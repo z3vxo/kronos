@@ -10,8 +10,6 @@ import (
 	"github.com/z3vxo/nyx/internal/config"
 )
 
-// todo, setup config file, add these
-
 func authMiddleWare(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authToken := r.Header.Get("Authorization")
@@ -50,7 +48,7 @@ func CraftJWT(user string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenString, err := token.SignedString([]byte("changem"))
+	tokenString, err := token.SignedString([]byte(config.Cfg.JwtSecret))
 	if err != nil {
 		fmt.Println(err)
 		return "", err

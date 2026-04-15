@@ -96,7 +96,7 @@ func main() {
 		fmt.Println("Failed Setting up DB")
 	}
 
-	if err := server.Setup(); err != nil {
+	if err := server.SetupTeamServer(); err != nil {
 		fmt.Println("Failed Setting up server")
 
 	}

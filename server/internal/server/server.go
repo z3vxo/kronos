@@ -7,8 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func Setup() error {
-	//err := database.CheckAndSetupDB()
+func SetupTeamServer() error {
 
 	r := chi.NewRouter()
 
@@ -19,9 +18,14 @@ func Setup() error {
 			r.Use(authMiddleWare)
 			r.Get("/agents", nyx_AgentHandler)
 			r.Post("/agents/resolve/{codeName}", nyx_AgentResolveHandler)
+
+			// r.Post("/commands/new", nyx_CommandNewHandler)
+			// r.Post("/commands/delete", nyx_CommandDeleteHandler)
+
 		})
 	})
 	fmt.Println("Server Started!")
+
 	http.ListenAndServe(":3000", r)
 
 	return nil

@@ -3,9 +3,21 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/z3vxo/nyx/internal/database"
 )
 
 func nyx_AgentHandler(w http.ResponseWriter, r *http.Request) {
+
+	data, err := database.Nyx_ListAgents()
+	if err != nil {
+		http.Error(w, "failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
 
 }
 
