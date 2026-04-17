@@ -1,0 +1,26 @@
+#!/bin/bash
+
+
+token=$(curl http://localhost:3000/rest/login -s -d '{"user":"nyx", "passwd":"nyxpwd"}' | jq -r '.token')
+
+#curl -s http://localhost:3000/rest/agents -s -H "Authorization: Bearer $token" | jq
+
+# type TaskEntry struct {
+# 	Cmd_type int    `json:"type"`
+# 	Guid     string `json:"guid"`
+# 	Param1   string `json:"param1"`
+# 	Param2   string `json:"param2"`
+# }
+case "$1" in
+    resolve)
+        curl -s http://localhost:3000/rest/agents/resolve/ted_kaz -v -s -H "Authorization: Bearer $token" | jq
+        ;;
+    list)
+        curl -s http://localhost:3000/rest/agents/list -s -H "Authorization: Bearer $token" | jq
+        ;;
+    insert)
+        curl -s http://localhost:3000/rest/commands/new  -d '{"guid":"1122", "type":1, "task_id":"1111-11111", "param_1":"test"}' -s -H "Authorization: Bearer $token" | jq
+        ;;
+    *)
+        echo "need option"
+esac

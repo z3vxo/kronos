@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/z3vxo/nyx/internal/config"
+	"github.com/z3vxo/kronos/internal/config"
 )
 
 func authMiddleWare(next http.Handler) http.Handler {

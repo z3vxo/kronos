@@ -7,12 +7,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/z3vxo/nyx/internal/database"
+	"github.com/z3vxo/kronos/internal/database"
 )
-
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
 
 func SendJSONError(w http.ResponseWriter, message string, code int) {
 	w.Header().Set("Content-Type", "application/json")
@@ -21,7 +17,7 @@ func SendJSONError(w http.ResponseWriter, message string, code int) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-func nyx_AgentHandler(w http.ResponseWriter, r *http.Request) {
+func nyx_AgentListHandler(w http.ResponseWriter, r *http.Request) {
 
 	data, err := database.Db_ListAgents()
 	if err != nil {
@@ -55,13 +51,6 @@ func nyx_AgentResolveHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"guid": AgentGuid})
 }
 
-type TaskEntry struct {
-	Cmd_type int    `json:"type"`
-	Guid     string `json:"guid"`
-	Param1   string `json:"param1"`
-	Param2   string `json:"param2"`
-}
-
 func nyx_CommandNewHandler(w http.ResponseWriter, r *http.Request) {
 	var cmd TaskEntry
 	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
@@ -69,7 +58,7 @@ func nyx_CommandNewHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := database.InsertCommand(cmd.Cmd_type, cmd.Guid, cmd.Param1, cmd.Param2)
+	err := database.InsertCommand(cmd.Cmd_type, cmd.Guid, cmd.TaskID, cmd.Param1, cmd.Param2)
 	if err != nil {
 		SendJSONError(w, "failed inserting command", http.StatusInternalServerError)
 		return
@@ -77,11 +66,6 @@ func nyx_CommandNewHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]string{"status": "OK"})
 	return
-}
-
-type UserLogin struct {
-	Username string `json:"user"`
-	Password string `json:"passwd"`
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {

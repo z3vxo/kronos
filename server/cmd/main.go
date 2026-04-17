@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/z3vxo/nyx/internal/config"
-	"github.com/z3vxo/nyx/internal/database"
-	"github.com/z3vxo/nyx/internal/server"
+	"github.com/z3vxo/kronos/internal/config"
+	"github.com/z3vxo/kronos/internal/database"
+	"github.com/z3vxo/kronos/internal/server"
 )
 
 func SetupNyx() error {

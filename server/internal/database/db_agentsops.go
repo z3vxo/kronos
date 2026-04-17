@@ -6,24 +6,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type Agent struct {
-	CodeName   string `json:"code_name"`
-	Username   string `json:"username"`
-	Hostname   string `json:"hostname"`
-	Ex_ip      string `json:"ex_ip"`
-	In_ip      string `json:"in_ip"`
-	IsElevated bool   `json:"is_elevated"`
-	Pid        int    `json:"pid"`
-	ProcPath   string `json:"proc_path"`
-	WinVer     string `json:"winver"`
-	LastSeen   string `json:"last_checkin"`
-}
-
-type Agents struct {
-	Total int     `json:"total"`
-	Agent []Agent `json:"agents"`
-}
-
 func Db_ListAgents() ([]byte, error) {
 
 	qeuery := `SELECT code_name, username, hostname, external_ip, internal_ip, is_elevated, pid, process_path, windows_version, last_checkin FROM agents`

@@ -16,7 +16,7 @@ func SetupTeamServer() error {
 
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleWare)
-			r.Get("/agents/list", nyx_AgentHandler)
+			r.Get("/agents/list", nyx_AgentListHandler)
 			r.Get("/agents/resolve/{codename}", nyx_AgentResolveHandler)
 
 			r.Post("/commands/new", nyx_CommandNewHandler)
