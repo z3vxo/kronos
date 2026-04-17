@@ -4,43 +4,29 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/httputil"
 )
 
-// @Summary      List all agents
-// @Tags         agents
-// @Produce      json
-// @Success      200  {object}  database.Agents
-// @Failure      500  {object}  ErrorResponse
-// @Security     BearerAuth
-// @Router       /ts/rest/agents/list [get]
 func (ts *TeamServer) AgentListHandler(w http.ResponseWriter, r *http.Request) {
 
-	data, err := ts.db.ListAgents()
+	agents, err := ts.db.ListAgents()
 	if err != nil {
 		httputil.SendJSONError(w, "Failed retreiving agents", http.StatusInternalServerError)
 		return
 	}
 
+	payload := database.Agents{Total: len(agents), Agent: agents}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	json.NewEncoder(w).Encode(&payload)
 
 }
 
-// @Summary      Resolve agent codename to GUID
-// @Tags         agents
-// @Produce      json
-// @Param        codename  path      string  true  "Agent codename"
-// @Success      200       {object}  map[string]string
-// @Failure      400       {object}  ErrorResponse
-// @Failure      404       {object}  ErrorResponse
-// @Failure      500       {object}  ErrorResponse
-// @Security     BearerAuth
-// @Router       /ts/rest/agents/resolve/{codename} [get]
 func (ts *TeamServer) AgentResolveHandler(w http.ResponseWriter, r *http.Request) {
 	codeName := chi.URLParam(r, "codename")
 	if codeName == "" {
@@ -62,15 +48,6 @@ func (ts *TeamServer) AgentResolveHandler(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(map[string]string{"guid": AgentGuid})
 }
 
-// @Summary      Queue a new command for an agent
-// @Tags         commands
-// @Accept       json
-// @Produce      json
-// @Param        body  body      TaskEntry  true  "Command payload"
-// @Success      200   {object}  map[string]string
-// @Failure      500   {object}  ErrorResponse
-// @Security     BearerAuth
-// @Router       /ts/rest/commands/new [post]
 func (ts *TeamServer) CommandNewHandler(w http.ResponseWriter, r *http.Request) {
 	var cmd TaskEntry
 	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
@@ -88,15 +65,6 @@ func (ts *TeamServer) CommandNewHandler(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(map[string]string{"status": "OK"})
 }
 
-// @Summary      Delete a queued command by task ID
-// @Tags         commands
-// @Accept       json
-// @Produce      json
-// @Param        body  body      TaskDelete  true  "Task to delete"
-// @Success      200   {object}  map[string]string
-// @Failure      500   {object}  ErrorResponse
-// @Security     BearerAuth
-// @Router       /ts/rest/commands/delete [post]
 func (ts *TeamServer) CommandDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	var task TaskDelete
 
@@ -115,15 +83,69 @@ func (ts *TeamServer) CommandDeleteHandler(w http.ResponseWriter, r *http.Reques
 
 }
 
-// @Summary      Authenticate and receive a JWT
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        body  body      UserLogin  true  "Login credentials"
-// @Success      200   {object}  map[string]string
-// @Failure      401   {object}  ErrorResponse
-// @Failure      500   {object}  ErrorResponse
-// @Router       /ts/rest/login [post]
+func (ts *TeamServer) ListTasksHandler(w http.ResponseWriter, r *http.Request) {
+	guid := chi.URLParam(r, "guid")
+	if guid == "" {
+		httputil.SendJSONError(w, "missing guid", http.StatusBadRequest)
+		return
+	}
+
+	tasks, err := ts.db.ListTasks(guid)
+	if err != nil {
+		httputil.SendJSONError(w, "database error, failed loading tasks", http.StatusInternalServerError)
+		return
+	}
+
+	payload := database.TaskEntrys{Total: len(tasks), Tasks: tasks}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(&payload)
+
+}
+
+func (ts *TeamServer) StartListenerHandler(w http.ResponseWriter, r *http.Request) {
+	var Info NewListener
+	if err := json.NewDecoder(r.Body).Decode(&Info); err != nil {
+		httputil.SendJSONError(w, "Failed decoding json", http.StatusInternalServerError)
+		return
+	}
+
+	id, err := ts.NewListener(Info.Port)
+	if err != nil {
+		fmt.Println(err)
+		httputil.SendJSONError(w, "failed Creating listener", http.StatusInternalServerError)
+		return
+	}
+
+	if err := ts.StartListener(id); err != nil {
+		httputil.SendJSONError(w, "failed starting listener", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"listener_id": id})
+}
+
+func (ts *TeamServer) StopListenerHandler(w http.ResponseWriter, r *http.Request) {
+	guid := chi.URLParam(r, "guid")
+	if guid == "" {
+		httputil.SendJSONError(w, "missing guid", http.StatusBadRequest)
+		return
+	}
+
+	err := ts.StopListener(guid)
+	if err != nil {
+		httputil.SendJSONError(w, "failed deleting listener from db", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "OK"})
+}
+
 func (ts *TeamServer) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")

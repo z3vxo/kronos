@@ -27,9 +27,10 @@ func NewTeamServer() (*TeamServer, error) {
 			WriteTimeout: 0,
 			IdleTimeout:  60 * time.Second,
 		},
-		SSE:  NewBroker(),
-		Auth: a,
-		db:   d,
+		SSE:       NewBroker(),
+		Auth:      a,
+		db:        d,
+		Listeners: &Listeners{ListenerMap: make(map[string]Listener), GetEndpoint: config.Cfg.Server.GetEndpoint, PostEndpoint: config.Cfg.Server.PostEndpoint},
 	}, nil
 }
 
@@ -46,22 +47,20 @@ func (ts *TeamServer) Start() error {
 
 	r.Route("/ts", func(r chi.Router) {
 		r.Post("/rest/login", ts.loginHandler)
-		r.Get("/events", ts.SSE.EventHandler)
 
 		r.Group(func(r chi.Router) {
 			r.Use(ts.Auth.AuthMiddleWare)
+			r.Get("/events", ts.SSE.EventHandler)
 			r.Get("/rest/agents/list", ts.AgentListHandler)
 			r.Get("/rest/agents/resolve/{codename}", ts.AgentResolveHandler)
 
-			r.Post("/rest/commands/new", ts.CommandNewHandler)
-			r.Post("/rest/commands/delete", ts.CommandDeleteHandler)
+			r.Post("/rest/tasks/new", ts.CommandNewHandler)
+			r.Post("/rest/tasks/delete", ts.CommandDeleteHandler)
+			r.Get("/rest/tasks/list/{guid}", ts.ListTasksHandler)
 
 			//r.Get("/rest/listeners/list", ts_ListListener)
-			//r.Post("/rest/listeners/start, ts_StartListenerHandler)
-			//r.Post("/rest/listeners/stop, ts_StopListenerHandler)
-			//
-			// r.Post("/listeners/start, nyx_StartListenerHandler)
-			// r.Post("/listeners/stop, nyx_StopListenerHandler)
+			r.Post("/rest/listeners/start", ts.StartListenerHandler)
+			r.Post("/rest/listeners/stop/{guid}", ts.StopListenerHandler)
 
 		})
 	})

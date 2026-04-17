@@ -1,7 +1,6 @@
 package teamserver
 
 import (
-	"net"
 	"net/http"
 	"sync"
 
@@ -31,10 +30,14 @@ type Broker struct {
 	mu       sync.RWMutex
 }
 
+type NewListener struct {
+	Port int `json:"port"`
+}
+
 type TeamServer struct {
-	Listener   net.Listener
 	httpServer *http.Server
 	SSE        *Broker
 	Auth       *auth.Auth
 	db         *database.DB
+	Listeners  *Listeners
 }

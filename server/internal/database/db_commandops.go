@@ -27,3 +27,26 @@ func (db *DB) DeleteTask(id int) error {
 	}
 	return nil
 }
+
+func (db *DB) ListTasks(guid string) ([]Task, error) {
+	query := `SELECT command_type, param_1, param_2, tasked_at FROM commands WHERE guid = ? AND executed = 0`
+
+	rows, err := db.conn.Query(query, guid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tasks []Task
+	for rows.Next() {
+		var t Task
+		err := rows.Scan(&t.CmdCode, &t.Param1, &t.Param2, &t.TaskedAt)
+		if err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, t)
+	}
+
+	return tasks, nil
+
+}

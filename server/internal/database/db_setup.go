@@ -91,9 +91,18 @@ func SetupDB(db *DB) error {
 
 	_, err = db.conn.Exec(commands_query)
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("commands")
 
+		return err
+	}
+
+	listeners_query := `CREATE TABLE IF NOT EXISTS listeners (
+		id INTEGER PRIMARY KEY,
+		guid TEXT NOT NULL,
+		port INTEGER NOT NULL,
+		status TEXT NOT NULL);
+		`
+	_, err = db.conn.Exec(listeners_query)
+	if err != nil {
 		return err
 	}
 

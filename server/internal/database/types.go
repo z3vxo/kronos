@@ -17,3 +17,15 @@ type Agents struct {
 	Total int     `json:"total"`
 	Agent []Agent `json:"agents"`
 }
+
+type Task struct {
+	CmdCode  int    `json:"cmd_code"`
+	Param1   string `json:"param_1"`
+	Param2   string `json:"param_2"`
+	TaskedAt int    `json:"tasked_at"`
+}
+
+type TaskEntrys struct {
+	Total int    `json:"total"`
+	Tasks []Task `json:"tasks"`
+}

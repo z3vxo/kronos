@@ -1,12 +1,10 @@
 package database
 
 import (
-	"encoding/json"
-
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func (db *DB) ListAgents() ([]byte, error) {
+func (db *DB) ListAgents() ([]Agent, error) {
 
 	qeuery := `SELECT code_name, username, hostname, external_ip, internal_ip, is_elevated, pid, process_path, windows_version, last_checkin FROM agents`
 
@@ -27,16 +25,7 @@ func (db *DB) ListAgents() ([]byte, error) {
 		AgentList = append(AgentList, a)
 	}
 
-	payload := Agents{
-		Total: len(AgentList),
-		Agent: AgentList,
-	}
-
-	res, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
+	return AgentList, nil
 
 }
 
