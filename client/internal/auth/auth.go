@@ -6,11 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/z3vxo/kronos/internal/config"
 )
 
 type AUTH struct {
+	Mu      sync.RWMutex
 	Token   string
 	Refresh string
 	baseURL string
@@ -36,8 +38,6 @@ func New(baseURL, User, Passwd string, c *http.Client) (*AUTH, error) {
 
 func (a *AUTH) Login() error {
 	endpoint := fmt.Sprintf("%s/ts/rest/login", a.baseURL)
-	fmt.Printf("User: %s\n", config.Cfg.Http.User)
-	fmt.Printf("Passwd: %s\n", config.Cfg.Http.Passwd)
 
 	body, _ := json.Marshal(map[string]string{"username": config.Cfg.Http.User, "password": config.Cfg.Http.Passwd})
 	resp, err := a.Client.Post(endpoint, "application/json", bytes.NewReader(body))
@@ -56,11 +56,12 @@ func (a *AUTH) Login() error {
 
 	a.Token = auth.Tok
 	a.Refresh = auth.Refresh
-	fmt.Printf("Token: %s\nRefresh: %s\n", auth.Tok, auth.Refresh)
 	return nil
 }
 
 func (a *AUTH) Apply(req *http.Request) {
+	a.Mu.RLock()
+	defer a.Mu.RUnlock()
 	TokenString := fmt.Sprintf("Bearer %s", a.Token)
 	req.Header.Set("Authorization", TokenString)
 	return

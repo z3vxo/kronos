@@ -1,21 +1,16 @@
 package httpclient
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/z3vxo/kronos/internal/auth"
 	"github.com/z3vxo/kronos/internal/config"
 )
-
-type Client struct {
-	Hostname   string
-	Auth       *auth.AUTH
-	HttpClient *http.Client
-	Stream     *http.Client
-}
 
 func NewClient() (*Client, error) {
 
@@ -41,16 +36,59 @@ func NewClient() (*Client, error) {
 		return nil, err
 	}
 
-	return &Client{
+	client := &Client{
 		HttpClient: c,
 		Auth:       a,
 		Hostname:   config.Cfg.Http.Host,
 		Stream:     s,
-	}, nil
+	}
+
+	return client, nil
 }
 
-func (c *Client) DoGet(method string, endpoint string, out any) error {
-	req, _ := http.NewRequest(method, fmt.Sprintf("%s/%s", c.Hostname, endpoint), nil)
+func (c *Client) ConnectToSSE() error {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/ts/events", c.Hostname), nil)
+	if err != nil {
+		return err
+	}
+	c.Auth.Apply(req)
+
+	resp, err := c.Stream.Do(req)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return fmt.Errorf("SSE connect failed: %s", resp.Status)
+	}
+
+	defer resp.Body.Close()
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "data:") {
+			continue
+		}
+		raw := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+		var event Event
+		if err := json.Unmarshal([]byte(raw), &event); err != nil {
+			continue
+		}
+		switch event.CmdType {
+		case TYPE_NEW_AGENT:
+			fmt.Println("[+] New agent:", event.User.CodeName)
+		case TYPE_CMD_OUTPUT:
+			fmt.Println(event.Data.Output)
+		}
+	}
+	return nil
+}
+
+func (c *Client) DoGet(endpoint string, out any) error {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", c.Hostname, endpoint), nil)
+	if err != nil {
+		return err
+	}
 	c.Auth.Apply(req)
 	return c.Do(req, out)
 }
@@ -59,6 +97,13 @@ func (c *Client) Do(req *http.Request, out any) error {
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
 		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var e ErrorRes
+		_ = json.NewDecoder(resp.Body).Decode(&e)
+		return fmt.Errorf("[!] Error: %s", e.ErrorStr)
 	}
 
 	return json.NewDecoder(resp.Body).Decode(out)

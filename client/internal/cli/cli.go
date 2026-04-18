@@ -6,14 +6,17 @@ import (
 	"os"
 	"strings"
 
+	"github.com/chzyer/readline"
 	"github.com/google/shlex"
-	"github.com/peterh/liner"
 	"github.com/z3vxo/kronos/internal/httpclient"
 )
 
+const prompt = "\001\033[2m\033[4m\002kronos\001\033[0m\002 $> "
+
 type CLI struct {
 	http          *httpclient.Client
-	liner         *liner.State
+	rl            *readline.Instance
+	Out           *Output
 	ClientInUse   string
 	dispatchTable map[string]HandlerFunc
 }
@@ -25,11 +28,22 @@ func NewCli() (*CLI, error) {
 	if err != nil {
 		return nil, err
 	}
-	c := &CLI{
-		http:  h,
-		liner: liner.NewLiner(),
+
+	rl, err := readline.New(prompt)
+	if err != nil {
+		return nil, err
 	}
+
+	c := &CLI{
+		http: h,
+		rl:   rl,
+		Out:  &Output{ch: make(chan string, 32), prompt: prompt},
+	}
+	go c.Out.Run()
 	c.SetupDispatchTable()
+
+	go h.ConnectToSSE()
+
 	return c, nil
 }
 
@@ -40,7 +54,7 @@ func (c *CLI) SetupDispatchTable() {
 }
 
 func (c *CLI) Close() {
-	c.liner.Close()
+	c.rl.Close()
 }
 
 func (c *CLI) Split(input string) ([]string, error) {
@@ -50,40 +64,40 @@ func (c *CLI) Split(input string) ([]string, error) {
 func (c *CLI) Dispatch(cmd []string) {
 	fn, ok := c.dispatchTable[cmd[0]]
 	if !ok {
-		fmt.Println("[!] Unknown Command: ", cmd[0])
+		c.Out.Send(fmt.Sprintf("[!] Unknown command: %s", cmd[0]))
 		return
 	}
-	fn(cmd[1:])
-
+	go fn(cmd[1:])
 }
 
 func (c *CLI) Run() {
 	defer c.Close()
 	for {
-		input, err := c.liner.Prompt("kronos $> ")
-		if err == io.EOF {
+		input, err := c.rl.Readline()
+		if err == io.EOF || err == readline.ErrInterrupt {
 			break
 		}
 		if err != nil {
-			fmt.Println("error:", err)
+			c.Out.Send(fmt.Sprintf("error: %v", err))
 			break
 		}
+		input = strings.TrimSpace(input)
 		if input == "" {
 			continue
 		}
 
 		cmd, err := c.Split(input)
 		if err != nil {
-			fmt.Println("[!] Failed Parsing input")
+			c.Out.Send("[!] Failed parsing input")
+			continue
 		}
+
 		if strings.ToLower(cmd[0]) == "exit" {
 			c.Close()
-			os.Exit(1)
+			os.Exit(0)
 		}
 
+		c.rl.SaveHistory(input)
 		c.Dispatch(cmd)
-
-		c.liner.AppendHistory(input)
-		fmt.Println(input)
 	}
 }

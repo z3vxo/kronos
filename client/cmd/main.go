@@ -23,9 +23,11 @@ func main() {
 
 	cli, err := cli.NewCli()
 	if err != nil {
-		log.Fatalf("Failed Loading config: %v", err)
+		log.Fatalf("Failed starting CLI: %v", err)
 	}
 
+	log.Println("CLI started")
 	cli.Run()
+	log.Println("CLI exited")
 
 }
