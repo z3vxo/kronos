@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/z3vxo/kronos/internal/auth"
 	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/httputil"
 )
@@ -131,6 +132,8 @@ func (ts *TeamServer) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ts.Logger.Debug("Operator logged in", "user", log.Username)
+
 	json.NewEncoder(w).Encode(map[string]string{"token": token, "refresh": refresh})
 }
 
@@ -156,7 +159,8 @@ func (ts *TeamServer) StartListenerHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	id, name, err := ts.NewListener(Info.Port, Info.Protocol)
+	user, _ := r.Context().Value(auth.UsernameKey).(string)
+	id, name, err := ts.NewListener(Info.Port, Info.Protocol, user)
 	if err != nil {
 		fmt.Println(err)
 		httputil.SendJSONError(w, "failed Creating listener", http.StatusInternalServerError)
@@ -192,8 +196,8 @@ func (ts *TeamServer) StopListenerHandler(w http.ResponseWriter, r *http.Request
 		httputil.SendJSONError(w, "listener not found", http.StatusNotFound)
 		return
 	}
-
-	err := ts.StopListener(guid)
+	user, _ := r.Context().Value(auth.UsernameKey).(string)
+	err := ts.StopListener(guid, user)
 	if err != nil {
 		httputil.SendJSONError(w, "failed deleting listener from db", http.StatusInternalServerError)
 		return

@@ -14,12 +14,12 @@ const (
 	CMD_TYPE_OUTPUT   = 2
 )
 
-func AgentCheckInHandler(w http.ResponseWriter, r *http.Request) {
+func (h *AgentHandler) AgentCheckInHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("SUCCESS"))
 }
 
-func AgentUploadHandler(w http.ResponseWriter, r *http.Request) {
+func (h *AgentHandler) AgentUploadHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	body, err := io.ReadAll(r.Body)
@@ -39,7 +39,7 @@ func AgentUploadHandler(w http.ResponseWriter, r *http.Request) {
 	case CMD_TYPE_REGISTER:
 		fmt.Println("[+] Register hit!")
 		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
-		err := HandleClientRegister(ip, reader)
+		err := h.HandleClientRegister(ip, reader)
 		if err != nil {
 			http.Error(w, "failed getting data", http.StatusInternalServerError)
 		}

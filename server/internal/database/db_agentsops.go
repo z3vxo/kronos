@@ -1,6 +1,9 @@
 package database
 
 import (
+	"fmt"
+	"time"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -39,4 +42,19 @@ func (db *DB) ResolveCodename(name string) (string, error) {
 	}
 
 	return guid, nil
+}
+
+func (db *DB) InsertAgent(guid, codeName, User, Host, InIP, ExIP, ProcPath, WinVer string, Pid int32, IsElev byte) error {
+	query := `INSERT INTO agents(guid, code_name,
+	  						username, hostname,
+							external_ip, internal_ip,
+							is_elevated, pid, process_path,
+							windows_version, session_key, last_checkin) VALUES(
+							?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := db.conn.Exec(query, guid, codeName, User, Host, ExIP, InIP, IsElev, Pid, ProcPath, WinVer, "32324234", time.Now().UTC().Unix())
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return nil
 }

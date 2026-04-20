@@ -3,7 +3,10 @@ package teamserver
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -12,10 +15,20 @@ import (
 	"github.com/z3vxo/kronos/internal/database"
 )
 
+func GetLogFile() string {
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".kronos", "logs", "kronos.log")
+}
+
 func NewTeamServer() (*TeamServer, error) {
 	a := auth.NewAuth(config.Cfg.TS.Auth.Username, config.Cfg.TS.Auth.Password,
 		config.Cfg.TS.Auth.JwtSecret, config.Cfg.TS.Auth.TokenHours, config.Cfg.TS.Auth.TokenRefreshHours)
 	d, err := database.NewDB()
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := os.OpenFile(GetLogFile(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, err
 	}
@@ -31,6 +44,7 @@ func NewTeamServer() (*TeamServer, error) {
 		Auth:      a,
 		db:        d,
 		Listeners: &Listeners{ListenerMap: make(map[string]Listener), GetEndpoint: config.Cfg.Server.GetEndpoint, PostEndpoint: config.Cfg.Server.PostEndpoint},
+		Logger:    slog.New(slog.NewJSONHandler(file, nil)),
 	}, nil
 }
 

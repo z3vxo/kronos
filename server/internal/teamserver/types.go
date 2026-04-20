@@ -1,6 +1,7 @@
 package teamserver
 
 import (
+	"log/slog"
 	"net/http"
 	"sync"
 
@@ -41,6 +42,7 @@ type TeamServer struct {
 	Auth       *auth.Auth
 	db         *database.DB
 	Listeners  *Listeners
+	Logger     *slog.Logger
 }
 
 type ListenerEntry struct {

@@ -26,6 +26,7 @@ func setupDirs(home string) error {
 		filepath.Join(basePath, "config"),
 		filepath.Join(basePath, "database"),
 		filepath.Join(basePath, "certs"),
+		filepath.Join(basePath, "logs"),
 	} {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return err
@@ -34,6 +35,7 @@ func setupDirs(home string) error {
 	for _, f := range []string{
 		filepath.Join(basePath, "database", "kronos_db.sql"),
 		filepath.Join(basePath, "config", "nyx.log"),
+		filepath.Join(basePath, "logs", "kronos.log"),
 	} {
 		if err := ensureFile(f); err != nil {
 			return err

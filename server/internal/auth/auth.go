@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -54,14 +55,20 @@ func (a *Auth) ValidateToken(tokenStr string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
+type contextKey string
+
+const UsernameKey contextKey = "username"
+
 func (a *Auth) AuthMiddleWare(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, err := a.ValidateToken(r.Header.Get("Authorization"))
+		claims, err := a.ValidateToken(r.Header.Get("Authorization"))
 		if err != nil {
 			httputil.SendJSONError(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		next.ServeHTTP(w, r)
+		username, _ := claims["user"].(string)
+		ctx := context.WithValue(r.Context(), UsernameKey, username)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

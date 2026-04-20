@@ -15,8 +15,8 @@ import (
 	"github.com/z3vxo/kronos/internal/server"
 )
 
-var listenerAdjectives = []string{"silent", "ghost", "iron", "shadow", "crimson", "steel", "hollow", "obsidian", "frozen", "ashen"}
-var listenerNouns = []string{"falcon", "specter", "anvil", "wraith", "ember", "vault", "cipher", "nexus", "bastion", "phantom"}
+var listenerAdjectives = []string{"golden", "cursed", "sacred", "eternal", "fallen", "divine", "forsaken", "ancient", "wrathful", "fated", "hollow", "sunken", "boundless", "immortal", "exiled"}
+var listenerNouns = []string{"olympus", "tartarus", "elysium", "styx", "erebus", "acheron", "lethe", "phlegethon", "asphodel", "cocytus", "ithaca", "troy", "delphi", "sparta", "thebes"}
 
 func generateListenerName() string {
 	adj := listenerAdjectives[rand.Intn(len(listenerAdjectives))]
@@ -38,10 +38,10 @@ type Listeners struct {
 	PostEndpoint string
 }
 
-func BuildListenerHttp(port int, protocol string) *http.Server {
+func BuildListenerHttp(port int, protocol string, h *server.AgentHandler) *http.Server {
 	r := chi.NewRouter()
-	r.Get(config.Cfg.Server.GetEndpoint, server.AgentCheckInHandler)
-	r.Post(config.Cfg.Server.PostEndpoint, server.AgentUploadHandler)
+	r.Get(config.Cfg.Server.GetEndpoint, h.AgentCheckInHandler)
+	r.Post(config.Cfg.Server.PostEndpoint, h.AgentUploadHandler)
 
 	return &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
@@ -58,10 +58,11 @@ func (ts *TeamServer) StartListenersFromDB() error {
 	if err != nil {
 		return err
 	}
+	h := &server.AgentHandler{DB: ts.db}
 	for _, l := range ToStart {
 		ts.Listeners.Mu.Lock()
 		ts.Listeners.ListenerMap[l.Guid] = Listener{
-			httpServer: BuildListenerHttp(l.Port, l.Protocol),
+			httpServer: BuildListenerHttp(l.Port, l.Protocol, h),
 			Port:       l.Port,
 			Name:       l.Name,
 			Protocol:   l.Protocol,
@@ -75,11 +76,12 @@ func (ts *TeamServer) StartListenersFromDB() error {
 			fmt.Printf("failed starting listener %s: %v\n", l.Guid, err)
 			continue
 		}
+		ts.Logger.Info("listener started from db", "event", "listener-restore", "id", l.Guid, "protocol", l.Protocol, "port", l.Port)
 	}
 	return nil
 }
 
-func (ts *TeamServer) NewListener(port int, Protocol string) (string, string, error) {
+func (ts *TeamServer) NewListener(port int, Protocol string, user string) (string, string, error) {
 	id := uuid.NewString()
 	name := generateListenerName()
 
@@ -92,7 +94,7 @@ func (ts *TeamServer) NewListener(port int, Protocol string) (string, string, er
 	}
 
 	ts.Listeners.ListenerMap[id] = Listener{
-		httpServer: BuildListenerHttp(port, Protocol),
+		httpServer: BuildListenerHttp(port, Protocol, &server.AgentHandler{DB: ts.db}),
 		Port:       port,
 		Name:       name,
 		Protocol:   Protocol,
@@ -105,6 +107,7 @@ func (ts *TeamServer) NewListener(port int, Protocol string) (string, string, er
 		ts.Listeners.Mu.Unlock()
 		return "", "", err
 	}
+	ts.Logger.Info("New Listener Created", "event", "listener-create", "id", id, "operator", user, "proto", Protocol, "port", port)
 
 	return id, name, nil
 }
@@ -132,7 +135,7 @@ func (ts *TeamServer) StartListener(id string) error {
 	return nil
 }
 
-func (ts *TeamServer) StopListener(id string) error {
+func (ts *TeamServer) StopListener(id string, user string) error {
 	ts.Listeners.Mu.Lock()
 	l, ok := ts.Listeners.ListenerMap[id]
 	if !ok {
@@ -149,6 +152,8 @@ func (ts *TeamServer) StopListener(id string) error {
 	if err := ts.db.DeleteListener(id); err != nil {
 		return err
 	}
+	ts.Logger.Info("listener stopped", "event", "listener-stop", "id", id, "operator", user)
+
 	return nil
 
 }
