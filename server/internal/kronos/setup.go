@@ -117,7 +117,7 @@ func SetupConfig() error {
 	}
 
 	fmt.Printf("\n[*] Setup complete. Config saved to %s\n", configFile)
-	fmt.Printfln("[*] View File to update req/resp headers and more")
+	fmt.Println("[*] View File to update req/resp headers and more")
 	fmt.Println("Run './kronos' to start the teamserver.")
 	return nil
 }

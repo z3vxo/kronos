@@ -71,7 +71,8 @@ func SetupDB(db *DB) error {
 		process_path 	TEXT NOT NULL,
 		windows_version TEXT NOT NULL,
 		session_key    	BLOB NOT NULL,
-		last_checkin    INTEGER NOT NULL);`
+		last_checkin    INTEGER NOT NULL,
+		registation_date INTEGER NOT NULL);`
 
 	_, err := db.conn.Exec(agents_querys)
 	if err != nil {
