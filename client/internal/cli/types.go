@@ -1,20 +1,5 @@
 package cli
 
-import "fmt"
-
-type tag string
-
-const (
-	WARN tag = "\033[1;33m[!]\033[0m "
-	INFO tag = "\033[1;36m[*]\033[0m "
-	GOOD tag = "\033[1;32m[+]\033[0m "
-	BAD  tag = "\033[1;31m[-]\033[0m "
-)
-
-func (t tag) Sprint(msg string) string          { return string(t) + msg }
-func (t tag) Sprintf(f string, a ...any) string { return string(t) + fmt.Sprintf(f, a...) }
-func (t tag) Sprint_tab(msg string) string      { return string("\t"+t) + msg }
-
 type Agent struct {
 	CodeName   string `json:"code_name"`
 	Username   string `json:"username"`

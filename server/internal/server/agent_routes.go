@@ -3,7 +3,6 @@ package server
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -37,7 +36,7 @@ func (h *AgentHandler) AgentUploadHandler(w http.ResponseWriter, r *http.Request
 
 	switch cmdType {
 	case CMD_TYPE_REGISTER:
-		fmt.Println("[+] Register hit!")
+
 		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
 		err := h.HandleClientRegister(ip, reader)
 		if err != nil {

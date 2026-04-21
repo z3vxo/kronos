@@ -3,9 +3,9 @@ package teamserver
 import (
 	"log/slog"
 	"net/http"
-	"sync"
 
 	"github.com/z3vxo/kronos/internal/auth"
+	"github.com/z3vxo/kronos/internal/broker"
 	"github.com/z3vxo/kronos/internal/database"
 )
 
@@ -26,11 +26,6 @@ type UserLogin struct {
 	Password string `json:"password"`
 }
 
-type Broker struct {
-	Channels map[string]chan string
-	mu       sync.RWMutex
-}
-
 type NewListener struct {
 	Port     int    `json:"port"`
 	Protocol string `json:"protocol"`
@@ -38,7 +33,7 @@ type NewListener struct {
 
 type TeamServer struct {
 	httpServer *http.Server
-	SSE        *Broker
+	SSE        *broker.Broker
 	Auth       *auth.Auth
 	db         *database.DB
 	Listeners  *Listeners

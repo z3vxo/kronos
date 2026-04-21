@@ -58,7 +58,7 @@ func (ts *TeamServer) StartListenersFromDB() error {
 	if err != nil {
 		return err
 	}
-	h := &server.AgentHandler{DB: ts.db}
+	h := &server.AgentHandler{DB: ts.db, Broker: ts.SSE}
 	for _, l := range ToStart {
 		ts.Listeners.Mu.Lock()
 		ts.Listeners.ListenerMap[l.Guid] = Listener{

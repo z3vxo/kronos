@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/z3vxo/kronos/internal/auth"
+	"github.com/z3vxo/kronos/internal/broker"
 	"github.com/z3vxo/kronos/internal/config"
 	"github.com/z3vxo/kronos/internal/database"
 )
@@ -40,18 +41,12 @@ func NewTeamServer() (*TeamServer, error) {
 			WriteTimeout: 0,
 			IdleTimeout:  60 * time.Second,
 		},
-		SSE:       NewBroker(),
+		SSE:       broker.NewBroker(),
 		Auth:      a,
 		db:        d,
 		Listeners: &Listeners{ListenerMap: make(map[string]Listener), GetEndpoint: config.Cfg.Server.GetEndpoint, PostEndpoint: config.Cfg.Server.PostEndpoint},
 		Logger:    slog.New(slog.NewJSONHandler(file, nil)),
 	}, nil
-}
-
-func NewBroker() *Broker {
-	return &Broker{
-		Channels: make(map[string]chan string),
-	}
 }
 
 func (ts *TeamServer) Start() error {

@@ -11,9 +11,10 @@ import (
 
 	"github.com/z3vxo/kronos/internal/auth"
 	"github.com/z3vxo/kronos/internal/config"
+	"github.com/z3vxo/kronos/internal/ui"
 )
 
-func NewClient() (*Client, error) {
+func NewClient(h *ui.UI) (*Client, error) {
 
 	c := &http.Client{
 		Timeout: 30 * time.Second,
@@ -42,6 +43,7 @@ func NewClient() (*Client, error) {
 		Auth:       a,
 		Hostname:   config.Cfg.Http.Host,
 		Stream:     s,
+		UI:         h,
 	}
 
 	return client, nil
@@ -77,7 +79,7 @@ func (c *Client) ConnectToSSE() error {
 		}
 		switch event.CmdType {
 		case TYPE_NEW_AGENT:
-			fmt.Println("[+] New agent:", event.User.CodeName)
+			c.UI.Send(ui.INFO.Sprintf("New Agent Connect %s", event.User.Username))
 		case TYPE_CMD_OUTPUT:
 			fmt.Println(event.Data.Output)
 		}

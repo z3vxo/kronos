@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/z3vxo/kronos/internal/auth"
+	"github.com/z3vxo/kronos/internal/ui"
 )
 
 type ErrorRes struct {
@@ -40,4 +41,5 @@ type Client struct {
 	Auth       *auth.AUTH
 	HttpClient *http.Client
 	Stream     *http.Client
+	UI         *ui.UI
 }

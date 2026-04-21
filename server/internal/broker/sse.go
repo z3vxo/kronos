@@ -1,14 +1,27 @@
-package teamserver
+package broker
 
 import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"sync"
 	"time"
 )
 
+func NewBroker() *Broker {
+	return &Broker{
+		Channels: make(map[string]chan string),
+	}
+}
+
+type Broker struct {
+	Channels map[string]chan string
+	mu       sync.RWMutex
+}
+
 func (b *Broker) AddSubscriber() (string, chan string) {
 	id := fmt.Sprintf("%016x", rand.Uint64())
+	fmt.Printf("New Sub: %s\n", id)
 	ch := make(chan string, 8)
 	b.mu.Lock()
 	b.Channels[id] = ch

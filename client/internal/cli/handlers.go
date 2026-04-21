@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
+	"github.com/z3vxo/kronos/internal/ui"
 )
 
 func relativeTime(unix int64) string {
@@ -27,12 +28,12 @@ func relativeTime(unix int64) string {
 func (c *CLI) ListAgents(args []string) {
 	var A Agents
 	if err := c.http.DoGet("ts/rest/agents/list", &A); err != nil {
-		c.ui.Send(WARN.Sprintf("Failed listing agents: %v", err))
+		c.ui.Send(ui.WARN.Sprintf("Failed listing agents: %v", err))
 		return
 	}
 
 	if A.Total == 0 {
-		c.ui.Send(INFO.Sprint("No agents connected"))
+		c.ui.Send(ui.INFO.Sprint("No agents connected"))
 		return
 	}
 
@@ -58,13 +59,13 @@ func (c *CLI) ListAgents(args []string) {
 
 func (c *CLI) ListAgentInfo(args []string) {
 	if c.ui.InUse == "" {
-		c.ui.Send(BAD.Sprint("Must be using agent!"))
+		c.ui.Send(ui.BAD.Sprint("Must be using agent!"))
 		return
 	}
 	var a AgentInfoResp
 
 	if err := c.http.DoGet(fmt.Sprintf("ts/rest/agents/info/%s", c.ui.InUse), &a); err != nil {
-		c.ui.Send(WARN.Sprintf("Failed listing info: %v", err))
+		c.ui.Send(ui.WARN.Sprintf("Failed listing info: %v", err))
 		return
 	}
 	var buf bytes.Buffer
@@ -87,7 +88,7 @@ func (c *CLI) ListAgentInfo(args []string) {
 }
 
 func (c *CLI) Back(args []string) {
-	c.ui.Send(INFO.Sprintf("Not using %s", c.ClientInUse))
+	c.ui.Send(ui.INFO.Sprintf("Not using %s", c.ClientInUse))
 	c.ClientInUse = ""
 	c.ui.InUse = ""
 	c.ui.SetPrompt("")
@@ -95,7 +96,7 @@ func (c *CLI) Back(args []string) {
 
 func (c *CLI) ResolveAgent(args []string) {
 	if len(args) < 1 || args[0] == "" {
-		c.ui.Send(BAD.Sprint("Error: must choose agent"))
+		c.ui.Send(ui.BAD.Sprint("Error: must choose agent"))
 		return
 	}
 
@@ -103,19 +104,19 @@ func (c *CLI) ResolveAgent(args []string) {
 	e := fmt.Sprintf("ts/rest/agents/resolve/%s", args[0])
 
 	if err := c.http.DoGet(e, &r); err != nil {
-		c.ui.Send(WARN.Sprintf("Failed resolving agent: %v", err))
+		c.ui.Send(ui.WARN.Sprintf("Failed resolving agent: %v", err))
 		return
 	}
 
 	if r.Guid == "" {
-		c.ui.Send(BAD.Sprint("Server Did not return a guid!"))
+		c.ui.Send(ui.BAD.Sprint("Server Did not return a guid!"))
 		return
 	}
 
 	c.ClientInUse = r.Guid
 	c.ui.InUse = args[0]
 	c.ui.SetPrompt(args[0])
-	c.ui.Send(GOOD.Sprintf("Using %s", c.ClientInUse))
+	c.ui.Send(ui.GOOD.Sprintf("Using %s", c.ClientInUse))
 	return
 }
 
@@ -128,25 +129,25 @@ func (c *CLI) ParseListenerCmd(args []string) {
 	switch args[0] {
 	case "stop":
 		if args[1] == "" {
-			c.ui.Send(BAD.Sprint("Must provide listener name"))
+			c.ui.Send(ui.BAD.Sprint("Must provide listener name"))
 		}
 		c.StopListener(args[1])
 	case "start":
 		c.StartListener(args[1:])
 		//c.StopListener()
 	default:
-		c.ui.Send(BAD.Sprintf("Unknown subcommand: %s", args[0]))
+		c.ui.Send(ui.BAD.Sprintf("Unknown subcommand: %s", args[0]))
 	}
 }
 
 func (c *CLI) StopListener(name string) {
 	endpoint := fmt.Sprintf("ts/rest/listeners/stop/%s", name)
 	if err := c.http.DoPost(endpoint, nil, nil); err != nil {
-		c.ui.Send(WARN.Sprintf("Failed Stopping Listener: %s", err))
+		c.ui.Send(ui.WARN.Sprintf("Failed Stopping Listener: %s", err))
 		return
 	}
 
-	c.ui.Send(GOOD.Sprintf("Stopped Listener %s", name))
+	c.ui.Send(ui.GOOD.Sprintf("Stopped Listener %s", name))
 	return
 
 }
@@ -155,12 +156,12 @@ func (c *CLI) ListListners() {
 	var r ListListenersResp
 
 	if err := c.http.DoGet("ts/rest/listeners/list", &r); err != nil {
-		c.ui.Send(BAD.Sprint("Failed Listing Listeners!"))
+		c.ui.Send(ui.BAD.Sprint("Failed Listing Listeners!"))
 		return
 	}
 
 	if r.Total == 0 {
-		c.ui.Send(INFO.Sprint("No Active Listeners"))
+		c.ui.Send(ui.INFO.Sprint("No Active Listeners"))
 		return
 	}
 
@@ -183,7 +184,7 @@ func (c *CLI) StartListener(args []string) {
 	port := fs.IntP("port", "p", 443, "")
 	proto := fs.StringP("type", "t", "http", "")
 	if err := fs.Parse(args); err != nil {
-		c.ui.Send(WARN.Sprintf("[!] %v", err))
+		c.ui.Send(ui.WARN.Sprintf("[!] %v", err))
 		return
 	}
 
@@ -194,17 +195,17 @@ func (c *CLI) StartListener(args []string) {
 
 	body, err := json.Marshal(data)
 	if err != nil {
-		c.ui.Send(BAD.Sprintf("Error Marshaling json: %v", err))
+		c.ui.Send(ui.BAD.Sprintf("Error Marshaling json: %v", err))
 		return
 	}
 	var StartResp ListenerStartResp
 	if err := c.http.DoPost("ts/rest/listeners/start", body, &StartResp); err != nil {
-		c.ui.Send(BAD.Sprintf("Error Starting Listener: %v", err))
+		c.ui.Send(ui.BAD.Sprintf("Error Starting Listener: %v", err))
 		return
 
 	}
 
-	c.ui.Send(GOOD.Sprintf("Listener Started: %s", StartResp.Name))
+	c.ui.Send(ui.GOOD.Sprintf("Listener Started: %s", StartResp.Name))
 	return
 
 }

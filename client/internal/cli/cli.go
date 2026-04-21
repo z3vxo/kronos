@@ -9,11 +9,12 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/google/shlex"
 	"github.com/z3vxo/kronos/internal/httpclient"
+	"github.com/z3vxo/kronos/internal/ui"
 )
 
 type CLI struct {
 	http          *httpclient.Client
-	ui            *UI
+	ui            *ui.UI
 	ClientInUse   string
 	dispatchTable map[string]HandlerFunc
 }
@@ -21,12 +22,15 @@ type CLI struct {
 type HandlerFunc func(args []string)
 
 func NewCli() (*CLI, error) {
-	h, err := httpclient.NewClient()
+	rl, err := ui.NewUI()
+	if err != nil {
+		return nil, err
+	}
+	h, err := httpclient.NewClient(rl)
 	if err != nil {
 		return nil, err
 	}
 
-	rl, err := NewUI()
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +59,7 @@ func (c *CLI) SetupDispatchTable() {
 }
 
 func (c *CLI) Close() {
-	c.ui.rl.Close()
+	c.ui.Rl.Close()
 }
 
 func (c *CLI) Dispatch(cmd []string) {
@@ -70,7 +74,7 @@ func (c *CLI) Dispatch(cmd []string) {
 func (c *CLI) Run() {
 	defer c.Close()
 	for {
-		input, err := c.ui.rl.Readline()
+		input, err := c.ui.Rl.Readline()
 		if err == io.EOF || err == readline.ErrInterrupt {
 			break
 		}
@@ -85,7 +89,7 @@ func (c *CLI) Run() {
 
 		cmd, err := shlex.Split(input)
 		if err != nil {
-			c.ui.Send(BAD.Sprint("Failed parsing input"))
+			c.ui.Send(ui.BAD.Sprint("Failed parsing input"))
 			continue
 		}
 
@@ -93,7 +97,7 @@ func (c *CLI) Run() {
 			c.Close()
 			os.Exit(0)
 		}
-		c.ui.rl.SaveHistory(input)
+		c.ui.Rl.SaveHistory(input)
 
 		c.Dispatch(cmd)
 	}
@@ -125,5 +129,6 @@ func (c *CLI) Help(args []string) {
 	c.ui.Send(fmt.Sprintf("  \033[1;36m%-40s\033[0m %s", "ls <dir>", "list a directory"))
 	c.ui.Send(fmt.Sprintf("  \033[1;36m%-40s\033[0m %s", "cat <file>", "read a file"))
 	c.ui.Send(fmt.Sprintf("  \033[1;36m%-40s\033[0m %s", "whoami", "list current users identity"))
+	c.ui.Send(fmt.Sprintf("  \033[1;36m%-40s\033[0m %s", "WIP MORE CMDS COMING"))
 
 }
