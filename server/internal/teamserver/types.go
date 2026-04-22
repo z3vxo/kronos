@@ -29,6 +29,8 @@ type UserLogin struct {
 type NewListener struct {
 	Port     int    `json:"port"`
 	Protocol string `json:"protocol"`
+	Host     string `json:"host"`
+	CertType bool   `json:"letsencrypt"` // 0 = self signed, 1 = lets encrypt
 }
 
 type TeamServer struct {
@@ -44,7 +46,8 @@ type ListenerEntry struct {
 	Port     int    `json:"port"`
 	Name     string `json:"name"`
 	Protocol string `json:"protocol"`
-	Status   string `json:"status"`
+	Host     string `json:"host"`
+	Status   bool   `json:"status"`
 }
 
 type ListListenersResp struct {

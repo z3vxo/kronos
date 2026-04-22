@@ -2,6 +2,7 @@ package teamserver
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -29,6 +30,8 @@ type Listener struct {
 	Port       int
 	Name       string
 	Protocol   string
+	Host       string
+	Status     bool
 }
 
 type Listeners struct {
@@ -38,18 +41,31 @@ type Listeners struct {
 	PostEndpoint string
 }
 
-func BuildListenerHttp(port int, protocol string, h *server.AgentHandler) *http.Server {
+func BuildListenerHttp(port int, protocol string, h *server.AgentHandler, host string, letsEncrypt bool) (*http.Server, error) {
 	r := chi.NewRouter()
 	r.Get(config.Cfg.Server.GetEndpoint, h.AgentCheckInHandler)
 	r.Post(config.Cfg.Server.PostEndpoint, h.AgentUploadHandler)
 
-	return &http.Server{
+	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		Handler:      r,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
+	if protocol == "https" {
+		if !letsEncrypt {
+			cert, err := GenSelSigned(host)
+			if err != nil {
+				return nil, errors.New("failed generating self signed cert")
+			}
+			srv.TLSConfig = &tls.Config{
+				Certificates: []tls.Certificate{cert},
+				MinVersion:   tls.VersionTLS12,
+			}
+		}
+	}
+	return srv, nil
 
 }
 
@@ -59,13 +75,20 @@ func (ts *TeamServer) StartListenersFromDB() error {
 		return err
 	}
 	h := &server.AgentHandler{DB: ts.db, Broker: ts.SSE}
+
 	for _, l := range ToStart {
 		ts.Listeners.Mu.Lock()
+		srv, err := BuildListenerHttp(l.Port, l.Protocol, h, l.Host, l.CertType)
+		if err != nil {
+			return err
+		}
 		ts.Listeners.ListenerMap[l.Guid] = Listener{
-			httpServer: BuildListenerHttp(l.Port, l.Protocol, h),
+			httpServer: srv,
 			Port:       l.Port,
 			Name:       l.Name,
+			Host:       l.Host,
 			Protocol:   l.Protocol,
+			Status:     l.Status,
 		}
 		ts.Listeners.Mu.Unlock()
 
@@ -81,7 +104,7 @@ func (ts *TeamServer) StartListenersFromDB() error {
 	return nil
 }
 
-func (ts *TeamServer) NewListener(port int, Protocol string, user string) (string, string, error) {
+func (ts *TeamServer) NewListener(port int, Protocol string, user, host string, letsEncrypt bool) (string, string, error) {
 	id := uuid.NewString()
 	name := generateListenerName()
 
@@ -92,16 +115,21 @@ func (ts *TeamServer) NewListener(port int, Protocol string, user string) (strin
 			return "", "", errors.New("already Listening on port")
 		}
 	}
-
+	srv, err := BuildListenerHttp(port, Protocol, &server.AgentHandler{DB: ts.db}, host, letsEncrypt)
+	if err != nil {
+		return "", "", err
+	}
 	ts.Listeners.ListenerMap[id] = Listener{
-		httpServer: BuildListenerHttp(port, Protocol, &server.AgentHandler{DB: ts.db}),
+		httpServer: srv,
 		Port:       port,
 		Name:       name,
+		Host:       host,
 		Protocol:   Protocol,
+		Status:     true,
 	}
 	ts.Listeners.Mu.Unlock()
 
-	if err := ts.db.InsertListener(port, id, name, Protocol); err != nil {
+	if err := ts.db.InsertListener(port, id, name, Protocol, host, letsEncrypt); err != nil {
 		ts.Listeners.Mu.Lock()
 		delete(ts.Listeners.ListenerMap, id)
 		ts.Listeners.Mu.Unlock()
@@ -124,7 +152,7 @@ func (ts *TeamServer) StartListener(id string) error {
 	go func() {
 		var err error
 		if l.Protocol == "https" {
-			err = l.httpServer.ListenAndServeTLS(config.Cfg.Server.Cert, config.Cfg.Server.Key)
+			err = l.httpServer.ListenAndServeTLS("", "")
 		} else {
 			err = l.httpServer.ListenAndServe()
 		}
@@ -190,7 +218,8 @@ func (ts *TeamServer) ListListeners() ([]ListenerEntry, error) {
 			Port:     i.Port,
 			Name:     i.Name,
 			Protocol: i.Protocol,
-			Status:   "running",
+			Host:     i.Host,
+			Status:   i.Status,
 		})
 	}
 

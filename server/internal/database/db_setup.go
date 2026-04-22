@@ -67,7 +67,9 @@ func SetupDB(db *DB) error {
 		external_ip	 	TEXT NOT NULL,
 		internal_ip 	TEXT NOT NULL,
 		is_elevated 	BOOLEAN NOT NULL,
+		arch			BOOLEAN NOT NULL,
 		pid 			INTEGER NOT NULL,
+		ppid			INTEGER NOT NULL,
 		process_path 	TEXT NOT NULL,
 		windows_version TEXT NOT NULL,
 		session_key    	BLOB NOT NULL,
@@ -101,8 +103,10 @@ func SetupDB(db *DB) error {
 		guid TEXT NOT NULL,
 		port INTEGER NOT NULL,
 		name TEXT NOT NULL,
+		host TEXT NOT NULL,
+		certType BOOLEAN NOT NULL,
 		protocol TEXT NOT NULL,
-		status TEXT NOT NULL);
+		status INTEGER NOT NULL);
 		`
 	_, err = db.conn.Exec(listeners_query)
 	if err != nil {

@@ -198,7 +198,8 @@ func (ts *TeamServer) StartListenerHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	user, _ := r.Context().Value(auth.UsernameKey).(string)
-	id, name, err := ts.NewListener(Info.Port, Info.Protocol, user)
+	fmt.Println(Info.Protocol)
+	id, name, err := ts.NewListener(Info.Port, Info.Protocol, user, Info.Host, Info.CertType)
 	if err != nil {
 		fmt.Println(err)
 		httputil.SendJSONError(w, err.Error(), http.StatusInternalServerError)

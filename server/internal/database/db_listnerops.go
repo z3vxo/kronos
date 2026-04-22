@@ -2,10 +2,10 @@ package database
 
 import "fmt"
 
-func (db *DB) InsertListener(port int, id, name, protocol string) error {
-	query := `INSERT INTO listeners(port, guid, name, protocol, status) VALUES(?, ?, ?, ?, ?)`
+func (db *DB) InsertListener(port int, id, name, protocol, host string, certType bool) error {
+	query := `INSERT INTO listeners(port, guid, name, protocol, host, certType, status) VALUES(?, ?, ?, ?, ?, ?, ?)`
 
-	_, err := db.conn.Exec(query, port, id, name, protocol, "running")
+	_, err := db.conn.Exec(query, port, id, name, protocol, host, certType, 1)
 	if err != nil {
 		fmt.Printf("Failed Insert: %v", err)
 		return err
@@ -28,10 +28,13 @@ type ListenersToStart struct {
 	Port     int
 	Name     string
 	Protocol string
+	Host     string
+	CertType bool
+	Status   bool
 }
 
 func (db *DB) GetListeners() ([]ListenersToStart, error) {
-	q := `SELECT guid, port, protocol, name FROM listeners WHERE status='running'`
+	q := `SELECT guid, port, protocol, name, host, certType, status FROM listeners WHERE status=1`
 
 	rows, err := db.conn.Query(q)
 	if err != nil {
@@ -43,7 +46,7 @@ func (db *DB) GetListeners() ([]ListenersToStart, error) {
 	var Entrys []ListenersToStart
 	for rows.Next() {
 		var l ListenersToStart
-		err := rows.Scan(&l.Guid, &l.Port, &l.Protocol, &l.Name)
+		err := rows.Scan(&l.Guid, &l.Port, &l.Protocol, &l.Name, &l.Host, &l.CertType, &l.Status)
 		if err != nil {
 			return nil, err
 		}
