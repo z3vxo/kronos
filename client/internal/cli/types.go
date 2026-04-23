@@ -1,5 +1,7 @@
 package cli
 
+// ---- AGENT STRUCTS ----
+
 type Agent struct {
 	CodeName   string `json:"code_name"`
 	Username   string `json:"username"`
@@ -36,6 +38,15 @@ type Agents struct {
 
 type ResolveResp struct {
 	Guid string `json:"guid"`
+}
+
+// ---- TASK STRUCTS ----
+type TaskEntry struct {
+	Cmd_type int    `json:"type"`
+	Guid     string `json:"guid"`
+	TaskID   int    `json:"task_id"`
+	Param1   string `json:"param_1"`
+	Param2   string `json:"param_2"`
 }
 
 // ----- Listener List response data -----

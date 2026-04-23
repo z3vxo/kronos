@@ -73,8 +73,6 @@ func (a *Auth) AuthMiddleWare(next http.Handler) http.Handler {
 }
 
 func (a *Auth) CheckLogin(user, pass string) bool {
-	fmt.Printf("[USER] Wanted %s | got %s\n", config.Cfg.TS.Auth.Username, user)
-	fmt.Printf("[PASSWD] Wanted %s | got %s\n", config.Cfg.TS.Auth.Password, pass)
 	return user == config.Cfg.TS.Auth.Username && pass == config.Cfg.TS.Auth.Password
 
 }

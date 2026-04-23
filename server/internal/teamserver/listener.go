@@ -12,7 +12,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/z3vxo/kronos/internal/broker"
 	"github.com/z3vxo/kronos/internal/config"
+	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/server"
 )
 
@@ -50,10 +52,17 @@ func (ts *TeamServer) UpdateListenerMapStatus(id string, status bool) {
 	ts.Listeners.Mu.Unlock()
 }
 
-func BuildListenerHttp(port int, protocol string, h *server.AgentHandler, host string, letsEncrypt bool) (*http.Server, error) {
+func BuildListenerHttp(port int, protocol string, db *database.DB, sse *broker.Broker, host string, letsEncrypt bool) (*http.Server, error) {
+	h := &server.AgentHandler{DB: db, Broker: sse, Host: host}
 	r := chi.NewRouter()
 	r.Get(config.Cfg.Server.GetEndpoint, h.AgentCheckInHandler)
 	r.Post(config.Cfg.Server.PostEndpoint, h.AgentUploadHandler)
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(notFound))
+
+	})
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
@@ -83,11 +92,9 @@ func (ts *TeamServer) StartListenersFromDB() error {
 	if err != nil {
 		return err
 	}
-	h := &server.AgentHandler{DB: ts.db, Broker: ts.SSE}
-
 	for _, l := range ToStart {
 
-		srv, err := BuildListenerHttp(l.Port, l.Protocol, h, l.Host, l.CertType)
+		srv, err := BuildListenerHttp(l.Port, l.Protocol, ts.db, ts.SSE, l.Host, l.CertType)
 		if err != nil {
 			return err
 		}
@@ -161,7 +168,7 @@ func (ts *TeamServer) StartListener(id string) error {
 		return errors.New("listener already running!")
 	}
 
-	srv, err := BuildListenerHttp(l.Port, l.Protocol, &server.AgentHandler{DB: ts.db, Broker: ts.SSE}, l.Host, l.certType)
+	srv, err := BuildListenerHttp(l.Port, l.Protocol, ts.db, ts.SSE, l.Host, l.certType)
 	if err != nil {
 		return errors.New("Failed Creating server object")
 	}

@@ -23,6 +23,7 @@ type Task struct {
 	CmdCode  int    `json:"cmd_code"`
 	Param1   string `json:"param_1"`
 	Param2   string `json:"param_2"`
+	TaskID   int    `json:task_id"`
 	TaskedAt int    `json:"tasked_at"`
 }
 

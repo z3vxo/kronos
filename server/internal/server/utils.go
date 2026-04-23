@@ -23,3 +23,13 @@ func GenCodeName() string {
 	noun := codeNameNouns[rand.Intn(len(codeNameNouns))]
 	return adj + "-" + noun
 }
+
+const notFound = `<!DOCTYPE html>
+<html>
+    <head><title>404 - Not Found</title></head>
+    <body>
+        <h1>404 - Page Not Found</h1>
+        <p> The page you're looking for was not found</p>
+        <a href="https://google.com"</a>
+    </body>
+</html>`

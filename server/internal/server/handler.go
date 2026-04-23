@@ -6,13 +6,14 @@ import (
 	"fmt"
 
 	"github.com/z3vxo/kronos/internal/broker"
-	"github.com/z3vxo/kronos/internal/byte"
+	"github.com/z3vxo/kronos/internal/bytemgr"
 	"github.com/z3vxo/kronos/internal/database"
 )
 
 type AgentHandler struct {
 	DB     *database.DB
 	Broker *broker.Broker
+	Host   string
 }
 
 func ConvertToWindowsVer(major, minor, build int16) string {
@@ -50,7 +51,7 @@ type UserDetails struct {
 
 type DataDetails struct {
 	AgentID string `json:"agent_id"`
-	TaskID  string `json:"task_id"`
+	TaskID  int32  `json:"task_id"`
 	Output  string `json:"output"`
 }
 
@@ -61,7 +62,7 @@ type Event struct {
 }
 
 func (h *AgentHandler) HandleClientRegister(ip string, r *bytes.Reader) error {
-	Client, err := byte.ExtractRegistrationDetails(ip, r)
+	Client, err := bytemgr.ExtractRegistrationDetails(ip, r)
 	if err != nil {
 		return err
 	}
@@ -85,11 +86,35 @@ func (h *AgentHandler) HandleClientRegister(ip string, r *bytes.Reader) error {
 		},
 		Data: DataDetails{},
 	})
-	fmt.Println("GOT HERE")
 	if err == nil {
 		h.Broker.Broadcast(string(data))
 	}
 
 	return nil
 
+}
+
+func (h *AgentHandler) HandleAgentOutput(r *bytes.Reader, id string) {
+	OutputEntrys, err := bytemgr.ParseClientOutput(r)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(len(OutputEntrys))
+
+	for _, o := range OutputEntrys {
+		data, err := json.Marshal(Event{
+			CmdType: 2,
+			Data: DataDetails{
+				AgentID: id,
+				TaskID:  o.TaskID,
+				Output:  string(o.Output),
+			},
+		})
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		h.Broker.Broadcast(string(data))
+	}
 }

@@ -14,6 +14,16 @@ import (
 	"github.com/z3vxo/kronos/internal/ui"
 )
 
+const (
+	dim = "\001\033[2m\033[4m\002"
+	rst = "\001\033[0m\002"
+)
+
+func PrintTitle(msg string) string {
+	return fmt.Sprintf("%s[%s]%s \033[1;36m[*]\033[0m %s", dim, time.Now().Format("2/1 15:04:05"), rst, msg)
+
+}
+
 func NewClient(h *ui.UI) (*Client, error) {
 
 	c := &http.Client{
@@ -49,6 +59,19 @@ func NewClient(h *ui.UI) (*Client, error) {
 	return client, nil
 }
 
+func fmtSize(n int) string {
+	switch {
+	case n >= 1<<20:
+		return fmt.Sprintf("%.1fmb",
+			float64(n)/float64(1<<20))
+	case n >= 1<<10:
+		return fmt.Sprintf("%.1fkb",
+			float64(n)/float64(1<<10))
+	default:
+		return fmt.Sprintf("%db", n)
+	}
+}
+
 func (c *Client) ConnectToSSE() error {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/ts/events", c.Hostname), nil)
 	if err != nil {
@@ -82,8 +105,11 @@ func (c *Client) ConnectToSSE() error {
 			c.UI.Send(ui.INFO.Sprint("New Agent Connected"))
 			c.UI.Send(ui.INFO.Sprintf_tab("Username: %s", event.User.Username))
 			c.UI.Send(ui.INFO.Sprintf_tab("Hostname: %s", event.User.HostName))
+
 		case TYPE_CMD_OUTPUT:
-			fmt.Println(event.Data.Output)
+			sep := strings.Repeat("-", min(len(event.Data.Output), 60))
+			c.UI.Send(PrintTitle(fmt.Sprintf("Agent called server, sent [%s]", fmtSize(len(event.Data.Output)))))
+			c.UI.Send("\n" + sep + "\n\n" + event.Data.Output + "\n\n" + sep)
 		case TYPE_HEARTBEAT:
 			continue
 		}

@@ -1,11 +1,11 @@
 package cli
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"text/tabwriter"
 
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/spf13/pflag"
 	"github.com/z3vxo/kronos/internal/ui"
 )
@@ -77,22 +77,37 @@ func (c *CLI) ListListners() {
 		return
 	}
 
-	var buf bytes.Buffer
-	w := tabwriter.NewWriter(&buf, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "--------\t----\t--------\t----\t------")
-	fmt.Fprintln(w, "NAME\tPORT\tPROTOCOL\tHOST\tSTATUS")
-	fmt.Fprintln(w, "--------\t----\t--------\t----\t------")
+	c.PrintTitle("Active Listeners")
+
+	t := table.NewWriter()
+	t.SetStyle(table.StyleLight)
+	t.AppendHeader(table.Row{
+		"NAME", "PORT", "PROTOCOL", "HOST", "STATUS",
+	})
+
+	t.SetColumnConfigs([]table.ColumnConfig{
+		{Number: 1, WidthMin: 20},
+		{Number: 2, WidthMin: 8, Align: text.AlignLeft, AlignHeader: text.AlignLeft},
+		{Number: 3, WidthMin: 12},
+		{Number: 4, WidthMin: 16},
+		{Number: 5, WidthMin: 12},
+	})
 
 	for _, i := range r.Listeners {
 		status := "RUNNING"
 		if i.Status == false {
 			status = "STOPPED"
 		}
-		fmt.Fprintf(w, "%s\t%d\t%s\t%s\t%s\n",
-			i.Name, i.Port, i.Protocol, i.Host, status)
+		t.AppendRow(table.Row{
+			i.Name,
+			i.Port,
+			i.Protocol,
+			i.Host,
+			status,
+		})
 	}
-	w.Flush()
-	c.ui.Send(buf.String())
+
+	c.ui.Send(t.Render())
 }
 
 func (c *CLI) StartListener(name string) {

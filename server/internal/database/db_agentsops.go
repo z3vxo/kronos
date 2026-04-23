@@ -33,6 +33,12 @@ func (db *DB) ListAgents() ([]Agent, error) {
 
 }
 
+func (db *DB) AgentExist(id string) bool {
+	var exists bool
+	db.conn.QueryRow(`SELECT EXISTS(SELECT 1 FROM agents WHERE guid = ?)`, id).Scan(&exists)
+	return exists
+}
+
 func (db *DB) ResolveCodename(name string) (string, error) {
 	query := `SELECT guid FROM agents WHERE code_name = ?`
 	var guid string

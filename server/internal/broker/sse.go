@@ -43,6 +43,8 @@ func (b *Broker) RemoveSubscriber(id string) {
 }
 
 func (b *Broker) Broadcast(msg string) {
+	fmt.Println("CALLED")
+
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -80,7 +82,7 @@ func (b *Broker) EventHandler(w http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		case <-heart.C:
 			data, _ := json.Marshal(map[string]int{"type": 3})
-			fmt.Fprint(w, "data: %s\n\n", data)
+			fmt.Fprintf(w, "data: %s\n\n", data)
 			flusher.Flush()
 		}
 	}

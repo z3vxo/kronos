@@ -1,14 +1,23 @@
 package cli
 
 import (
-	"bytes"
 	"fmt"
-	"strings"
-	"text/tabwriter"
 	"time"
 
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/z3vxo/kronos/internal/ui"
 )
+
+const (
+	dim = "\001\033[2m\033[4m\002"
+	rst = "\001\033[0m\002"
+)
+
+func (c *CLI) PrintTitle(msg string) {
+	str := fmt.Sprintf("%s[%s]%s \033[1;36m[*]\033[0m %s", dim, time.Now().Format("2/1 15:04:05"), rst, msg)
+	c.ui.Send(str)
+}
 
 func relativeTime(unix int64) string {
 	since := time.Since(time.Unix(unix, 0))
@@ -35,12 +44,11 @@ func (c *CLI) ListAgents(args []string) {
 		c.ui.Send(ui.INFO.Sprint("No agents connected"))
 		return
 	}
+	c.PrintTitle("Active Agents")
+	t := table.NewWriter()
+	t.SetStyle(table.StyleLight)
+	t.AppendHeader(table.Row{"CODENAME", "USER", "HOSTNAME", "EX IP", "IN IP", "ELEV", "PID", "LAST-SEEN", "REG-DATE"})
 
-	var buf bytes.Buffer
-	w := tabwriter.NewWriter(&buf, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "--------\t----\t--------\t------\t------\t----\t---\t---------\t--------)")
-	fmt.Fprintln(w, "CODENAME\tUSER\tHOSTNAME\tEXT IP\tINT IP\tELEV\tPID\tLAST SEEN\tREG DATE")
-	fmt.Fprintln(w, "--------\t----\t--------\t------\t------\t----\t---\t---------\t--------")
 	for _, a := range A.Agent {
 		elev := "no"
 		if a.IsElevated {
@@ -48,12 +56,21 @@ func (c *CLI) ListAgents(args []string) {
 		}
 		last := relativeTime(a.LastSeen)
 		reg := time.Unix(a.RegDate, 0).Format("2006-01-02 15:04:05")
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s\n",
-			a.CodeName, a.Username, a.Hostname, a.Ex_ip, a.In_ip, elev, a.Pid, last, reg)
+
+		t.AppendRow(table.Row{
+			a.CodeName,
+			a.Username,
+			a.Hostname,
+			a.Ex_ip,
+			a.In_ip,
+			elev,
+			a.Pid,
+			last,
+			reg,
+		})
 	}
 
-	w.Flush()
-	c.ui.Send(buf.String())
+	c.ui.Send(t.Render())
 }
 
 func (c *CLI) ListAgentInfo(args []string) {
@@ -67,6 +84,7 @@ func (c *CLI) ListAgentInfo(args []string) {
 		c.ui.Send(ui.WARN.Sprintf("Failed listing info: %v", err))
 		return
 	}
+	c.PrintTitle(fmt.Sprintf("Info for %s", c.ui.InUse))
 
 	elev := "no"
 	if a.IsElevated {
@@ -79,7 +97,16 @@ func (c *CLI) ListAgentInfo(args []string) {
 	last := relativeTime(a.LastCheckin)
 	reg := time.Unix(a.RegisterTime, 0).Format("2006-01-02 15:04:05")
 
-	rows := [][2]string{
+	t := table.NewWriter()
+
+	t.SetColumnConfigs([]table.ColumnConfig{
+		{Number: 1, WidthMin: 18},
+		{Number: 2, WidthMin: 40},
+	})
+
+	t.AppendRow(table.Row{"AGENT", ""}, table.RowConfig{AutoMerge: true, AutoMergeAlign: text.AlignCenter})
+	t.AppendSeparator()
+	t.AppendRows([]table.Row{
 		{"CODENAME", c.ui.InUse},
 		{"USER", a.User},
 		{"HOSTNAME", a.Host},
@@ -92,27 +119,19 @@ func (c *CLI) ListAgentInfo(args []string) {
 		{"PROCESS", a.ProcPath},
 		{"LAST SEEN", last},
 		{"REGISTERED", reg},
-	}
+	})
 
-	col0, col1 := 0, 0
-	for _, r := range rows {
-		if len(r[0]) > col0 {
-			col0 = len(r[0])
-		}
-		if len(r[1]) > col1 {
-			col1 = len(r[1])
-		}
-	}
+	t.AppendSeparator()
+	t.AppendRow(table.Row{"EVASION", ""}, table.RowConfig{AutoMerge: true, AutoMergeAlign: text.AlignCenter})
+	t.AppendSeparator()
+	t.AppendRows([]table.Row{
+		{"Heap Obfuscation", "true"},
+		{"Sleep", "15"},
+		{"Jitter", "10%"},
+	})
 
-	sep := fmt.Sprintf("+-%-*s-+-%-*s-+", col0, strings.Repeat("-", col0), col1, strings.Repeat("-", col1))
-
-	var buf bytes.Buffer
-	buf.WriteString(sep + "\n")
-	for _, r := range rows {
-		fmt.Fprintf(&buf, "| %-*s | %-*s |\n", col0, r[0], col1, r[1])
-	}
-	buf.WriteString(sep + "\n")
-	c.ui.Send(buf.String())
+	t.SetStyle(table.StyleLight)
+	c.ui.Send(t.Render())
 }
 
 func (c *CLI) Back(args []string) {

@@ -69,3 +69,13 @@ type AgentInfoResp struct {
 	LastCheckin  int64  `json:"last_checkin"`
 	RegisterTime int64  `json:"reg_date`
 }
+
+const notFound = `<!DOCTYPE html>
+<html>
+    <head><title>404 - Not Found</title></head>
+    <body>
+        <h1>404 - Page Not Found</h1>
+        <p> The page you're looking for was not found</p>
+        <a href="https://google.com"</a>
+    </body>
+</html>`

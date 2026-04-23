@@ -53,6 +53,12 @@ func (ts *TeamServer) Start() error {
 
 	r := chi.NewRouter()
 	ts.httpServer.Handler = r
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(notFound))
+
+	})
 
 	r.Route("/ts", func(r chi.Router) {
 		r.Post("/rest/login", ts.loginHandler)

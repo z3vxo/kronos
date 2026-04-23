@@ -18,6 +18,27 @@ func (db *DB) InsertCommand(cmdType, taskid int, guid, param1, param2 string) er
 
 }
 
+func (db *DB) GetTasks(id string) ([]Task, error) {
+	q := `SELECT command_type, task_id, param_1, param_2 FROM commands WHERE guid = ? AND executed = 0 LIMIT 3`
+	rows, err := db.conn.Query(q, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tasks []Task
+	for rows.Next() {
+		var t Task
+		err := rows.Scan(&t.CmdCode, &t.TaskID, &t.Param1, &t.Param2)
+		if err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, t)
+	}
+
+	return tasks, nil
+}
+
 func (db *DB) DeleteTask(id int) error {
 	query := `DELETE FROM commands WHERE task_id = ?`
 
