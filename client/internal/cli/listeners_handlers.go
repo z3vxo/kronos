@@ -48,7 +48,6 @@ func (c *CLI) DeleteListeners(name string) {
 		return
 	}
 	c.ui.Send(ui.GOOD.Sprintf("Deleted Listener %s", name))
-	return
 
 }
 
@@ -60,7 +59,6 @@ func (c *CLI) StopListener(name string) {
 	}
 
 	c.ui.Send(ui.GOOD.Sprintf("Stopped Listener %s", name))
-	return
 
 }
 
@@ -117,7 +115,7 @@ func (c *CLI) StartListener(name string) {
 		return
 	}
 	c.ui.Send(ui.GOOD.Sprintf("Started Listener %s", name))
-	return
+
 }
 
 func (c *CLI) NewListener(args []string) {
@@ -156,5 +154,5 @@ func (c *CLI) NewListener(args []string) {
 	}
 
 	c.ui.Send(ui.GOOD.Sprintf("Listener Started: %s", StartResp.Name))
-	return
+
 }

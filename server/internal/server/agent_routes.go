@@ -63,7 +63,6 @@ func (h *AgentHandler) AgentCheckInHandler(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(cmdBytes)
-	return
 
 }
 

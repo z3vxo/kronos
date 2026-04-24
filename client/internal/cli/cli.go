@@ -34,9 +34,6 @@ func NewCli() (*CLI, error) {
 		return nil, err
 	}
 
-	if err != nil {
-		return nil, err
-	}
 	ai, _ := ai.NewAI(rl)
 	c := &CLI{
 		http: h,

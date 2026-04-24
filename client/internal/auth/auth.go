@@ -64,5 +64,5 @@ func (a *AUTH) Apply(req *http.Request) {
 	defer a.Mu.RUnlock()
 	TokenString := fmt.Sprintf("Bearer %s", a.Token)
 	req.Header.Set("Authorization", TokenString)
-	return
+
 }

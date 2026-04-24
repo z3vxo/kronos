@@ -183,5 +183,4 @@ func (c *CLI) ResolveAgent(args []string) {
 	c.ui.InUse = args[0]
 	c.ui.SetPrompt(args[0])
 	c.ui.Send(ui.GOOD.Sprintf("Using %s", c.ClientInUse))
-	return
 }

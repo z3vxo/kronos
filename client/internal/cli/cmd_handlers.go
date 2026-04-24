@@ -60,6 +60,5 @@ func (c *CLI) HandlePS(args []string) {
 	}
 
 	c.ui.PrintTitle(fmt.Sprintf("Tasked %s", c.ui.InUse))
-	return
 
 }

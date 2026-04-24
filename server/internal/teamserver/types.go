@@ -58,16 +58,16 @@ type ListListenersResp struct {
 type AgentInfoResp struct {
 	User         string `json:"username"`
 	Host         string `json:"hostname"`
-	ProcPath     string `json:"proc_path`
+	ProcPath     string `json:"proc_path"`
 	Pid          int32  `json:"pid"`
 	PPid         int32  `json:"ppid"`
-	WinVer       string `json:"win_version`
+	WinVer       string `json:"win_version"`
 	InternalIP   string `json:"internal_ip"`
 	ExternalIP   string `json:"external_ip"`
-	IsElevated   bool   `json:"is_elev`
+	IsElevated   bool   `json:"is_elev"`
 	Arch         byte   `json:"arch"`
 	LastCheckin  int64  `json:"last_checkin"`
-	RegisterTime int64  `json:"reg_date`
+	RegisterTime int64  `json:"reg_date"`
 }
 
 const notFound = `<!DOCTYPE html>

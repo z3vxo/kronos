@@ -9,6 +9,7 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
+// TODO fix this system prompt, allow user too configure it at rutntime
 const SystemPrompt = `You are an expert at generating Windows commands.
 Respond with ONLY the raw command. No markdown, no code fences, no explanation.
 GOOD: whoami /all
