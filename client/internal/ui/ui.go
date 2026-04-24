@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/chzyer/readline"
 )
@@ -33,6 +34,11 @@ func (u *UI) SetPrompt(agent string) {
 		u.Rl.SetPrompt(fmt.Sprintf("%skronos%s (\001\033[33m\002%s%s) $> ", dim, rst, agent, rst))
 	}
 	u.Rl.Refresh()
+}
+
+func (u *UI) PrintTitle(msg string) {
+	str := fmt.Sprintf("%s[%s]%s \033[1;36m[*]\033[0m %s", dim, time.Now().Format("2/1 15:04:05"), rst, msg)
+	u.Send(str)
 }
 
 func NewUI() (*UI, error) {

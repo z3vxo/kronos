@@ -77,7 +77,7 @@ func (c *CLI) ListListners() {
 		return
 	}
 
-	c.PrintTitle("Active Listeners")
+	c.ui.PrintTitle("Active Listeners")
 
 	t := table.NewWriter()
 	t.SetStyle(table.StyleLight)

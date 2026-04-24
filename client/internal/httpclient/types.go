@@ -37,9 +37,10 @@ const (
 )
 
 type Client struct {
-	Hostname   string
-	Auth       *auth.AUTH
-	HttpClient *http.Client
-	Stream     *http.Client
-	UI         *ui.UI
+	Hostname             string
+	Auth                 *auth.AUTH
+	HttpClient           *http.Client
+	Stream               *http.Client
+	UI                   *ui.UI
+	InvalidateAgentCache func()
 }

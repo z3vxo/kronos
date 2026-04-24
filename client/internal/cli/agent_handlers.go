@@ -9,16 +9,6 @@ import (
 	"github.com/z3vxo/kronos/internal/ui"
 )
 
-const (
-	dim = "\001\033[2m\033[4m\002"
-	rst = "\001\033[0m\002"
-)
-
-func (c *CLI) PrintTitle(msg string) {
-	str := fmt.Sprintf("%s[%s]%s \033[1;36m[*]\033[0m %s", dim, time.Now().Format("2/1 15:04:05"), rst, msg)
-	c.ui.Send(str)
-}
-
 func relativeTime(unix int64) string {
 	since := time.Since(time.Unix(unix, 0))
 	switch {
@@ -34,6 +24,12 @@ func relativeTime(unix int64) string {
 }
 
 func (c *CLI) ListAgents(args []string) {
+	if cached := c.CacheMgr.GetAgentsCache(); cached != nil {
+		fmt.Println("Printing from cache")
+		c.PrintAgents(cached)
+		return
+	}
+
 	var A Agents
 	if err := c.http.DoGet("ts/rest/agents/list", &A); err != nil {
 		c.ui.Send(ui.WARN.Sprintf("Failed listing agents: %v", err))
@@ -44,12 +40,22 @@ func (c *CLI) ListAgents(args []string) {
 		c.ui.Send(ui.INFO.Sprint("No agents connected"))
 		return
 	}
-	c.PrintTitle("Active Agents")
+	fmt.Println("Not Printing from cache")
+	c.CacheMgr.PopulateAgentsCache(A)
+	c.PrintAgents(c.CacheMgr.GetAgentsCache())
+}
+
+func (c *CLI) PrintAgents(agents []Agent) {
+	if len(agents) == 0 {
+		c.ui.Send(ui.INFO.Sprint("No agents connected"))
+		return
+	}
+	c.ui.PrintTitle("Active Agents")
 	t := table.NewWriter()
 	t.SetStyle(table.StyleLight)
 	t.AppendHeader(table.Row{"CODENAME", "USER", "HOSTNAME", "EX IP", "IN IP", "ELEV", "PID", "LAST-SEEN", "REG-DATE"})
 
-	for _, a := range A.Agent {
+	for _, a := range agents {
 		elev := "no"
 		if a.IsElevated {
 			elev = "yes"
@@ -78,13 +84,26 @@ func (c *CLI) ListAgentInfo(args []string) {
 		c.ui.Send(ui.BAD.Sprint("Must be using agent!"))
 		return
 	}
-	var a AgentInfoResp
 
+	if cached := c.CacheMgr.GetInfoCache(); cached != nil {
+		fmt.Println("Printing from cache")
+		c.PrintAgentInfo(*cached)
+		return
+	}
+
+	var a AgentInfoResp
 	if err := c.http.DoGet(fmt.Sprintf("ts/rest/agents/info/%s", c.ui.InUse), &a); err != nil {
 		c.ui.Send(ui.WARN.Sprintf("Failed listing info: %v", err))
 		return
 	}
-	c.PrintTitle(fmt.Sprintf("Info for %s", c.ui.InUse))
+
+	c.CacheMgr.PopulateInfoCache(a)
+	fmt.Println("not Printing from cache")
+	c.PrintAgentInfo(*c.CacheMgr.GetInfoCache())
+}
+
+func (c *CLI) PrintAgentInfo(a InfoCache) {
+	c.ui.PrintTitle(fmt.Sprintf("Info for %s", c.ui.InUse))
 
 	elev := "no"
 	if a.IsElevated {
@@ -98,7 +117,7 @@ func (c *CLI) ListAgentInfo(args []string) {
 	reg := time.Unix(a.RegisterTime, 0).Format("2006-01-02 15:04:05")
 
 	t := table.NewWriter()
-
+	t.SetStyle(table.StyleLight)
 	t.SetColumnConfigs([]table.ColumnConfig{
 		{Number: 1, WidthMin: 18},
 		{Number: 2, WidthMin: 40},
@@ -130,7 +149,6 @@ func (c *CLI) ListAgentInfo(args []string) {
 		{"Jitter", "10%"},
 	})
 
-	t.SetStyle(table.StyleLight)
 	c.ui.Send(t.Render())
 }
 
@@ -138,6 +156,7 @@ func (c *CLI) Back(args []string) {
 	c.ui.Send(ui.INFO.Sprintf("Not using %s", c.ClientInUse))
 	c.ClientInUse = ""
 	c.ui.InUse = ""
+	c.CacheMgr.InvalidateInfo()
 	c.ui.SetPrompt("")
 }
 

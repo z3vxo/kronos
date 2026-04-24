@@ -59,7 +59,7 @@ func (c *CLI) HandlePS(args []string) {
 		c.ui.Send(ui.WARN.Sprintf("Failed Inserting command: %s", err))
 	}
 
-	c.PrintTitle(fmt.Sprintf("Tasked %s", c.ui.InUse))
+	c.ui.PrintTitle(fmt.Sprintf("Tasked %s", c.ui.InUse))
 	return
 
 }

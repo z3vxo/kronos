@@ -102,6 +102,9 @@ func (c *Client) ConnectToSSE() error {
 		}
 		switch event.CmdType {
 		case TYPE_NEW_AGENT:
+			if c.InvalidateAgentCache != nil {
+				c.InvalidateAgentCache()
+			}
 			c.UI.Send(ui.INFO.Sprint("New Agent Connected"))
 			c.UI.Send(ui.INFO.Sprintf_tab("Username: %s", event.User.Username))
 			c.UI.Send(ui.INFO.Sprintf_tab("Hostname: %s", event.User.HostName))
