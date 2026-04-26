@@ -3,6 +3,7 @@ package cli
 // ---- AGENT STRUCTS ----
 
 type Agent struct {
+	AgentID    int32  `json:"agent_id"`
 	CodeName   string `json:"code_name"`
 	Username   string `json:"username"`
 	Hostname   string `json:"hostname"`
@@ -49,8 +50,24 @@ type TaskEntry struct {
 	Param2   string `json:"param_2"`
 }
 
+type Task struct {
+	ID       int    `json:"id"`
+	Guid     string `json:"guid"`
+	CmdCode  int    `json:"cmd_code"`
+	Param1   string `json:"param_1"`
+	Param2   string `json:"param_2"`
+	TaskID   string `json:"task_id"`
+	TaskedAt int    `json:"tasked_at"`
+}
+
+type TaskEntrys struct {
+	Total int    `json:"total"`
+	Tasks []Task `json:"tasks"`
+}
+
 // ----- Listener List response data -----
 type ListenerEntry struct {
+	ID       int
 	Port     int
 	Name     string
 	Protocol string

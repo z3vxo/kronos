@@ -1,6 +1,7 @@
 package database
 
 type Agent struct {
+	AgentID    int    `json:"agent_id"`
 	CodeName   string `json:"code_name"`
 	Username   string `json:"username"`
 	Hostname   string `json:"hostname"`
@@ -20,10 +21,12 @@ type Agents struct {
 }
 
 type Task struct {
+	ID       int    `json:"id"`
+	Guid     string `json:"guid"`
 	CmdCode  int    `json:"cmd_code"`
 	Param1   string `json:"param_1"`
 	Param2   string `json:"param_2"`
-	TaskID   int    `json:"task_id"`
+	TaskID   string `json:"task_id"`
 	TaskedAt int    `json:"tasked_at"`
 }
 

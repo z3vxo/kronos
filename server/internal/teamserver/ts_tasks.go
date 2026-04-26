@@ -1,6 +1,8 @@
 package teamserver
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 
@@ -9,6 +11,12 @@ import (
 	"github.com/z3vxo/kronos/internal/httputil"
 )
 
+func GenTaskID() string {
+	bytes := make([]byte, 3)
+	rand.Read(bytes)
+	return hex.EncodeToString(bytes)
+}
+
 func (ts *TeamServer) CommandNewHandler(w http.ResponseWriter, r *http.Request) {
 	var cmd TaskEntry
 	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
@@ -16,7 +24,7 @@ func (ts *TeamServer) CommandNewHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err := ts.db.InsertCommand(cmd.Cmd_type, cmd.TaskID, cmd.Guid, cmd.Param1, cmd.Param2)
+	err := ts.db.InsertCommand(cmd.Cmd_type, GenTaskID(), cmd.Guid, cmd.Param1, cmd.Param2)
 	if err != nil {
 		httputil.SendJSONError(w, "failed inserting command", http.StatusInternalServerError)
 		return
@@ -27,14 +35,10 @@ func (ts *TeamServer) CommandNewHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (ts *TeamServer) CommandDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	var task TaskDelete
+	guid := chi.URLParam(r, "guid")
+	taskID := chi.URLParam(r, "taskID")
 
-	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
-		httputil.SendJSONError(w, "Error Decoding json", http.StatusInternalServerError)
-		return
-	}
-
-	if err := ts.db.DeleteTask(task.TaskID); err != nil {
+	if err := ts.db.DeleteTask(guid, taskID); err != nil {
 		httputil.SendJSONError(w, "Failed Deleting task", http.StatusInternalServerError)
 		return
 	}

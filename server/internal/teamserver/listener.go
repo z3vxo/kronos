@@ -273,14 +273,17 @@ func (ts *TeamServer) ListListeners() ([]ListenerEntry, error) {
 	defer ts.Listeners.Mu.RUnlock()
 
 	var listener []ListenerEntry
+	count := 1
 	for _, i := range ts.Listeners.ListenerMap {
 		listener = append(listener, ListenerEntry{
+			ID:       count,
 			Port:     i.Port,
 			Name:     i.Name,
 			Protocol: i.Protocol,
 			Host:     i.Host,
 			Status:   i.Status,
 		})
+		count += 1
 	}
 
 	return listener, nil

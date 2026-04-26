@@ -48,7 +48,7 @@ func CraftCmdBytes(tasks []database.Task) ([]byte, error) {
 		if err := Write4(&buffer, int32(c.CmdCode)); err != nil {
 			return nil, err
 		}
-		if err := Write4(&buffer, int32(c.TaskID)); err != nil {
+		if err := WriteString(&buffer, c.TaskID); err != nil {
 			return nil, err
 		}
 

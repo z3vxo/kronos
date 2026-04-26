@@ -86,7 +86,7 @@ func SetupDB(db *DB) error {
 	commands_query := `CREATE TABLE IF NOT EXISTS commands (
 		guid TEXT NOT NULL,
 		command_type INTEGER NOT NULL,
-		task_id      INTEGER NOT NULL,
+		task_id      TEXT NOT NULL,
 		param_1      TEXT NOT NULL,
 		param_2      TEXT NOT NULL,
 		executed     BOOLEAN NOT NULL,

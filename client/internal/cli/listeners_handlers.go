@@ -3,12 +3,26 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/spf13/pflag"
 	"github.com/z3vxo/kronos/internal/ui"
 )
+
+func (c *CLI) ResolveListenerName(input string) (string, bool) {
+	if ID, err := strconv.Atoi(input); err == nil {
+		name, ok := c.CacheMgr.ListenersIdMap[ID]
+		if !ok {
+			c.ui.Send(ui.BAD.Sprint("Unknown Listener ID, run 'listeners' to view or refresh"))
+			return "", false
+		}
+		return name, false
+
+	}
+	return input, false
+}
 
 func (c *CLI) ParseListenerCmd(args []string) {
 	if len(args) == 0 {
@@ -52,7 +66,11 @@ func (c *CLI) DeleteListeners(name string) {
 }
 
 func (c *CLI) StopListener(name string) {
-	endpoint := fmt.Sprintf("ts/rest/listeners/stop/%s", name)
+	listenername, ok := c.ResolveListenerName(name)
+	if !ok {
+		return
+	}
+	endpoint := fmt.Sprintf("ts/rest/listeners/stop/%s", listenername)
 	if err := c.http.DoPost(endpoint, nil, nil); err != nil {
 		c.ui.Send(ui.WARN.Sprintf("Failed Stopping Listener: %s", err))
 		return
@@ -80,7 +98,7 @@ func (c *CLI) ListListners() {
 	t := table.NewWriter()
 	t.SetStyle(table.StyleLight)
 	t.AppendHeader(table.Row{
-		"NAME", "PORT", "PROTOCOL", "HOST", "STATUS",
+		"ID", "NAME", "PORT", "PROTOCOL", "HOST", "STATUS",
 	})
 
 	t.SetColumnConfigs([]table.ColumnConfig{
@@ -91,25 +109,33 @@ func (c *CLI) ListListners() {
 		{Number: 5, WidthMin: 12},
 	})
 
+	c.CacheMgr.ListenersIdMap = make(map[int]string)
+
 	for _, i := range r.Listeners {
 		status := "RUNNING"
 		if i.Status == false {
 			status = "STOPPED"
 		}
 		t.AppendRow(table.Row{
+			i.ID,
 			i.Name,
 			i.Port,
 			i.Protocol,
 			i.Host,
 			status,
 		})
+		c.CacheMgr.ListenersIdMap[i.ID] = i.Name
 	}
 
 	c.ui.Send(t.Render())
 }
 
 func (c *CLI) StartListener(name string) {
-	endpoint := fmt.Sprintf("ts/rest/listeners/start/%s", name)
+	listenername, ok := c.ResolveListenerName(name)
+	if !ok {
+		return
+	}
+	endpoint := fmt.Sprintf("ts/rest/listeners/start/%s", listenername)
 	if err := c.http.DoPost(endpoint, nil, nil); err != nil {
 		c.ui.Send(ui.WARN.Sprintf("Failed Deleting listener: %s", err))
 		return

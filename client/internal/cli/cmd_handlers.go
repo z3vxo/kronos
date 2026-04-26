@@ -3,7 +3,6 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"strings"
 
 	"github.com/z3vxo/kronos/internal/ui"
@@ -16,10 +15,6 @@ var CmdCodeMap = map[string]int{
 	"ls":  3,
 	"rm":  4,
 	"mv":  5,
-}
-
-func genTaskID() int {
-	return rand.Intn(90000000) + 10000000
 }
 
 func (c *CLI) requireAgent() bool {
@@ -41,10 +36,8 @@ func (c *CLI) HandlePS(args []string) {
 
 	cmdCode := CmdCodeMap["ps"]
 	param1 := strings.Join(args, " ")
-	taskID := genTaskID()
 	payload := TaskEntry{
 		Guid:     c.ClientInUse,
-		TaskID:   taskID,
 		Cmd_type: cmdCode,
 		Param1:   param1,
 	}

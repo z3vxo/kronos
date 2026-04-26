@@ -3,6 +3,7 @@ package cli
 import "sync"
 
 type InfoCache struct {
+	AgentID      int
 	User         string
 	Host         string
 	ProcPath     string
@@ -17,10 +18,17 @@ type InfoCache struct {
 	RegisterTime int64
 }
 
+type TaskMapping struct {
+	Guid   string
+	TaskID int
+}
+
 type Cache struct {
 	mu             sync.RWMutex
 	AgentInfoCache *InfoCache
 	AgentsCache    []Agent
+	TaskIdMap      map[int]string
+	ListenersIdMap map[int]string
 }
 
 func (c *Cache) PopulateInfoCache(a AgentInfoResp) {
@@ -61,6 +69,17 @@ func (c *Cache) GetInfoCache() *InfoCache {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.AgentInfoCache
+}
+
+func (c *Cache) ResolveAgentID(id int) (string, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	for _, a := range c.AgentsCache {
+		if int(a.AgentID) == id {
+			return a.CodeName, true
+		}
+	}
+	return "", false
 }
 
 func (c *Cache) InvalidateAgents() {

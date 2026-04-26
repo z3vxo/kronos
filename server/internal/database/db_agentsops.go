@@ -19,14 +19,16 @@ func (db *DB) ListAgents() ([]Agent, error) {
 	defer rows.Close()
 
 	var AgentList []Agent
-
+	i := 1
 	for rows.Next() {
 		var a Agent
+		a.AgentID = i
 		err := rows.Scan(&a.CodeName, &a.Username, &a.Hostname, &a.Ex_ip, &a.In_ip, &a.IsElevated, &a.Pid, &a.ProcPath, &a.WinVer, &a.LastSeen, &a.RegDate)
 		if err != nil {
 			return nil, err
 		}
 		AgentList = append(AgentList, a)
+		i += 1
 	}
 
 	return AgentList, nil

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -47,13 +48,14 @@ func (c *CLI) ListAgents(args []string) {
 
 func (c *CLI) PrintAgents(agents []Agent) {
 	if len(agents) == 0 {
-		c.ui.Send(ui.INFO.Sprint("No agents connected"))
+		c.ui.PrintTitle("No Agents Connected")
+
 		return
 	}
 	c.ui.PrintTitle("Active Agents")
 	t := table.NewWriter()
 	t.SetStyle(table.StyleLight)
-	t.AppendHeader(table.Row{"CODENAME", "USER", "HOSTNAME", "EX IP", "IN IP", "ELEV", "PID", "LAST-SEEN", "REG-DATE"})
+	t.AppendHeader(table.Row{"ID", "CODENAME", "USER", "HOSTNAME", "EX IP", "IN IP", "ELEV", "PID", "LAST-SEEN", "REG-DATE"})
 
 	for _, a := range agents {
 		elev := "no"
@@ -64,6 +66,7 @@ func (c *CLI) PrintAgents(agents []Agent) {
 		reg := time.Unix(a.RegDate, 0).Format("2006-01-02 15:04:05")
 
 		t.AppendRow(table.Row{
+			a.AgentID,
 			a.CodeName,
 			a.Username,
 			a.Hostname,
@@ -166,8 +169,20 @@ func (c *CLI) ResolveAgent(args []string) {
 		return
 	}
 
+	var name string
+	if id, err := strconv.Atoi(args[0]); err == nil {
+		codename, ok := c.CacheMgr.ResolveAgentID(id)
+		if !ok {
+			c.ui.Send(ui.BAD.Sprint("Unknown agent ID, run 'list' to refresh"))
+			return
+		}
+		name = codename
+	} else {
+		name = args[0]
+	}
+
 	var r ResolveResp
-	e := fmt.Sprintf("ts/rest/agents/resolve/%s", args[0])
+	e := fmt.Sprintf("ts/rest/agents/resolve/%s", name)
 
 	if err := c.http.DoGet(e, &r); err != nil {
 		c.ui.Send(ui.WARN.Sprintf("Failed resolving agent: %v", err))
@@ -180,7 +195,7 @@ func (c *CLI) ResolveAgent(args []string) {
 	}
 
 	c.ClientInUse = r.Guid
-	c.ui.InUse = args[0]
-	c.ui.SetPrompt(args[0])
+	c.ui.InUse = name
+	c.ui.SetPrompt(name)
 	c.ui.Send(ui.GOOD.Sprintf("Using %s", c.ClientInUse))
 }

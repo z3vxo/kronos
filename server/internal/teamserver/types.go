@@ -10,13 +10,12 @@ import (
 )
 
 type TaskDelete struct {
-	TaskID int `json:"task_id"`
+	TaskID string `json:"task_id"`
 }
 
 type TaskEntry struct {
 	Cmd_type int    `json:"type"`
 	Guid     string `json:"guid"`
-	TaskID   int    `json:"task_id"`
 	Param1   string `json:"param_1"`
 	Param2   string `json:"param_2"`
 }
@@ -43,6 +42,7 @@ type TeamServer struct {
 }
 
 type ListenerEntry struct {
+	ID       int    `json:"id"`
 	Port     int    `json:"port"`
 	Name     string `json:"name"`
 	Protocol string `json:"protocol"`
