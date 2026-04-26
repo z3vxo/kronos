@@ -24,9 +24,24 @@ func relativeTime(unix int64) string {
 	}
 }
 
-func (c *CLI) ListAgents(args []string) {
+func (c *CLI) ParseAgentsCmd(args []string) {
+	if len(args) == 0 {
+		c.ListAgents()
+		return
+	}
+
+	if args[0] == "delete" {
+		if len(args) < 2 || args[1] == "" {
+			c.ui.Send(ui.WARN.Sprint("Must provide agent ID or name"))
+			return
+		}
+		c.DeleteAgent(args[1])
+		return
+	}
+}
+
+func (c *CLI) ListAgents() {
 	if cached := c.CacheMgr.GetAgentsCache(); cached != nil {
-		fmt.Println("Printing from cache")
 		c.PrintAgents(cached)
 		return
 	}
@@ -41,7 +56,6 @@ func (c *CLI) ListAgents(args []string) {
 		c.ui.Send(ui.INFO.Sprint("No agents connected"))
 		return
 	}
-	fmt.Println("Not Printing from cache")
 	c.CacheMgr.PopulateAgentsCache(A)
 	c.PrintAgents(c.CacheMgr.GetAgentsCache())
 }
@@ -57,7 +71,9 @@ func (c *CLI) PrintAgents(agents []Agent) {
 	t.SetStyle(table.StyleLight)
 	t.AppendHeader(table.Row{"ID", "CODENAME", "USER", "HOSTNAME", "EX IP", "IN IP", "ELEV", "PID", "LAST-SEEN", "REG-DATE"})
 
+	c.CacheMgr.AgentsIdMap = make(map[int]string)
 	for _, a := range agents {
+		c.CacheMgr.AgentsIdMap[int(a.AgentID)] = a.CodeName
 		elev := "no"
 		if a.IsElevated {
 			elev = "yes"
@@ -89,7 +105,6 @@ func (c *CLI) ListAgentInfo(args []string) {
 	}
 
 	if cached := c.CacheMgr.GetInfoCache(); cached != nil {
-		fmt.Println("Printing from cache")
 		c.PrintAgentInfo(*cached)
 		return
 	}
@@ -101,7 +116,6 @@ func (c *CLI) ListAgentInfo(args []string) {
 	}
 
 	c.CacheMgr.PopulateInfoCache(a)
-	fmt.Println("not Printing from cache")
 	c.PrintAgentInfo(*c.CacheMgr.GetInfoCache())
 }
 
@@ -198,4 +212,25 @@ func (c *CLI) ResolveAgent(args []string) {
 	c.ui.InUse = name
 	c.ui.SetPrompt(name)
 	c.ui.Send(ui.GOOD.Sprintf("Using %s", c.ClientInUse))
+}
+
+func (c *CLI) DeleteAgent(id string) {
+	var name string
+	if ID, err := strconv.Atoi(id); err == nil {
+		codename, ok := c.CacheMgr.AgentsIdMap[ID]
+		if !ok {
+			c.ui.Send(ui.BAD.Sprint("Unknown agent ID, run 'agents' to view or refresh"))
+			return
+		}
+		name = codename
+	} else {
+		name = id
+	}
+
+	if err := c.http.DoDelete(fmt.Sprintf("ts/rest/agents/delete/%s", name), nil); err != nil {
+		c.ui.Send(ui.WARN.Sprintf("Failed deleting agent: %v", err))
+		return
+	}
+	c.CacheMgr.InvalidateOneAgent(name)
+	c.ui.PrintTitle(fmt.Sprintf("Deleted agent %s", name))
 }

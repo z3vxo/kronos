@@ -37,6 +37,10 @@ func (ts *TeamServer) CommandNewHandler(w http.ResponseWriter, r *http.Request) 
 func (ts *TeamServer) CommandDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	guid := chi.URLParam(r, "guid")
 	taskID := chi.URLParam(r, "taskID")
+	if guid == "" || taskID == "" {
+		httputil.SendJSONError(w, "missing guid AND/OR taskID", http.StatusBadRequest)
+		return
+	}
 
 	if err := ts.db.DeleteTask(guid, taskID); err != nil {
 		httputil.SendJSONError(w, "Failed Deleting task", http.StatusInternalServerError)

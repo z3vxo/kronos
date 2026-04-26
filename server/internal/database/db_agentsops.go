@@ -105,3 +105,13 @@ func (db *DB) ListAgentInfo(name string) (AgentInfo, error) {
 
 	return a, nil
 }
+
+func (db *DB) DeleteAgent(name string) error {
+	q := `DELETE FROM agents WHERE code_name = ?`
+
+	_, err := db.conn.Exec(q, name)
+	if err != nil {
+		return err
+	}
+	return nil
+}

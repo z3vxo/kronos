@@ -29,6 +29,7 @@ type Cache struct {
 	AgentsCache    []Agent
 	TaskIdMap      map[int]string
 	ListenersIdMap map[int]string
+	AgentsIdMap    map[int]string
 }
 
 func (c *Cache) PopulateInfoCache(a AgentInfoResp) {
@@ -86,6 +87,22 @@ func (c *Cache) InvalidateAgents() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.AgentsCache = nil
+}
+func (c *Cache) InvalidateOneAgent(name string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for i, a := range c.AgentsCache {
+		if a.CodeName == name {
+			c.AgentsCache = append(c.AgentsCache[:i], c.AgentsCache[i+1:]...)
+			for id, n := range c.AgentsIdMap {
+				if n == name {
+					delete(c.AgentsIdMap, id)
+					break
+				}
+			}
+			return
+		}
+	}
 }
 
 func (c *Cache) InvalidateInfo() {

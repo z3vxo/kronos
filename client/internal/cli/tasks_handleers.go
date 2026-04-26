@@ -23,7 +23,7 @@ func (c *CLI) ParseTasks(args []string) {
 		return
 	}
 	if args[0] == "delete" {
-		if args[1] == "" {
+		if len(args) < 2 || args[1] == "" {
 			c.ui.Send(ui.WARN.Sprint("Must Provide ID or TaskID"))
 			return
 		}
@@ -104,6 +104,5 @@ func (c *CLI) DeleteTask(id string) {
 	}
 
 	c.ui.PrintTitle("Deleted Task!")
-	return
 
 }

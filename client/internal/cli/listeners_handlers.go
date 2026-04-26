@@ -18,10 +18,9 @@ func (c *CLI) ResolveListenerName(input string) (string, bool) {
 			c.ui.Send(ui.BAD.Sprint("Unknown Listener ID, run 'listeners' to view or refresh"))
 			return "", false
 		}
-		return name, false
-
+		return name, true
 	}
-	return input, false
+	return input, true
 }
 
 func (c *CLI) ParseListenerCmd(args []string) {
@@ -31,25 +30,21 @@ func (c *CLI) ParseListenerCmd(args []string) {
 	}
 
 	switch args[0] {
-	case "stop":
-		if args[1] == "" {
-			c.ui.Send(ui.BAD.Sprint("Must provide listener name"))
+	case "stop", "delete", "start":
+		if len(args) < 2 || args[1] == "" {
+			c.ui.Send(ui.BAD.Sprintf("Must provide listener name or ID"))
+			return
 		}
-		c.StopListener(args[1])
-	case "delete":
-		if args[1] == "" {
-			c.ui.Send(ui.BAD.Sprint("Must provide listener name"))
+		switch args[0] {
+		case "stop":
+			c.StopListener(args[1])
+		case "delete":
+			c.DeleteListeners(args[1])
+		case "start":
+			c.StartListener(args[1])
 		}
-		c.DeleteListeners(args[1])
-	case "start":
-		if args[1] == "" {
-			c.ui.Send(ui.BAD.Sprint("Must provide listener name"))
-		}
-		c.StartListener(args[1])
-
 	case "new":
 		c.NewListener(args[1:])
-		//c.StopListener()
 	default:
 		c.ui.Send(ui.BAD.Sprintf("Unknown subcommand: %s", args[0]))
 	}
@@ -137,7 +132,7 @@ func (c *CLI) StartListener(name string) {
 	}
 	endpoint := fmt.Sprintf("ts/rest/listeners/start/%s", listenername)
 	if err := c.http.DoPost(endpoint, nil, nil); err != nil {
-		c.ui.Send(ui.WARN.Sprintf("Failed Deleting listener: %s", err))
+		c.ui.Send(ui.WARN.Sprintf("Failed starting listener: %s", err))
 		return
 	}
 	c.ui.Send(ui.GOOD.Sprintf("Started Listener %s", name))

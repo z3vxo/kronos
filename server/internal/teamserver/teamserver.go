@@ -69,6 +69,7 @@ func (ts *TeamServer) Start() error {
 			r.Get("/rest/agents/list", ts.AgentListHandler)
 			r.Get("/rest/agents/resolve/{codename}", ts.AgentResolveHandler)
 			r.Get("/rest/agents/info/{codename}", ts.AgentInfoHandler)
+			r.Delete("/rest/agents/delete/{codename}", ts.AgentDeleteHandler)
 
 			r.Post("/rest/tasks/new", ts.CommandNewHandler)
 			r.Delete("/rest/tasks/delete/{guid}/{taskID}", ts.CommandDeleteHandler)

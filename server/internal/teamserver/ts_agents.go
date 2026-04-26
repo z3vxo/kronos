@@ -87,3 +87,16 @@ func (ts *TeamServer) AgentInfoHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&resp)
 
 }
+
+func (ts *TeamServer) AgentDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "codename")
+	if name == "" {
+		httputil.SendJSONError(w, "missing codename", http.StatusBadRequest)
+		return
+	}
+
+	if err := ts.db.DeleteAgent(name); err != nil {
+		httputil.SendJSONError(w, "failed deleting agent", http.StatusInternalServerError)
+		return
+	}
+}
