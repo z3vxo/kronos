@@ -2,11 +2,9 @@ package ai
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"time"
+	"os"
 
-	openai "github.com/sashabaranov/go-openai"
+	"github.com/sashabaranov/go-openai"
 )
 
 // TODO fix this system prompt, allow user too configure it at rutntime
@@ -19,19 +17,36 @@ whoami /all
 ` + "```" + `
 Match the execution environment specified in the request (powershell or cmd).`
 
-func (a *AI) OpenAi_CmdGenerate(req string) (string, error) {
-	if a.ApiKey["gpt"] == "" {
-		return "", errors.New("Missing API Key")
-	}
-	client := openai.NewClient(a.ApiKey["gpt"])
+type GPTProvider struct {
+	apiKey string
+	model  string
+}
 
-	start := time.Now()
+func NewGPTProvider() *GPTProvider {
+	return &GPTProvider{
+		apiKey: os.Getenv("OPENAI_KEY"),
+		model:  "gpt-4.1-nano",
+	}
+}
+func (g *GPTProvider) Name() string      { return "gpt" }
+func (g *GPTProvider) Model() string     { return g.model }
+func (g *GPTProvider) SetModel(m string) { g.model = m }
+func (g *GPTProvider) APIKeySet() bool   { return g.apiKey != "" }
+
+func (g *GPTProvider) Generate(prompt string, temp float32) (string, error) {
+	return g.OpenAi_CmdGenerate(g.apiKey, g.model, prompt, temp)
+}
+
+func (g *GPTProvider) OpenAi_CmdGenerate(apiKey, mode, prompt string, temp float32) (string, error) {
+	client := openai.NewClient(apiKey)
+
+	//start := time.Now()
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
 
 		openai.ChatCompletionRequest{
-			Model:       a.Model["gpt"],
-			Temperature: a.Temp,
+			Model:       mode,
+			Temperature: temp,
 			Messages: []openai.ChatCompletionMessage{
 				{
 					Role:    openai.ChatMessageRoleSystem,
@@ -39,7 +54,7 @@ func (a *AI) OpenAi_CmdGenerate(req string) (string, error) {
 				},
 				{
 					Role:    openai.ChatMessageRoleUser,
-					Content: req,
+					Content: prompt,
 				},
 			},
 		},
@@ -48,7 +63,7 @@ func (a *AI) OpenAi_CmdGenerate(req string) (string, error) {
 		return "", err
 	}
 
-	a.UI.PrintTitle(fmt.Sprintf("AI request completed in %s", time.Since(start).Round(time.Millisecond)))
+	//a.UI.PrintTitle(fmt.Sprintf("AI request completed in %s", time.Since(start).Round(time.Millisecond)))
 	return resp.Choices[0].Message.Content, nil
 
 }
