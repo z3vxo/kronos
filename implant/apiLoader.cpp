@@ -1,5 +1,6 @@
 #include "apidefs.hpp"
 #include "common.hpp"
+#include <stdio.h>
 
 
 
@@ -50,12 +51,21 @@ BOOL LoadAPIS() {
 
 	kModules->K32 = GetModuleHandleA("kernel32");
 
-	WinApis->GetUserNameA = (decltype(WinApis->GetUserNameA))GetProc(kModules->K32, 0x12222);
-	WinApis->GetComputerNameExA = (decltype(WinApis->GetComputerNameExA))GetProc(kModules->K32, 0x12222);
-	WinApis->GetModuleFileNameA = (decltype(WinApis->GetModuleFileNameA))GetProc(kModules->K32, 0x12222);
+	WinApis->LoadLibraryA = (decltype(WinApis->LoadLibraryA))GetProc(kModules->K32, HASHED_LoadLibraryA);
+	WinApis->GetComputerNameExA = (decltype(WinApis->GetComputerNameExA))GetProc(kModules->K32, HASHED_GetComputerNameExA);
+	WinApis->GetModuleFileNameA = (decltype(WinApis->GetModuleFileNameA))GetProc(kModules->K32, HASHED_GetModuleFileNameA);
+	//WinApis->HeapAlloc = (decltype(WinApis->HeapAlloc))GetProc(kModules->K32, HASHED_HeapAlloc);
 
 
+	kModules->ADVAPI32 = WinApis->LoadLibraryA("advapi32.dll");
 
+	WinApis->GetUserNameA = (decltype(WinApis->GetUserNameA))GetProc(kModules->ADVAPI32, HASHED_GetUserNameA);
+
+	kModules->IPHLPAPI = WinApis->LoadLibraryA("iphlpapi.dll");
+	WinApis->GetAdaptersInfo = (decltype(WinApis->GetAdaptersInfo))GetProc(kModules->IPHLPAPI, HASHED_GetAdaptersInfo);
+
+
+	return TRUE;
 
 
 
