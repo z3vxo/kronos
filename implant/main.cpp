@@ -1,8 +1,6 @@
-#include <stdio.h>
-#include "apidefs.hpp"
 #include "common.hpp"
 
-
+#include <stdio.h>
 /*
 	1. startup
 	2. load apis and alloc needed structs
@@ -15,17 +13,11 @@
 
 
 int main() {
-
-
-	printf("#define HASHED_GetAdaptersInfo 0x%08x\n", Hasher("GetAdaptersInfo"));
-	return 1;
-
-	if (!InitAgent()) {
-		printf("Failed Loading\n");
-		return 0;
-	}
 	
 
-	return 1;
+	if (!RunHades()) { return 1; }
+	
+
+	return 0;
 	
 }

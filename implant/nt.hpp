@@ -4,6 +4,23 @@
 
 
 #define RTL_MAX_DRIVE_LETTERS 32
+#define NTAPI_SUCESS(Status) ((NTSTATUS)(Status)) >= 0)
+
+
+extern "C" NTSYSAPI NTSTATUS NTAPI RtlGetVersion(PRTL_OSVERSIONINFOW);
+extern "C" NTSYSAPI ULONG NTAPI RtlRandomEx(PULONG Seed);
+extern "C" NTSYSAPI NTSTATUS NTAPI RtlIpv4StringToAddressA(PCSTR S, BOOLEAN Strict, PCSTR* Terminator, in_addr* Addr);
+extern "C" NTSYSCALLAPI NTSTATUS NTAPI NtOpenProcessToken(
+    HANDLE      ProcessHandle,
+    ACCESS_MASK DesiredAccess,
+    PHANDLE     TokenHandle
+);
+extern "C" NTSYSCALLAPI NTSTATUS NTAPI NtOpenThreadToken(
+    HANDLE      ThreadHandle,
+    ACCESS_MASK DesiredAccess,
+    BOOLEAN     OpenAsSelf,
+    PHANDLE     TokenHandle
+);
 
 typedef struct _UNICODE_STRING {
     USHORT Length;

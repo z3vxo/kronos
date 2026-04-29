@@ -2,6 +2,6 @@
 
 
 
-//BOOL ParseAgentConfig() {
+//BOOL LoadConfig() {
 //
 //}
