@@ -13,47 +13,50 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="NewFilter1">
+      <UniqueIdentifier>{d9ed71ca-150c-42ab-9726-761c1514660f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="init.cpp">
+    <ClCompile Include="hades\init.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="api.cpp">
+    <ClCompile Include="utils\api.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="config.cpp">
+    <ClCompile Include="hades\config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="bytes.cpp">
+    <ClCompile Include="utils\bytes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Hadesmain.cpp">
+    <ClCompile Include="hades\Hadesmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="network.cpp">
+    <ClCompile Include="networkd\network.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="apidefs.hpp">
+    <ClInclude Include="utils\apidefs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="common.hpp">
+    <ClInclude Include="shared\common.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="config.hpp">
+    <ClInclude Include="hades\config.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="bytes.hpp">
+    <ClInclude Include="utils\bytes.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="nt.hpp">
+    <ClInclude Include="shared\nt.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="network.hpp">
+    <ClInclude Include="networkd\network.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

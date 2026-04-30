@@ -1,7 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <wininet.h>
-#include "common.hpp"
+#include "../shared/common.hpp"
 
 #define DECL(x) decltype(x) * x;
 

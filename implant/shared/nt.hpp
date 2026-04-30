@@ -6,21 +6,103 @@
 #define RTL_MAX_DRIVE_LETTERS 32
 #define NTAPI_SUCESS(Status) ((NTSTATUS)(Status)) >= 0)
 
+typedef enum _PROCESSINFOCLASS
+{
+    ProcessBasicInformation,
+    ProcessQuotaLimits,
+    ProcessIoCounters,
+    ProcessVmCounters,
+    ProcessTimes,
+    ProcessBasePriority,
+    ProcessRaisePriority,
+    ProcessDebugPort,
+    ProcessExceptionPort,
+    ProcessAccessToken,
+    ProcessLdtInformation,
+    ProcessLdtSize,
+    ProcessDefaultHardErrorMode,
+    ProcessIoPortHandlers,
+    ProcessPooledUsageAndLimits,
+    ProcessWorkingSetWatch,
+    ProcessUserModeIOPL,
+    ProcessEnableAlignmentFaultFixup,
+    ProcessPriorityClass,
+    ProcessWx86Information,
+    ProcessHandleCount,
+    ProcessAffinityMask,
+    ProcessPriorityBoost,
+    ProcessDeviceMap,
+    ProcessSessionInformation,
+    ProcessForegroundInformation,
+    ProcessWow64Information,
+    ProcessImageFileName,
+    ProcessLUIDDeviceMapsEnabled,
+    ProcessBreakOnTermination,
+    ProcessDebugObjectHandle,
+    ProcessDebugFlags,
+    ProcessHandleTracing,
+    ProcessIoPriority,
+    ProcessExecuteFlags,
+    ProcessTlsInformation,
+    ProcessCookie,
+    ProcessImageInformation,
+    ProcessCycleTime,
+    ProcessPagePriority,
+    ProcessInstrumentationCallback,
+    ProcessThreadStackAllocation,
+    ProcessWorkingSetWatchEx,
+    ProcessImageFileNameWin32,
+    ProcessImageFileMapping,
+    ProcessAffinityUpdateMode,
+    ProcessMemoryAllocationMode,
+    ProcessGroupInformation,
+    ProcessTokenVirtualizationEnabled,
+    ProcessConsoleHostProcess,
+    ProcessWindowInformation,
+    MaxProcessInfoClass
+} PROCESSINFOCLASS;
 
-extern "C" NTSYSAPI NTSTATUS NTAPI RtlGetVersion(PRTL_OSVERSIONINFOW);
-extern "C" NTSYSAPI ULONG NTAPI RtlRandomEx(PULONG Seed);
-extern "C" NTSYSAPI NTSTATUS NTAPI RtlIpv4StringToAddressA(PCSTR S, BOOLEAN Strict, PCSTR* Terminator, in_addr* Addr);
-extern "C" NTSYSCALLAPI NTSTATUS NTAPI NtOpenProcessToken(
-    HANDLE      ProcessHandle,
-    ACCESS_MASK DesiredAccess,
-    PHANDLE     TokenHandle
-);
-extern "C" NTSYSCALLAPI NTSTATUS NTAPI NtOpenThreadToken(
-    HANDLE      ThreadHandle,
-    ACCESS_MASK DesiredAccess,
-    BOOLEAN     OpenAsSelf,
-    PHANDLE     TokenHandle
-);
+
+
+extern "C" {
+    NTSYSAPI NTSTATUS NTAPI RtlGetVersion(PRTL_OSVERSIONINFOW);
+    NTSYSAPI NTSTATUS NTAPI RtlGetNtVersionNumbers(DWORD* major, DWORD* minor, DWORD* build);
+    NTSYSAPI ULONG NTAPI RtlRandomEx(PULONG Seed);
+    NTSYSAPI NTSTATUS NTAPI RtlIpv4StringToAddressA(PCSTR S, BOOLEAN Strict, PCSTR* Terminator, in_addr* Addr);
+    NTSYSCALLAPI NTSTATUS NTAPI NtOpenProcessToken(
+        HANDLE      ProcessHandle,
+        ACCESS_MASK DesiredAccess,
+        PHANDLE     TokenHandle
+    );
+    NTSYSCALLAPI NTSTATUS NTAPI NtOpenThreadToken(
+        HANDLE      ThreadHandle,
+        ACCESS_MASK DesiredAccess,
+        BOOLEAN     OpenAsSelf,
+        PHANDLE     TokenHandle
+    );
+
+    NTSTATUS
+        NTAPI
+        NtQueryInformationProcess(
+            IN HANDLE ProcessHandle,
+            IN PROCESSINFOCLASS ProcessInformationClass,
+            OUT PVOID ProcessInformation,
+            IN ULONG ProcessInformationLength,
+            OUT OPTIONAL PULONG ReturnLength
+        );
+}
+
+typedef LONG KPRIORITY, * PKPRIORITY;
+typedef struct _PROCESS_BASIC_INFORMATION
+{
+    NTSTATUS ExitStatus;                    // The exit status of the process. (GetExitCodeProcess)
+    PVOID PebBaseAddress;                    // A pointer to the process environment block (PEB) of the process.
+    KAFFINITY AffinityMask;                 // The affinity mask of the process. (GetProcessAffinityMask) (deprecated)
+    KPRIORITY BasePriority;                 // The base priority of the process. (GetPriorityClass)
+    HANDLE UniqueProcessId;                 // The unique identifier of the process. (GetProcessId)
+    HANDLE InheritedFromUniqueProcessId;    // The unique identifier of the parent process.
+} PROCESS_BASIC_INFORMATION, * PPROCESS_BASIC_INFORMATION;
+
 
 typedef struct _UNICODE_STRING {
     USHORT Length;

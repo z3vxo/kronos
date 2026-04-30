@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "../shared/common.hpp"
 
 class bytes {
 public:
@@ -12,10 +12,11 @@ public:
 	void InitRead(PBYTE data, INT DataSize);
 	UINT Read4();
 	void ReadString(PBYTE Out, UINT Len);
-	void InitWrite(PBYTE buffer, UINT len);
+	void InitWrite();
 	void Write4(UINT val);
 	void Write1(BOOL val);
 	void WriteString(PBYTE Data, UINT Length);
+
 
 };
 

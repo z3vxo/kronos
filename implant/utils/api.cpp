@@ -1,5 +1,5 @@
 #include "apidefs.hpp"
-#include "common.hpp"
+#include "../shared/common.hpp"
 #include <stdio.h>
 
 
@@ -91,10 +91,12 @@ BOOL LoadAPIS() {
 
 	kModules->NTDLL = GetModule(HASHED_NTDLL);
 	if (kModules->NTDLL) {
-		WinApis->RtlGetVersion      = (decltype(WinApis->RtlGetVersion))      GetProc(kModules->NTDLL, HASHED_RtlGetVersion);
-		WinApis->RtlRandomEx        = (decltype(WinApis->RtlRandomEx))        GetProc(kModules->NTDLL, HASHED_GenRandom);
-		WinApis->NtOpenProcessToken = (decltype(WinApis->NtOpenProcessToken)) GetProc(kModules->NTDLL, HASHED_OpenProcessToken);
-		WinApis->NtOpenThreadToken  = (decltype(WinApis->NtOpenThreadToken))  GetProc(kModules->NTDLL, HASHED_OpenThreadToken);
+		WinApis->RtlGetVersion = (decltype(WinApis->RtlGetVersion))GetProc(kModules->NTDLL, HASHED_RtlGetVersion);
+		WinApis->RtlGetNtVersionNumbers = (decltype(WinApis->RtlGetNtVersionNumbers))GetProc(kModules->NTDLL, HASHED_RtlGetNtVersionNumbers);
+		WinApis->RtlRandomEx = (decltype(WinApis->RtlRandomEx))GetProc(kModules->NTDLL, HASHED_GenRandom);
+		WinApis->NtOpenProcessToken = (decltype(WinApis->NtOpenProcessToken))GetProc(kModules->NTDLL, HASHED_OpenProcessToken);
+		WinApis->NtOpenThreadToken = (decltype(WinApis->NtOpenThreadToken))GetProc(kModules->NTDLL, HASHED_OpenThreadToken);
+		WinApis->NtQueryInformationProcess = (decltype(WinApis->NtQueryInformationProcess))GetProc(kModules->NTDLL, HASHED_NtQueryInformationProcess);
 	}
 	
 

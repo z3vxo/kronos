@@ -1,15 +1,18 @@
 #include "bytes.hpp"
-
+#include <stdio.h>
 
 BOOL bytes::EnsureBuffer(PBYTE& Buffer, UINT datasize) {
 	UINT NewSize = this->size;
 	if (this->index + datasize > this->size) {
-		while (this->size < this->index + datasize) {
+		this->size = NewSize;
+		while (NewSize < this->index + datasize) {
 			NewSize *= 2;
 		}
 
 		PBYTE Temp = (PBYTE)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Buffer, NewSize);
 		Buffer = Temp;
+		this->size = NewSize;
+
 		return TRUE;
 	}
 	return TRUE;
@@ -37,19 +40,22 @@ void bytes::ReadString(PBYTE buffer, UINT len) {
 }
 
 
-void bytes::InitWrite(PBYTE buffer, UINT DataSize) {
+void bytes::InitWrite() {
+	if (this->OutData) { HeapFree(GetProcessHeap(), 0, this->OutData); }
+	this->OutData = AllocMemory<BYTE>(BASE_BUFFER_SIZE);
 	this->index = 0;
-	this->OutData = buffer;
-	this->size = DataSize;
+	this->size = BASE_BUFFER_SIZE;
 }
 
 void bytes::Write4(UINT val) {
 	this->EnsureBuffer(this->OutData, sizeof(val));
 	memcpy(this->OutData + this->index, &val, sizeof(val));
 	this->index += 4;
+
 }
 
 void bytes::Write1(BOOL val) {
+
 	this->EnsureBuffer(this->OutData, 1);
 	memcpy(this->OutData + this->index, &val, 1);
 	this->index += 1;
@@ -59,6 +65,7 @@ void bytes::WriteString(PBYTE data, UINT len) {
 	this->EnsureBuffer(this->OutData, len);
 	memcpy(this->OutData + this->index, data, len);
 	this->index += len;
+
 }
 
 
