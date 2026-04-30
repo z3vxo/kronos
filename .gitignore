@@ -3,3 +3,33 @@ client/todo.txt
 
 server/test
 
+.vs/
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.opendb
+
+Debug/
+Release/
+x64/
+x86/
+*.obj
+*.sln
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.dll
+*.exe
+*.vcxproj
+*.vcxproj.filter
+*.vcxproj.user
+
+ipch/
+*.ipch
+*.aps
+
+packages/
+

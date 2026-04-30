@@ -16,7 +16,7 @@ type AgentHandler struct {
 	Host   string
 }
 
-func ConvertToWindowsVer(major, minor, build int16) string {
+func ConvertToWindowsVer(major, minor, build int32) string {
 	switch {
 	case major == 10 && minor == 0 && build > 22000:
 		return fmt.Sprintf("Windows 11 (Build %d)", build)
@@ -64,6 +64,7 @@ type Event struct {
 func (h *AgentHandler) HandleClientRegister(ip string, r *bytes.Reader) error {
 	Client, err := bytemgr.ExtractRegistrationDetails(ip, r)
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 

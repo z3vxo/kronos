@@ -60,7 +60,7 @@ func InitDB(db *DB) error {
 func SetupDB(db *DB) error {
 
 	agents_querys := `CREATE TABLE IF NOT EXISTS agents (
-		guid 			TEXT NOT NULL,
+		guid 			INTEGER NOT NULL,
 		code_name 		TEXT NOT NULL,
 		username 		TEXT NOT NULL,
 		hostname 		TEXT NOT NULL,
@@ -69,6 +69,7 @@ func SetupDB(db *DB) error {
 		is_elevated 	BOOLEAN NOT NULL,
 		arch			INTEGER NOT NULL,
 		pid 			INTEGER NOT NULL,
+		tid      		INTEGER NOT NULL,
 		ppid			INTEGER NOT NULL,
 		process_path 	TEXT NOT NULL,
 		windows_version TEXT NOT NULL,
@@ -84,7 +85,7 @@ func SetupDB(db *DB) error {
 	}
 
 	commands_query := `CREATE TABLE IF NOT EXISTS commands (
-		guid TEXT NOT NULL,
+		guid INTEGER NOT NULL,
 		command_type INTEGER NOT NULL,
 		task_id      TEXT NOT NULL,
 		param_1      TEXT NOT NULL,

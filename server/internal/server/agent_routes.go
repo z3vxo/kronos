@@ -79,20 +79,25 @@ func (h *AgentHandler) AgentUploadHandler(w http.ResponseWriter, r *http.Request
 	defer r.Body.Close()
 
 	body, err := io.ReadAll(r.Body)
+	fmt.Println(len(body))
 	if err != nil {
 		http.Error(w, "failed", http.StatusInternalServerError)
 		return
 	}
+	fmt.Printf("URL=%s, USER=%s, LEN=%d, HEX=%x\n", r.URL.Path, r.UserAgent(), len(body), body[:min(16, len(body))])
 
 	reader := bytes.NewReader(body)
 	var cmdType int32
 	if err := binary.Read(reader, binary.LittleEndian, &cmdType); err != nil {
+		fmt.Println("ERROR READING")
 		http.Error(w, "failed reading cmd type", http.StatusInternalServerError)
 		return
 	}
+	fmt.Println(cmdType)
 
 	switch cmdType {
 	case CMD_TYPE_REGISTER:
+		fmt.Println("REGISTER HIT")
 
 		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
 		err := h.HandleClientRegister(ip, reader)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+	"fmt"
 )
 
 type Reader struct {
@@ -48,70 +49,80 @@ func (r *Reader) ReadString(len int32) string {
 
 }
 
-/*   Agent Register wire format
- * [GUID LEN] 4 BYTES
- * [GUID STR] N BYTES
- * ->
- * [USERNAME LEN] 4 BYTES
- * [USERNAME STR] N BYTES
- * ->
- * [HOSTNAME LEN] 4 BYTES
- * [HOSTNAME STR] N BYTES
- * ->
- * [INTERNAL IP LEN] 4 BYTES
- * [INTERNAL IP STR] N BYTES
- * ->
- * [PROCESS_PATH LEN] 4 BYTES
- * [PROCESS_PATH STR] N BYTES
- * ->
- * [PID] 4 BYTES
- * -->
- * [PPID] 4 BYTES
- * ->
- * [IS ELEVATED] 1 BYTE
- * ->
- * [ARCH] 1 BYTE | 1 == x64, 0 == x86
- * ->
- * [MINOR VERSION] 2 BYTES
- * [MAJOR VERSION] 2 BYTES
- * [BUILD VERSION] 2 BYTES
- *
- */
+/*
+	[MSG TYPE]		  4 BYTES
+	[HADES ID]		  4 BYTES
+	[UserLen]         4 BYTES
+	[Username]		  N BYTES
+	[HostLen]		  4 BYTES
+	[Hostname]		  N BYTES
+	[IP LEN]		  4 BYTES
+	[IP STR]		  N BYTES
+	[ProcessPath Len] 4 BYTES
+	[PROCESS PATH]    N BYTES
+	[PID]			  4 BYTES
+	[TID]			  4 BYTES
+	[PPID]			  4 BYTES
+	[IsElev]		  1 BYTES
+	[Arch]			  1 BYTES
+	[Minor]			  4 BYTES
+	[Major]			  4 BYTES
+	[Build]			  4 BYTES
+
+*/
 
 type ClientRegister struct {
-	Guid       string
+	Guid       int32
 	User       string
 	Host       string
 	InternaIP  string
 	ExternalIP string
 	ProcPath   string
 	Pid        int32
+	Tid        int32
 	Ppid       int32
 	IsElev     byte
 	Arch       byte
-	Minor      int16
-	Major      int16
-	Build      int16
+	Minor      int32
+	Major      int32
+	Build      int32
 }
 
 func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, error) {
 	rd := &Reader{r: r}
 
-	guid := rd.ReadString(rd.Read4())
+
+
+	guid := rd.Read4()
 	Username := rd.ReadString(rd.Read4())
 	Hostname := rd.ReadString(rd.Read4())
 	InternalIP := rd.ReadString(rd.Read4())
 	ProcessPath := rd.ReadString(rd.Read4())
 	Pid := rd.Read4()
+	Tid := rd.Read4()
 	PPid := rd.Read4()
 	IsElev := rd.Read1()
 	Arch := rd.Read1()
-	Minor := rd.Read2()
-	Major := rd.Read2()
-	BuildVer := rd.Read2()
+	Minor := rd.Read4()
+	Major := rd.Read4()
+	BuildVer := rd.Read4()
 	if rd.err != nil {
+		fmt.Println(rd.err);
 		return ClientRegister{}, rd.err
 	}
+	fmt.Println(guid)
+	fmt.Println(Username)
+	fmt.Println(Hostname)
+	fmt.Println(InternalIP)
+	fmt.Println(ProcessPath)
+	fmt.Println(Pid)
+	fmt.Println(Tid)
+	fmt.Println(PPid)
+	fmt.Println(IsElev)
+	fmt.Println(Arch)
+	fmt.Println(Minor)
+	fmt.Println(Major)
+	fmt.Println(BuildVer)
 
 	Res := ClientRegister{
 		Guid:       guid,
@@ -121,6 +132,7 @@ func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, err
 		ExternalIP: IP,
 		ProcPath:   ProcessPath,
 		Pid:        Pid,
+		Tid:        Tid,
 		Ppid:       PPid,
 		IsElev:     IsElev,
 		Arch:       Arch,

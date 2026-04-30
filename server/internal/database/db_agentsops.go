@@ -53,7 +53,7 @@ func (db *DB) ResolveCodename(name string) (string, error) {
 	return guid, nil
 }
 
-func (db *DB) InsertAgent(guid, codeName, User, Host, InIP, ExIP, ProcPath, WinVer string, Pid, PPid int32, IsElev, Arch byte) error {
+func (db *DB) InsertAgent(guid int32, codeName, User, Host, InIP, ExIP, ProcPath, WinVer string, Pid, PPid int32, IsElev, Arch byte) error {
 	query := `INSERT INTO agents(guid, code_name,
 	  						username, hostname,
 							external_ip, internal_ip,
