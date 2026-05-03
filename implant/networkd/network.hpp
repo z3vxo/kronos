@@ -16,28 +16,14 @@ struct HTTPAPIS {
 	DECL(HttpAddRequestHeadersA);
 };
 
-struct Domain {
-	PCHAR host;
-	PCHAR GetEndpoint;
-	PCHAR PostEndpoint;
-	UINT port;
-	BOOL UseSSL;
-};
+#define MAX_RETRYS 5
+#define BASE_DELAY_MS 100
+#define MAX_DELAY_MS 3000
 
-struct Header {
-	PCHAR Name;
-	PCHAR Value;
-};
-
-struct HTTPCONF {
-	struct Domain* domains;
-	struct Header* Headers;
-};
 
 class Network {
 	HTTPAPIS* HttpApis;
-	HTTPCONF* HttpConf;
-
+	DWORD reqFlags;
 
 public:
 	Network();

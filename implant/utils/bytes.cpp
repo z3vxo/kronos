@@ -19,6 +19,7 @@ BOOL bytes::EnsureBuffer(PBYTE& Buffer, UINT datasize) {
 }
 
 void bytes::InitRead(PBYTE data, INT DataSize) {
+
 	this->index = 0;
 	this->InData = data;
 	this->size = DataSize;

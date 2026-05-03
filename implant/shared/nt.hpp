@@ -90,6 +90,10 @@ extern "C" {
             IN ULONG ProcessInformationLength,
             OUT OPTIONAL PULONG ReturnLength
         );
+        NTSTATUS NTAPI NtDelayExecution(
+            _In_ BOOLEAN Alertable,
+            _In_ PLARGE_INTEGER DelayInterval
+        );
 }
 
 typedef LONG KPRIORITY, * PKPRIORITY;

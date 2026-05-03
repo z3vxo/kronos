@@ -1,10 +1,7 @@
 #pragma once
 #include <Windows.h>
-#include <wininet.h>
-#include <iphlpapi.h>
 #include "../shared/nt.hpp"
 
-#define DECL(x) decltype(x) * x;
 
 #define HASHED_GetUserNameA				 0xe7cb70d1
 #define HASHED_LoadLibraryA				 0x8e338329
@@ -33,66 +30,9 @@
 #define HASHED_InternetSetOptionA		 0x2a15e3ce
 #define HASHED_NtQueryInformationProcess 0x8047d43f
 #define HASHED_RtlGetNtVersionNumbers    0x2e8c8a48
+#define HASHED_NtDelayExecution			 0xdafbb9c9
 
 
-
-
-struct MODULES {
-	HMODULE K32;
-	HMODULE IPHLPAPI;
-	HMODULE WININET;
-	HMODULE NTDLL;
-	HMODULE ADVAPI32;
-};
-
-
-struct WINAPIS {
-
-	// kernel32
-	DECL(ReadFile);
-	DECL(GetModuleFileNameA);
-	DECL(GetComputerNameExA);
-	DECL(LoadLibraryA);
-	DECL(HeapAlloc);
-	DECL(GetTickCount);
-	DECL(CloseHandle);
-
-
-		
-
-
-
-
-
-	DECL(RtlGetVersion);
-	DECL(RtlRandomEx);
-	DECL(RtlIpv4StringToAddressA);
-	DECL(NtOpenProcessToken);
-	DECL(NtOpenThreadToken);
-	DECL(NtQueryInformationProcess);
-	DECL(RtlGetNtVersionNumbers);
-
-
-
-	DECL(GetUserNameA);
-	DECL(GetTokenInformation)
-
-	
-	DECL(GetAdaptersInfo);
-
-	DECL(WSAStartup);
-
-
-
-};
-
-
-
-
-
-
-extern WINAPIS * WinApis;
-extern MODULES* kModules;
 
 BOOL LoadAPIS();
 FARPROC GetProc(HMODULE dll, DWORD hash);

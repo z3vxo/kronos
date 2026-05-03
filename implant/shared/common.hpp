@@ -10,7 +10,7 @@
 
 
 template<typename T>
-T* AllocMemory(SIZE_T size) {
+T* AllocMemory(size_t size) {
 	return (T*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 }
 
@@ -18,5 +18,5 @@ inline PTEB GetTeb() { return (PTEB)__readgsqword(0x30); }
 inline PPEB GetPEB() { return (PPEB)GetTeb()->ProcessEnvironmentBlock; }
 
 BOOL InitAgent();
-BOOL RunHades();
+
 DWORD Hasher(PCHAR str);

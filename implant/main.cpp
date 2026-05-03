@@ -1,7 +1,6 @@
-#include "shared/common.hpp"
+#include "hades/hades.h"
 
 int main() {
-	
 	
 
 

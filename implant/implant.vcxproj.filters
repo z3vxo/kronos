@@ -33,7 +33,7 @@
     <ClCompile Include="utils\bytes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hades\Hadesmain.cpp">
+    <ClCompile Include="hades\hades.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="networkd\network.cpp">
@@ -57,6 +57,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="networkd\network.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="hades\hades.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
