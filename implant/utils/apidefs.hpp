@@ -26,6 +26,7 @@
 #define HASHED_OpenRequest				 0x15eddc50
 #define HASHED_SendRequest				 0xeda89fa7
 #define HASHED_InternetReadFile			 0x43d53dd0
+#define HASHED_HttpQueryInfoA            0x94887ec7
 #define HASHED_InternetCloseHandle		 0x54ea3e04
 #define HASHED_InternetSetOptionA		 0x2a15e3ce
 #define HASHED_NtQueryInformationProcess 0x8047d43f

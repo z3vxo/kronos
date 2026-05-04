@@ -143,9 +143,8 @@ BOOL InitAgent() {
 	g_Network =  AllocMemory <Network>  (sizeof(Network));
 	if (!LoadAPIS()) { return FALSE; }
 	if (!LoadConfig()) { return FALSE; }
-	return TRUE;
 	
-	*g_Network = Network();
+	
 	
 
 
@@ -165,7 +164,8 @@ BOOL InitAgent() {
 	DWORD PPID = GetPPID();
 	BOOL Arch         = (sizeof(void*) != 4);
 	BOOL IsElev       = IsElevated();
-	GetVer(&Minor, &Major, &Build);
+	GetVer(&Major, &Minor, &Build);
+	*g_Network = Network(HadesID);
 
 
 	

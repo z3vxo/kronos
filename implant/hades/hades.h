@@ -1,11 +1,20 @@
 #pragma once
 #include <Windows.h>
 #include "../shared/nt.hpp"
+#include "../shared/common.hpp"
+#include "../networkd/network.hpp"
+#include "../utils/bytes.hpp"
 #include <wininet.h>
 #include <iphlpapi.h>
 
 
 #define DECL(x) decltype(x) * x;
+
+#ifdef _DEBUG
+#define DEBUG_LOG(msg, ...) printf(msg "\n", ##__VA_ARGS__)
+#else
+#define DEBUG_LOG(msg, ...)
+#endif
 
 
 typedef struct {
