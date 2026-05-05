@@ -3,7 +3,8 @@
 
 class bytes {
 public:
-	INT index;
+	INT ReadIndex;
+	INT WriteIndex;
 	INT size;
 	PBYTE InData;
 	PBYTE OutData;

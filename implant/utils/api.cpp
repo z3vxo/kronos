@@ -82,7 +82,7 @@ BOOL LoadAPIS() {
 
 	hades->Modules.K32 = GetModule(HASHED_Kernel322);;
 	if (hades->Modules.K32) {
-
+		hades->WinApis.MoveFileA          = (decltype(hades->WinApis.MoveFileA))          GetProc(hades->Modules.K32, HASHED_MoveFileA);
 		hades->WinApis.LoadLibraryA       = (decltype(hades->WinApis.LoadLibraryA))       GetProc(hades->Modules.K32, HASHED_LoadLibraryA);
 		hades->WinApis.GetComputerNameExA = (decltype(hades->WinApis.GetComputerNameExA)) GetProc(hades->Modules.K32, HASHED_GetComputerNameExA);
 		hades->WinApis.GetModuleFileNameA = (decltype(hades->WinApis.GetModuleFileNameA)) GetProc(hades->Modules.K32, HASHED_GetModuleFileNameA);

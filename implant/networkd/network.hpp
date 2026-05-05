@@ -28,8 +28,10 @@ class Network {
 	DWORD reqFlags;
 	ULONG HadesID;
 
-	BOOL DoPost(PBYTE toSend, SIZE_T len, DomainEntry* domain, ULONG id = 0);
-	BOOL DoGet(PBYTE* ResponseBuf, SIZE_T size, DomainEntry* domain, ULONG id, UINT * FinalSize, UINT * capacity);
+	BOOL DoPostSingle(PBYTE toSend, SIZE_T len, DomainEntry* domain);
+	BOOL DoGetSingle(PBYTE* ResponseBuf, SIZE_T size, DomainEntry* domain, ULONG id, UINT* FinalSize, UINT* capacity);
+	BOOL DoPost(PBYTE toSend, SIZE_T len);
+	BOOL DoGet(PBYTE* ResponseBuf, SIZE_T size, ULONG id, UINT* FinalSize, UINT* capacity);
 	void NetSleep(LONGLONG time);
 
 public:

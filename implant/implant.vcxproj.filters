@@ -39,6 +39,9 @@
     <ClCompile Include="networkd\network.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cmds\cmds.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="utils\apidefs.hpp">
@@ -60,6 +63,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="hades\hades.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cmds\cmds.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
