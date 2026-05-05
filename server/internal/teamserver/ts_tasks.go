@@ -2,8 +2,8 @@ package teamserver
 
 import (
 	"crypto/rand"
-	"encoding/hex"
-	"encoding/json"
+    "encoding/binary"	
+    "encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -11,10 +11,10 @@ import (
 	"github.com/z3vxo/kronos/internal/httputil"
 )
 
-func GenTaskID() string {
-	bytes := make([]byte, 3)
-	rand.Read(bytes)
-	return hex.EncodeToString(bytes)
+func GenTaskID() uint32 {
+	var b [4]byte
+	rand.Read(b[:])
+	return binary.LittleEndian.Uint32(b[:])
 }
 
 func (ts *TeamServer) CommandNewHandler(w http.ResponseWriter, r *http.Request) {

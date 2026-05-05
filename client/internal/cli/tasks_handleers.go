@@ -48,7 +48,7 @@ func (c *CLI) ListTasks() {
 		return
 	}
 
-	c.CacheMgr.TaskIdMap = make(map[int]string)
+	c.CacheMgr.TaskIdMap = make(map[uint32]uint32)
 
 	t := table.NewWriter()
 	t.SetStyle(table.StyleLight)
@@ -85,9 +85,10 @@ func (c *CLI) ListTasks() {
 }
 
 func (c *CLI) DeleteTask(id string) {
-	var name string
-	if ID, err := strconv.Atoi(id); err == nil {
-		taskId, ok := c.CacheMgr.TaskIdMap[ID]
+	var name uint32
+	ID, err := strconv.ParseUint(id, 10, 32)
+	if err == nil {
+		taskId, ok := c.CacheMgr.TaskIdMap[uint32(ID)]
 		if !ok {
 			c.ui.Send(ui.BAD.Sprint("Unknown agent ID, run 'tasks' to view or refresh"))
 			return
@@ -95,10 +96,11 @@ func (c *CLI) DeleteTask(id string) {
 		name = taskId
 
 	} else {
-		name = id
+		name = uint32(ID)
 	}
+	
 
-	if err := c.http.DoDelete(fmt.Sprintf("ts/rest/tasks/delete/%s/%s", c.ClientInUse, name), nil); err != nil {
+	if err := c.http.DoDelete(fmt.Sprintf("ts/rest/tasks/delete/%s/%d", c.ClientInUse, name), nil); err != nil {
 		c.ui.Send(ui.BAD.Sprintf("Error Deleting Task: %s", err))
 		return
 	}

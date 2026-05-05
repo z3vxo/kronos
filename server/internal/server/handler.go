@@ -16,7 +16,7 @@ type AgentHandler struct {
 	Host   string
 }
 
-func ConvertToWindowsVer(major, minor, build int32) string {
+func ConvertToWindowsVer(major, minor, build uint32) string {
 	switch {
 	case major == 10 && minor == 0 && build > 22000:
 		return fmt.Sprintf("Windows 11 (Build %d)", build)
@@ -51,7 +51,7 @@ type UserDetails struct {
 
 type DataDetails struct {
 	AgentID string `json:"agent_id"`
-	TaskID  int32  `json:"task_id"`
+	TaskID  uint32  `json:"task_id"`
 	Output  string `json:"output"`
 }
 
@@ -73,7 +73,7 @@ func (h *AgentHandler) HandleClientRegister(ip string, r *bytes.Reader) error {
 	err = h.DB.InsertAgent(Client.Guid, CodeName,
 		Client.User, Client.Host,
 		Client.InternaIP, Client.ExternalIP,
-		Client.ProcPath, ver, Client.Pid, Client.Ppid, Client.IsElev, Client.Arch)
+		Client.ProcPath, ver, Client.Pid, Client.Ppid,Client.Tid, Client.IsElev, Client.Arch)
 	if err != nil {
 		return err
 	}

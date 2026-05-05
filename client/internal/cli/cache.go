@@ -7,8 +7,8 @@ type InfoCache struct {
 	User         string
 	Host         string
 	ProcPath     string
-	Pid          int32
-	PPid         int32
+	Pid          uint32
+	PPid         uint32
 	WinVer       string
 	InternalIP   string
 	ExternalIP   string
@@ -20,14 +20,14 @@ type InfoCache struct {
 
 type TaskMapping struct {
 	Guid   string
-	TaskID int
+	TaskID uint32
 }
 
 type Cache struct {
 	mu             sync.RWMutex
 	AgentInfoCache *InfoCache
 	AgentsCache    []Agent
-	TaskIdMap      map[int]string
+	TaskIdMap      map[uint32]uint32
 	ListenersIdMap map[int]string
 	AgentsIdMap    map[int]string
 }

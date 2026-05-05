@@ -3,7 +3,7 @@ package cli
 // ---- AGENT STRUCTS ----
 
 type Agent struct {
-	AgentID    int32  `json:"agent_id"`
+	AgentID    uint32  `json:"agent_id"`
 	CodeName   string `json:"code_name"`
 	Username   string `json:"username"`
 	Hostname   string `json:"hostname"`
@@ -21,8 +21,8 @@ type AgentInfoResp struct {
 	User         string `json:"username"`
 	Host         string `json:"hostname"`
 	ProcPath     string `json:"proc_path"`
-	Pid          int32  `json:"pid"`
-	PPid         int32  `json:"ppid"`
+	Pid          uint32  `json:"pid"`
+	PPid         uint32  `json:"ppid"`
 	WinVer       string `json:"win_version"`
 	InternalIP   string `json:"internal_ip"`
 	ExternalIP   string `json:"external_ip"`
@@ -45,18 +45,18 @@ type ResolveResp struct {
 type TaskEntry struct {
 	Cmd_type int    `json:"type"`
 	Guid     string `json:"guid"`
-	TaskID   int    `json:"task_id"`
+	TaskID   uint32    `json:"task_id"`
 	Param1   string `json:"param_1"`
 	Param2   string `json:"param_2"`
 }
 
 type Task struct {
-	ID       int    `json:"id"`
+	ID       uint32    `json:"id"`
 	Guid     string `json:"guid"`
 	CmdCode  int    `json:"cmd_code"`
 	Param1   string `json:"param_1"`
 	Param2   string `json:"param_2"`
-	TaskID   string `json:"task_id"`
+	TaskID   uint32 `json:"task_id"`
 	TaskedAt int    `json:"tasked_at"`
 }
 

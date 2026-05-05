@@ -12,11 +12,11 @@ type Reader struct {
 	err error
 }
 
-func (r *Reader) Read4() int32 {
+func (r *Reader) Read4() uint32 {
 	if r.err != nil {
 		return 0
 	}
-	var val int32
+	var val uint32
 	r.err = binary.Read(r.r, binary.LittleEndian, &val)
 	return val
 }
@@ -39,7 +39,7 @@ func (r *Reader) Read2() int16 {
 	return val
 }
 
-func (r *Reader) ReadString(len int32) string {
+func (r *Reader) ReadString(len uint32) string {
 	if r.err != nil {
 		return ""
 	}
@@ -72,20 +72,20 @@ func (r *Reader) ReadString(len int32) string {
 */
 
 type ClientRegister struct {
-	Guid       int32
+	Guid       uint32
 	User       string
 	Host       string
 	InternaIP  string
 	ExternalIP string
 	ProcPath   string
-	Pid        int32
-	Tid        int32
-	Ppid       int32
+	Pid        uint32
+	Tid        uint32
+	Ppid       uint32
 	IsElev     byte
 	Arch       byte
-	Minor      int32
-	Major      int32
-	Build      int32
+	Minor      uint32
+	Major      uint32
+	Build      uint32
 }
 
 func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, error) {
@@ -110,19 +110,19 @@ func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, err
 		fmt.Println(rd.err);
 		return ClientRegister{}, rd.err
 	}
-	fmt.Println(guid)
-	fmt.Println(Username)
-	fmt.Println(Hostname)
-	fmt.Println(InternalIP)
-	fmt.Println(ProcessPath)
-	fmt.Println(Pid)
-	fmt.Println(Tid)
-	fmt.Println(PPid)
-	fmt.Println(IsElev)
-	fmt.Println(Arch)
-	fmt.Println(Minor)
-	fmt.Println(Major)
-	fmt.Println(BuildVer)
+	fmt.Printf("guid: %d\n", guid)
+	fmt.Printf("username: %s\n", Username)
+	fmt.Printf("hostname: %s\n", Hostname)
+	fmt.Printf("InternaIP: %s\n", InternalIP)
+	fmt.Printf("Path: %s\n",ProcessPath)
+	fmt.Printf("PID: %d\n",Pid)
+	fmt.Printf("TID: %d\n",Tid)
+	fmt.Printf("PPID: %d\n",PPid)
+	fmt.Printf("isElev: %d\n",IsElev)
+	fmt.Printf("Arch: %d\n",Arch)
+	fmt.Printf("Minor: %d\n",Minor)
+	fmt.Printf("Major: %d\n",Major)
+	fmt.Printf("build: %d\n",BuildVer)
 
 	Res := ClientRegister{
 		Guid:       guid,
@@ -145,8 +145,8 @@ func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, err
 }
 
 type OutputEntrys struct {
-	Type   int32
-	TaskID int32
+	Type   uint32
+	TaskID uint32
 	Output []byte
 }
 

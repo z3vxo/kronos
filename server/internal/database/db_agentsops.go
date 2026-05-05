@@ -19,7 +19,8 @@ func (db *DB) ListAgents() ([]Agent, error) {
 	defer rows.Close()
 
 	var AgentList []Agent
-	i := 1
+	var i uint32
+	i = 1
 	for rows.Next() {
 		var a Agent
 		a.AgentID = i
@@ -53,14 +54,14 @@ func (db *DB) ResolveCodename(name string) (string, error) {
 	return guid, nil
 }
 
-func (db *DB) InsertAgent(guid int32, codeName, User, Host, InIP, ExIP, ProcPath, WinVer string, Pid, PPid int32, IsElev, Arch byte) error {
+func (db *DB) InsertAgent(guid uint32, codeName, User, Host, InIP, ExIP, ProcPath, WinVer string, Pid, PPid, tid uint32, IsElev, Arch byte) error {
 	query := `INSERT INTO agents(guid, code_name,
 	  						username, hostname,
 							external_ip, internal_ip,
-							is_elevated, arch, pid,ppid, process_path,
+							is_elevated, arch, pid,ppid,tid, process_path,
 							windows_version, session_key, last_checkin, registration_date) VALUES(
-							?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	_, err := db.conn.Exec(query, guid, codeName, User, Host, ExIP, InIP, IsElev, Arch, Pid, PPid, ProcPath, WinVer, "32324234", time.Now().UTC().Unix(), time.Now().UTC().Unix())
+							?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := db.conn.Exec(query, guid, codeName, User, Host, ExIP, InIP, IsElev, Arch, Pid, PPid,tid, ProcPath, WinVer, "32324234", time.Now().UTC().Unix(), time.Now().UTC().Unix())
 	if err != nil {
 		fmt.Println(err)
 		return err

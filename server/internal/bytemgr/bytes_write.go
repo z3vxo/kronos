@@ -13,11 +13,14 @@ func Write4(w io.Writer, val any) error {
 }
 
 func WriteString(w io.Writer, str string) error {
-	strLen := uint32(len(str))
+	strLen := uint32(len(str) + 1)
 	if err := Write4(w, strLen); err != nil {
 		return err
 	}
 	if _, err := w.Write([]byte(str)); err != nil {
+		return err
+	}
+	if _, err := w.Write([]byte{0}); err != nil {
 		return err
 	}
 	return nil
@@ -48,7 +51,7 @@ func CraftCmdBytes(tasks []database.Task) ([]byte, error) {
 		if err := Write4(&buffer, int32(c.CmdCode)); err != nil {
 			return nil, err
 		}
-		if err := WriteString(&buffer, c.TaskID); err != nil {
+		if err := Write4(&buffer, c.TaskID); err != nil {
 			return nil, err
 		}
 
