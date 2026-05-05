@@ -60,6 +60,7 @@ func (c *CLI) SetupDispatchTable() {
 		"ps":        c.HandlePS,
 		"ai":        c.ai.HandleAI,
 		"tasks":     c.ParseTasks,
+		"mv":        c.HandleMV,
 	}
 }
 

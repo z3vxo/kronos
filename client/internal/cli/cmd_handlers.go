@@ -55,3 +55,38 @@ func (c *CLI) HandlePS(args []string) {
 	c.ui.PrintTitle(fmt.Sprintf("Tasked %s", c.ui.InUse))
 
 }
+
+func (c *CLI) HandleMV(args []string) {
+	if !c.requireAgent() {
+		return
+	}
+	if len(args) == 0 {
+		c.ui.Send(ui.BAD.Sprint("Usage: ps <args>"))
+		return
+	}
+	if len(args) > 2 {
+		c.ui.Send(ui.BAD.Sprintf("Error: expected 2 args got %d; qoute files containing spaces", len(args)))
+		return
+	}
+	
+	code := CmdCodeMap["mv"]
+	payload := TaskEntry{
+		Guid: c.ClientInUse,
+		Cmd_type: code,
+		Param1: args[0],
+		Param2: args[1],
+	}
+
+	data, err := json.Marshal(&payload)
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprint("Failed marshaling json"))
+		return
+	}
+
+	if err := c.http.DoPost("ts/rest/tasks/new", data, nil); err != nil {
+		c.ui.Send(ui.WARN.Sprintf("Failed Inserting command: %s", err))
+	}
+
+	c.ui.PrintTitle(fmt.Sprintf("Tasked %s", c.ui.InUse))
+
+}
