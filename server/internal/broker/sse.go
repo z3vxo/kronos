@@ -43,16 +43,20 @@ func (b *Broker) RemoveSubscriber(id string) {
 }
 
 func (b *Broker) Broadcast(msg string) {
-	fmt.Println("CALLED")
-
 	b.mu.RLock()
-	defer b.mu.RUnlock()
-
-	for _, ch := range b.Channels {
+	var dead []string
+	for id, ch := range b.Channels {
 		select {
 		case ch <- msg:
 		default:
+			dead = append(dead, id)
 		}
+	}
+	b.mu.RUnlock()
+
+	for _, id := range dead {
+		fmt.Printf("Broker: dropping slow subscriber %s\n", id)
+		b.RemoveSubscriber(id)
 	}
 }
 

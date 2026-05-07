@@ -110,20 +110,8 @@ func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, err
 		fmt.Println(rd.err);
 		return ClientRegister{}, rd.err
 	}
-	fmt.Printf("guid: %d\n", guid)
-	fmt.Printf("username: %s\n", Username)
-	fmt.Printf("hostname: %s\n", Hostname)
-	fmt.Printf("InternaIP: %s\n", InternalIP)
-	fmt.Printf("Path: %s\n",ProcessPath)
-	fmt.Printf("PID: %d\n",Pid)
-	fmt.Printf("TID: %d\n",Tid)
-	fmt.Printf("PPID: %d\n",PPid)
-	fmt.Printf("isElev: %d\n",IsElev)
-	fmt.Printf("Arch: %d\n",Arch)
-	fmt.Printf("Minor: %d\n",Minor)
-	fmt.Printf("Major: %d\n",Major)
-	fmt.Printf("build: %d\n",BuildVer)
-
+	fmt.Printf("New Client: %s\n", Username)
+	
 	Res := ClientRegister{
 		Guid:       guid,
 		User:       Username,
@@ -145,7 +133,7 @@ func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, err
 }
 
 type OutputEntrys struct {
-	Type   uint32
+	//Type   uint32
 	TaskID uint32
 	Output []byte
 }
@@ -153,12 +141,14 @@ type OutputEntrys struct {
 // Looped
 /* [OUTPUT COUNT] 4 BYTES
  * ->
- * [Task ID] 4 BYTES
- * ->
- * [CMD TYPE] 4 BYTES | 0 == Server does nothing, 1 == File Content(uses task ID for Map lookup)
- * ->
- * [OUTPUT LEN]  4 BYTES
- * [OUTPUT DATA] N BYTES
+ 	[TASK ID] 4 bytes
+ 	->
+ 	[Status] 4 bytes
+ 		- if 1 -> read4() to get error code
+ 		-if 0 below
+ 	[HAS DATA] 4 BYTES
+ 		- if 1 -> done 
+ 		- if 0 -> read4() to get len -> readString to get data
  */
 
 func ParseClientOutput(r *bytes.Reader) ([]OutputEntrys, error) {
@@ -170,13 +160,27 @@ func ParseClientOutput(r *bytes.Reader) ([]OutputEntrys, error) {
 	for range Count {
 		var o OutputEntrys
 		o.TaskID = rd.Read4()
-		o.Type = rd.Read4()
-		OutputLen := rd.Read4()
-		o.Output = []byte(rd.ReadString(OutputLen))
-		if rd.err != nil {
-			return nil, rd.err
+		Status := rd.Read4()
+		if Status == 1 {
+			errorCode := rd.Read4()
+			ErrorStr := ErrorCodeMap[errorCode]
+			o.Output = []byte(ErrorStr)
+			Entrys = append(Entrys, o)
+			continue
 		}
+		hasData := rd.Read4()
+		if hasData == 1 {
+			o.Output = []byte("Agent Completed task")
+			Entrys = append(Entrys, o)
+			continue
+		}
+		dataLen := rd.Read4()
+		o.Output = []byte(rd.ReadString(dataLen))
 		Entrys = append(Entrys, o)
+	}
+
+	if rd.err != nil {
+		return nil, rd.err
 	}
 
 	return Entrys, nil

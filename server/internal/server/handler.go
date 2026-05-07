@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/z3vxo/kronos/internal/broker"
 	"github.com/z3vxo/kronos/internal/bytemgr"
@@ -98,24 +99,29 @@ func (h *AgentHandler) HandleClientRegister(ip string, r *bytes.Reader) error {
 func (h *AgentHandler) HandleAgentOutput(r *bytes.Reader, id string) {
 	OutputEntrys, err := bytemgr.ParseClientOutput(r)
 	if err != nil {
+		fmt.Println("Hit Error")
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(len(OutputEntrys))
-
+	
 	for _, o := range OutputEntrys {
+
 		data, err := json.Marshal(Event{
-			CmdType: 2,
-			Data: DataDetails{
+		CmdType: 2,
+		Data: DataDetails{
 				AgentID: id,
-				TaskID:  o.TaskID,
-				Output:  string(o.Output),
-			},
+		 		TaskID:  o.TaskID,
+		 		Output:  string(o.Output),
+		 	},
 		})
 		if err != nil {
-			fmt.Println(err)
-			return
+		 	fmt.Println(err)
+		 	return
 		}
 		h.Broker.Broadcast(string(data))
+		err = h.DB.DeleteTask(id, strconv.FormatUint(uint64(o.TaskID), 10)) 
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }

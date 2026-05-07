@@ -57,10 +57,12 @@ func (c *CLI) SetupDispatchTable() {
 		"listeners": c.ParseListenerCmd,
 		"info":      c.ListAgentInfo,
 		"help":      c.Help,
+		"pwd":       c.HandlePWD,
 		"ps":        c.HandlePS,
 		"ai":        c.ai.HandleAI,
 		"tasks":     c.ParseTasks,
 		"mv":        c.HandleMV,
+		"cd":        c.HandleCD,
 	}
 }
 

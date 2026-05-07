@@ -68,6 +68,7 @@ func (h *AgentHandler) AgentCheckInHandler(w http.ResponseWriter, r *http.Reques
 
 func (h *AgentHandler) AgentUploadHandler(w http.ResponseWriter, r *http.Request) {
 	AgentGuid := r.Header.Get("X-Agent-ID")
+	fmt.Println(AgentGuid)
 	Host := r.Host
 	if reqh, _, err := net.SplitHostPort(Host); err == nil {
 		Host = reqh
@@ -79,12 +80,10 @@ func (h *AgentHandler) AgentUploadHandler(w http.ResponseWriter, r *http.Request
 	defer r.Body.Close()
 
 	body, err := io.ReadAll(r.Body)
-	fmt.Println(len(body))
 	if err != nil {
 		http.Error(w, "failed", http.StatusInternalServerError)
 		return
 	}
-	fmt.Printf("URL=%s, USER=%s, LEN=%d, HEX=%x\n", r.URL.Path, r.UserAgent(), len(body), body[:min(16, len(body))])
 
 	reader := bytes.NewReader(body)
 	var cmdType int32
@@ -93,11 +92,10 @@ func (h *AgentHandler) AgentUploadHandler(w http.ResponseWriter, r *http.Request
 		http.Error(w, "failed reading cmd type", http.StatusInternalServerError)
 		return
 	}
-	fmt.Println(cmdType)
+	
 
 	switch cmdType {
 	case CMD_TYPE_REGISTER:
-		fmt.Println("REGISTER HIT")
 
 		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
 		err := h.HandleClientRegister(ip, reader)
@@ -108,10 +106,10 @@ func (h *AgentHandler) AgentUploadHandler(w http.ResponseWriter, r *http.Request
 		w.Write([]byte("SUCCESS"))
 
 	case CMD_TYPE_OUTPUT:
-		if AgentGuid == "" {
-			Send404(w)
-			return
-		}
+		// if AgentGuid == "" {
+		// 	Send404(w)
+		// 	return
+		// }
 		go h.HandleAgentOutput(reader, AgentGuid)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))

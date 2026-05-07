@@ -42,7 +42,8 @@ func (db *DB) GetTasks(id string) ([]Task, error) {
 	return tasks, nil
 }
 
-func (db *DB) DeleteTask(guid, id string) error {
+func (db *DB) DeleteTask(guid string, id string) error {
+	fmt.Printf("Deleting %s\n", guid)
 	query := `DELETE FROM commands WHERE task_id = ? AND guid = ?`
 
 	_, err := db.conn.Exec(query, id, guid)
