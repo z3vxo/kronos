@@ -26,6 +26,28 @@ void bytes::InitRead(PBYTE data, INT DataSize) {
 }
 
 
+UINT bytes::BeginTask() {
+	UINT taskID = this->Read4();
+	this->Write4(taskID);
+	return taskID;
+}
+
+void bytes::EndOk() {
+	this->Write4(STATUS_OK);
+	this->Write4(RESP_NO_DATA);
+}
+
+void bytes::EndErr(UINT errCode) {
+	this->Write4(STATUS_ERROR);
+	this->Write4(errCode);
+}
+
+void bytes::EndOkData(PBYTE data, UINT len) {
+	this->Write4(STATUS_OK);
+	this->Write4(RESP_HAS_DATA);
+	this->Write4(len);
+	this->WriteString(data, len);
+}
 
 
 UINT bytes::Read4() {
@@ -35,8 +57,31 @@ UINT bytes::Read4() {
 	return val;
 }
 
-void bytes::ReadString(PBYTE buffer, UINT len) {
-	memcpy(buffer, this->InData + this->ReadIndex, len);
+PCHAR bytes::ReadString(UINT len) {
+
+	PCHAR buf = AllocMemory<CHAR>(len + 1);
+	if (!buf) return NULL;
+
+	PBYTE src = this->InData + this->ReadIndex;
+	for (UINT i = 0; i < len; i++) {
+		buf[i] = (CHAR)src[i];
+	}
+	buf[len] = '\0';
+
+	this->ReadIndex += len;
+	return buf;
+}
+
+void bytes::FreeString(PCHAR s) {
+	if (s) HeapFree(GetProcessHeap(), 0, s);
+}
+
+void bytes::ReadInto(PBYTE dst, UINT len) {
+
+	PBYTE src = this->InData + this->ReadIndex;
+	for (UINT i = 0; i < len; i++) {
+		dst[i] = src[i];
+	}
 	this->ReadIndex += len;
 }
 

@@ -43,7 +43,9 @@ typedef struct {
 	struct _WINAPIS {
 
 		DECL(ReadFile);
+		DECL(GetCurrentDirectoryA)
 		DECL(MoveFileA);
+		DECL(SetCurrentDirectoryA);
 		DECL(GetModuleFileNameA);
 		DECL(GetComputerNameExA);
 		DECL(LoadLibraryA);

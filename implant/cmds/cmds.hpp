@@ -1,7 +1,6 @@
 #pragma once
 #include "../hades/hades.h"
 
-#define MSG_TYPE_OUTPUT 2
 
 
 class commanders {
@@ -12,6 +11,8 @@ class commanders {
 	void do_cat();
 	void do_rm();
 	void do_ls();
+	void do_cd();
+	void WriteError();
 
 public:
 	BOOL Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer);
