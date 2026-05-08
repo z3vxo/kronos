@@ -9,6 +9,15 @@
 #define HASHED_GetComputerNameExA		 0xcf275e49
 #define HASHED_HeapAlloc				 0x1c67db00
 #define HASHED_HeapFree					 0x4bdcb69a
+#define HASHED_NtQueryInformationToken	 0xdeb15a53
+#define HASHED_LookupPrivilegeNameA		 0xb409e14d
+#define HASHED_CreateFileA				 0xc5efccc1
+#define HASHED_ReadFile					 0x3fee4a9a
+#define HASHED_DeleteFileA				 0xc9a828c1
+#define HASHED_RemoveDirectoryA			 0x21763382
+#define HASHED_CopyFileA				 0x3bbf1812
+#define HASHED_FindFirstFileA			 0xf8eb0eb1
+#define HASHED_FindNextFileA			 0x25efdade
 #define HASHED_GetAdaptersInfo			 0xe0b877eb
 #define HASHED_GetCurrentDirectoryA		 0x4e36830e
 #define HASHED_SetCurrentDirectoryA  	 0x4e33070e

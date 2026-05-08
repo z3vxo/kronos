@@ -4,8 +4,10 @@
 
 
 BOOL RunHades() {
-	hades = AllocMemory<Hades>(sizeof(Hades));
+
 	
+	hades = AllocMemory<Hades>(sizeof(Hades));
+
 
 	if (!InitAgent()) {
 		DEBUG_LOG("Failed Loading\n");

@@ -37,12 +37,19 @@ typedef struct {
 		DECL(NtQueryInformationProcess);
 		DECL(RtlGetNtVersionNumbers);
 		DECL(NtDelayExecution);
+		DECL(NtQueryInformationToken);
 
 	} NtApis;
 
 	struct _WINAPIS {
 
 		DECL(ReadFile);
+		DECL(CreateFileA);
+		DECL(DeleteFileA);
+		DECL(RemoveDirectoryA);
+		DECL(FindFirstFileA);
+		DECL(FindNextFileA);
+		DECL(CopyFileA);
 		DECL(GetCurrentDirectoryA)
 		DECL(MoveFileA);
 		DECL(SetCurrentDirectoryA);
@@ -54,7 +61,8 @@ typedef struct {
 		DECL(CloseHandle);
 
 		DECL(GetUserNameA);
-		DECL(GetTokenInformation)
+		DECL(GetTokenInformation);
+		DECL(LookupPrivilegeNameA);
 
 
 		DECL(GetAdaptersInfo);

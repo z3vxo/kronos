@@ -4,7 +4,8 @@
 
 
 #define RTL_MAX_DRIVE_LETTERS 32
-#define NTAPI_SUCESS(Status) ((NTSTATUS)(Status)) >= 0)
+#define NTAPI_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
+
 
 typedef enum _PROCESSINFOCLASS
 {
@@ -89,6 +90,16 @@ extern "C" {
             OUT PVOID ProcessInformation,
             IN ULONG ProcessInformationLength,
             OUT OPTIONAL PULONG ReturnLength
+        );
+    NTSYSCALLAPI
+        NTSTATUS
+        NTAPI
+        NtQueryInformationToken(
+            _In_ HANDLE TokenHandle,
+            _In_ TOKEN_INFORMATION_CLASS TokenInformationClass,
+            _Out_writes_bytes_to_opt_(TokenInformationLength, *ReturnLength) PVOID TokenInformation,
+            _In_ ULONG TokenInformationLength,
+            _Out_ PULONG ReturnLength
         );
         NTSTATUS NTAPI NtDelayExecution(
             _In_ BOOLEAN Alertable,
