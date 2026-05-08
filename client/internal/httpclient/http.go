@@ -72,7 +72,7 @@ func fmtSize(n int) string {
 	}
 }
 
-func (c *Client) ConnectToSSE() error {
+func (c *Client) connectSSEOnce() error {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/ts/events", c.Hostname), nil)
 	if err != nil {
 		return err
@@ -87,9 +87,10 @@ func (c *Client) ConnectToSSE() error {
 		resp.Body.Close()
 		return fmt.Errorf("SSE connect failed: %s", resp.Status)
 	}
-
 	defer resp.Body.Close()
+
 	scanner := bufio.NewScanner(resp.Body)
+	scanner.Buffer(make([]byte, 64*1024), 10*1024*1024)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if !strings.HasPrefix(line, "data:") {
@@ -98,6 +99,7 @@ func (c *Client) ConnectToSSE() error {
 		raw := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
 		var event Event
 		if err := json.Unmarshal([]byte(raw), &event); err != nil {
+			fmt.Println(err)
 			continue
 		}
 		switch event.CmdType {
@@ -108,7 +110,6 @@ func (c *Client) ConnectToSSE() error {
 			c.UI.Send(ui.INFO.Sprint("New Agent Connected"))
 			c.UI.Send(ui.INFO.Sprintf_tab("Username: %s", event.User.Username))
 			c.UI.Send(ui.INFO.Sprintf_tab("Hostname: %s", event.User.HostName))
-
 		case TYPE_CMD_OUTPUT:
 			sep := strings.Repeat("-", min(len(event.Data.Output), 60))
 			c.UI.Send(PrintTitle(fmt.Sprintf("Agent called server, sent [%s]", fmtSize(len(event.Data.Output)))))
@@ -117,7 +118,19 @@ func (c *Client) ConnectToSSE() error {
 			continue
 		}
 	}
-	return nil
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	return fmt.Errorf("SSE stream closed")
+}
+
+func (c *Client) ConnectToSSE() {
+	for {
+		if err := c.connectSSEOnce(); err != nil {
+			c.UI.Send(ui.WARN.Sprintf("SSE disconnected: %s — reconnecting in 5s", err))
+		}
+		time.Sleep(5 * time.Second)
+	}
 }
 
 func (c *Client) DoDelete(enpoint string, out any) error {

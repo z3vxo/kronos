@@ -176,6 +176,7 @@ func ParseClientOutput(r *bytes.Reader) ([]OutputEntrys, error) {
 		}
 		dataLen := rd.Read4()
 		o.Output = []byte(rd.ReadString(dataLen))
+		fmt.Printf("Data: %s\n", string(o.Output))
 		Entrys = append(Entrys, o)
 	}
 

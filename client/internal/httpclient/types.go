@@ -20,7 +20,7 @@ type UserDetails struct {
 
 type DataDetails struct {
 	AgentID string `json:"agent_id"`
-	TaskID  int32  `json:"task_id"`
+	TaskID  uint32  `json:"task_id"`
 	Output  string `json:"output"`
 }
 

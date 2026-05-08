@@ -44,20 +44,14 @@ func (b *Broker) RemoveSubscriber(id string) {
 
 func (b *Broker) Broadcast(msg string) {
 	b.mu.RLock()
-	var dead []string
 	for id, ch := range b.Channels {
 		select {
 		case ch <- msg:
 		default:
-			dead = append(dead, id)
+			fmt.Printf("Broker: channel full for subscriber %s, dropping message\n", id)
 		}
 	}
 	b.mu.RUnlock()
-
-	for _, id := range dead {
-		fmt.Printf("Broker: dropping slow subscriber %s\n", id)
-		b.RemoveSubscriber(id)
-	}
 }
 
 func (b *Broker) EventHandler(w http.ResponseWriter, r *http.Request) {
@@ -82,11 +76,17 @@ func (b *Broker) EventHandler(w http.ResponseWriter, r *http.Request) {
 		case <-r.Context().Done():
 			return
 		case msg := <-ch:
-			fmt.Fprintf(w, "data: %s\n\n", msg)
+			if _, err := fmt.Fprintf(w, "data: %s\n\n", msg); err != nil {
+				fmt.Printf("Broker: write failed for subscriber %s: %v\n", id, err)
+				return
+			}
 			flusher.Flush()
 		case <-heart.C:
 			data, _ := json.Marshal(map[string]int{"type": 3})
-			fmt.Fprintf(w, "data: %s\n\n", data)
+			if _, err := fmt.Fprintf(w, "data: %s\n\n", data); err != nil {
+				fmt.Printf("Broker: heartbeat failed for subscriber %s: %v\n", id, err)
+				return
+			}
 			flusher.Flush()
 		}
 	}

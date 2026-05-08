@@ -36,10 +36,10 @@ func NewTeamServer() (*TeamServer, error) {
 
 	return &TeamServer{
 		httpServer: &http.Server{
-			Addr:         fmt.Sprintf("%s:%d", config.Cfg.TS.ListenInterface, config.Cfg.TS.Port),
-			ReadTimeout:  15 * time.Second,
-			WriteTimeout: 0,
-			IdleTimeout:  60 * time.Second,
+			Addr:              fmt.Sprintf("%s:%d", config.Cfg.TS.ListenInterface, config.Cfg.TS.Port),
+			ReadHeaderTimeout: 15 * time.Second,
+			WriteTimeout:      0,
+			IdleTimeout:       0,
 		},
 		SSE:       broker.NewBroker(),
 		Auth:      a,

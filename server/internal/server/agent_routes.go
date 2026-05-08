@@ -110,7 +110,7 @@ func (h *AgentHandler) AgentUploadHandler(w http.ResponseWriter, r *http.Request
 		// 	Send404(w)
 		// 	return
 		// }
-		go h.HandleAgentOutput(reader, AgentGuid)
+		h.HandleAgentOutput(reader, AgentGuid)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 

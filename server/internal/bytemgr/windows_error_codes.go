@@ -247,4 +247,18 @@ var ErrorCodeMap = map[uint32]string{
 	402: "ERROR_PROCESS_MODE_ALREADY_BACKGROUND: The process is already in background processing mode.",
 	403: "ERROR_PROCESS_MODE_NOT_BACKGROUND: The process is not in background processing mode.",
 	487: "ERROR_INVALID_ADDRESS: Attempt to access invalid address.",
+	// custom success below
+	488: "CP_SUCCESS: Succesfully copied files",
+	489: "CD_SUCCESS: Succesfully Changed Dirs",
+	490: "RM_SUCCESS: Succesfully Deleted File",
+	491: "RMDIR_SUCCESS: Succesfully Deleted Directory",
+	492: "MV_SUCCESS: Succesfully renamed file",
+
+	// custom error below
+	550: "ERROR_OUT_OF_MEMORY: Not enough memory to allocate",
+	551: "ERROR_TOKEN_SIZE: Failed Getting the total size of priv tokens",
+	552: "ERROR_FAILED_TOKENS: NtQueryInformationToken Failed getting privileges",
+	553: "ERROR_LOOKUPPRIV_FAILED: LookupPri"
+
+
 }

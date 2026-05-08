@@ -51,18 +51,23 @@ func NewCli() (*CLI, error) {
 
 func (c *CLI) SetupDispatchTable() {
 	c.dispatchTable = map[string]HandlerFunc{
-		"agents":    c.ParseAgentsCmd,
-		"use":       c.ResolveAgent,
-		"back":      c.Back,
-		"listeners": c.ParseListenerCmd,
-		"info":      c.ListAgentInfo,
-		"help":      c.Help,
-		"pwd":       c.HandlePWD,
-		"ps":        c.HandlePS,
-		"ai":        c.ai.HandleAI,
-		"tasks":     c.ParseTasks,
-		"mv":        c.HandleMV,
-		"cd":        c.HandleCD,
+		"agents":    	c.ParseAgentsCmd,
+		"use":       	c.ResolveAgent,
+		"back":      	c.Back,
+		"listeners": 	c.ParseListenerCmd,
+		"info":     	c.ListAgentInfo,
+		"help":      	c.Help,
+		"pwd":       	c.HandlePWD,
+		"ps":        	c.HandlePS,
+		"ai":        	c.ai.HandleAI,
+		"tasks":     	c.ParseTasks,
+		"mv":        	c.HandleMV,
+		"cd":        	c.HandleCD,
+		"cat":       	c.HandleCAT,
+		"rm":         	c.HandleRM,
+		"rmdir":        c.HandleRMDIR,
+		"cp":           c.HandleCP,
+		"get-privs":    c.HandleGETPRIVS,
 	}
 }
 
