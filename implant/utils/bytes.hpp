@@ -1,5 +1,5 @@
 #pragma once
-#include "../shared/common.hpp"
+#include "../hades/hades.h"
 
 #define MSG_TYPE_OUTPUT 2
 #define STATUS_OK 0

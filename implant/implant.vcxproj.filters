@@ -47,9 +47,6 @@
     <ClInclude Include="utils\apidefs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="shared\common.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="hades\config.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

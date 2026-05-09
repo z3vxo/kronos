@@ -9,6 +9,7 @@
 #define RM_SUCCESS	  490
 #define RMDIR_SUCCESS 491 
 #define MV_SUCCESS    492
+#define MKDIR_SUCCESS 493
 
 
 #define ERROR_OUT_OF_MEMORY 550
@@ -27,6 +28,7 @@ class commanders {
 	void do_cd();
 	void do_cp();
 	void do_rmdir();
+	void do_mkdir();
 
 
 public:
