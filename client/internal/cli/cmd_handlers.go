@@ -20,6 +20,7 @@ var CmdCodeMap = map[string]int{
 	"cp": 	 8,
 	"rmdir": 9,
 	"get-privs": 10,
+	"mkdir": 11,
 }
 
 
@@ -63,6 +64,31 @@ func(c *CLI) HandleRMDIR(args []string) {
 		return
 	}
 	c.sendTask("rmdir", strings.Join(args, " "), "")
+}
+
+func (c *CLI) HandleLS(args []string) {
+	if !c.requireAgent() {
+		return
+	}
+	var dir string
+	if len(args) == 0 {
+		dir = "."
+	} else {
+		dir = strings.Join(args, " ")
+	}
+
+	c.sendTask("ls", dir, "")
+}
+
+func (c *CLI) HandleMKDIR(args []string) {
+	if !c.requireAgent() {
+		return
+	}
+	if len(args) == 0 {
+		c.ui.Send(ui.BAD.Sprint("Usage: mkdir <dir>"))
+		return
+	}
+	c.sendTask("mkdir", strings.Join(args, " "), "")
 }
 
 func(c *CLI) HandleGETPRIVS(args []string) {

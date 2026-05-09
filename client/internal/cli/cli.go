@@ -66,8 +66,10 @@ func (c *CLI) SetupDispatchTable() {
 		"cat":       	c.HandleCAT,
 		"rm":         	c.HandleRM,
 		"rmdir":        c.HandleRMDIR,
+		"mkdir":        c.HandleMKDIR,
 		"cp":           c.HandleCP,
 		"get-privs":    c.HandleGETPRIVS,
+		"ls":           c.HandleLS,
 	}
 }
 

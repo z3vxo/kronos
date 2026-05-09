@@ -253,12 +253,13 @@ var ErrorCodeMap = map[uint32]string{
 	490: "RM_SUCCESS: Succesfully Deleted File",
 	491: "RMDIR_SUCCESS: Succesfully Deleted Directory",
 	492: "MV_SUCCESS: Succesfully renamed file",
+	493: "MKDIR_SUCCESS: Succesfully Created Directory",
 
 	// custom error below
 	550: "ERROR_OUT_OF_MEMORY: Not enough memory to allocate",
 	551: "ERROR_TOKEN_SIZE: Failed Getting the total size of priv tokens",
 	552: "ERROR_FAILED_TOKENS: NtQueryInformationToken Failed getting privileges",
-	553: "ERROR_LOOKUPPRIV_FAILED: LookupPri"
+	553: "ERROR_LOOKUPPRIV_FAILED: LookupPrivileg Failed",
 
 
 }
