@@ -71,6 +71,7 @@ typedef struct {
 		DECL(NtDelayExecution);
 		DECL(NtQueryInformationToken);
 		DECL(NtQuerySystemInformation);
+		DECL(NtOpenProcess);
 
 	} NtApis;
 
@@ -99,6 +100,7 @@ typedef struct {
 		DECL(GetUserNameA);
 		DECL(GetTokenInformation);
 		DECL(LookupPrivilegeNameA);
+		DECL(LookupAccountSidA);
 
 
 		DECL(GetAdaptersInfo);

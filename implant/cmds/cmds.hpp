@@ -11,7 +11,10 @@
 #define MV_SUCCESS    492
 #define MKDIR_SUCCESS 493
 
-#define TASK_TYPE_LS 3
+#define TASK_TYPE_GETPRIVS 3
+#define TASK_TYPE_LS 4
+#define TASK_PS_LIST 5
+#define END_SIG 0xFFFFFFFF
 #define STATUS_OK 0
 
 #define TASK_TYPE_NO_PARSE 0

@@ -107,6 +107,7 @@ BOOL LoadAPIS() {
 
 	hades->Modules.NTDLL = GetModule(HASHED_NTDLL);
 	if (hades->Modules.NTDLL) {
+		hades->NtApis.NtOpenProcess				= (decltype(hades->NtApis.NtOpenProcess))             GetProc(hades->Modules.NTDLL, HASHED_NtOpenProcess);
 		hades->NtApis.NtQuerySystemInformation  = (decltype(hades->NtApis.NtQuerySystemInformation))  GetProc(hades->Modules.NTDLL, HASHED_NtQuerySystemInformation);
 		hades->NtApis.NtQueryInformationToken   = (decltype(hades->NtApis.NtQueryInformationToken))   GetProc(hades->Modules.NTDLL, HASHED_NtQueryInformationToken);
 		hades->NtApis.RtlGetVersion				= (decltype(hades->NtApis.RtlGetVersion))			  GetProc(hades->Modules.NTDLL, HASHED_RtlGetVersion);
@@ -136,6 +137,7 @@ BOOL LoadAPIS() {
 	hades->Modules.ADVAPI32 = hades->WinApis.LoadLibraryA(buf);
 
 	if (hades->Modules.ADVAPI32) {  
+		hades->WinApis.LookupAccountSidA    = (decltype(hades->WinApis.LookupAccountSidA))GetProc(hades->Modules.ADVAPI32, HASHED_LookupAccountSidA);
 		hades->WinApis.LookupPrivilegeNameA = (decltype(hades->WinApis.LookupPrivilegeNameA)) GetProc(hades->Modules.ADVAPI32, HASHED_LookupPrivilegeNameA);
 		hades->WinApis.GetUserNameA         = (decltype(hades->WinApis.GetUserNameA))         GetProc(hades->Modules.ADVAPI32, HASHED_GetUserNameA);
 		hades->WinApis.GetTokenInformation  = (decltype(hades->WinApis.GetTokenInformation))  GetProc(hades->Modules.ADVAPI32, HASHED_GetTokenInformation);

@@ -46,6 +46,8 @@
 #define HASHED_InternetSetOptionA					 0x2a15e3ce
 #define HASHED_NtQueryInformationProcess			 0x8047d43f
 #define HASHED_RtlGetNtVersionNumbers				 0x2e8c8a48
+#define HASHED_LookupAccountSidA					 0x932fbdf5
+#define HASHED_NtOpenProcess						 0x82f3259b
 #define HASHED_NtQuerySystemInformation				 0xb347a81f
 #define HASHED_NtDelayExecution						 0xdafbb9c9
 #define HASHED_WinHttpQueryHeaders					 0x17f2f0b8

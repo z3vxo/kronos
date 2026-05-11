@@ -325,6 +325,42 @@ typedef enum _SYSTEM_INFORMATION_CLASS
 } SYSTEM_INFORMATION_CLASS;
 
 
+#define InitializeObjectAttributes( p, n, a, r, s ) { \
+    (p)->Length = sizeof( OBJECT_ATTRIBUTES );          \
+    (p)->RootDirectory = r;                             \
+    (p)->Attributes = a;                                \
+    (p)->ObjectName = n;                                \
+    (p)->SecurityDescriptor = s;                        \
+    (p)->SecurityQualityOfService = NULL;               \
+    }
+
+typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR  Buffer;
+} UNICODE_STRING, * PUNICODE_STRING;
+
+typedef const UNICODE_STRING* PCUNICODE_STRING;
+
+typedef struct _OBJECT_ATTRIBUTES
+{
+    ULONG Length;
+    HANDLE RootDirectory;
+    PCUNICODE_STRING ObjectName;
+    ULONG Attributes;
+    PSECURITY_DESCRIPTOR SecurityDescriptor;
+    PSECURITY_QUALITY_OF_SERVICE SecurityQualityOfService;
+} OBJECT_ATTRIBUTES, * POBJECT_ATTRIBUTES;
+
+typedef const OBJECT_ATTRIBUTES* PCOBJECT_ATTRIBUTES;
+
+typedef struct _CLIENT_ID
+{
+    HANDLE UniqueProcess;
+    HANDLE UniqueThread;
+} CLIENT_ID, * PCLIENT_ID;
+
+
 
 extern "C" {
     NTSYSAPI NTSTATUS NTAPI RtlGetVersion(PRTL_OSVERSIONINFOW);
@@ -375,6 +411,15 @@ extern "C" {
                 _In_ ULONG SystemInformationLength,
                 _Out_opt_ PULONG ReturnLength
             );
+        NTSYSCALLAPI
+            NTSTATUS
+            NTAPI
+            NtOpenProcess(
+                _Out_ PHANDLE ProcessHandle,
+                _In_ ACCESS_MASK DesiredAccess,
+                _In_ PCOBJECT_ATTRIBUTES ObjectAttributes,
+                _In_opt_ PCLIENT_ID ClientId
+            );
 }
 
 
@@ -391,11 +436,11 @@ typedef struct _PROCESS_BASIC_INFORMATION
 } PROCESS_BASIC_INFORMATION, * PPROCESS_BASIC_INFORMATION;
 
 
-typedef struct _UNICODE_STRING {
-    USHORT Length;
-    USHORT MaximumLength;
-    PWSTR  Buffer;
-} UNICODE_STRING, * PUNICODE_STRING;
+
+
+
+
+
 
 typedef struct _STRING
 {
@@ -530,11 +575,7 @@ typedef PVOID PACTIVATION_CONTEXT;
 typedef PVOID PAPI_SET_NAMESPACE;
 
 
-typedef struct _CLIENT_ID
-{
-    HANDLE UniqueProcess;
-    HANDLE UniqueThread;
-} CLIENT_ID, * PCLIENT_ID;
+
 
 typedef struct tagSOleTlsData
 {

