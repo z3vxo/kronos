@@ -138,51 +138,96 @@ type OutputEntrys struct {
 	Output []byte
 }
 
-// Looped
-/* [OUTPUT COUNT] 4 BYTES
- * ->
- 	[TASK ID] 4 bytes
- 	->
- 	[Status] 4 bytes
- 		- if 1 -> read4() to get error code
- 		-if 0 below
- 	[HAS DATA] 4 BYTES
- 		- if 1 -> done 
- 		- if 0 -> read4() to get len -> readString to get data
- */
+/*
+  [task output count] 4 bytes
+ // looped
+ [TASKID] 4 BYTES
+ [STATUS] 4 bytes -> if 0 == success read next, if 1 == read read4() for error code
+ [TASK_TYPE] 4 BYTES -> parse this, jump to handler and parse it, if task type == 0, continue below, single string output no further parsing
+ ------
+ [HAS_DATA] 4 BYTES -> if > 1 lookup in success map else below
+ [OUTPUT LEN] 4 BYTES
+ [OUTPUT DATA] N BYTES
+*/
 
 func ParseClientOutput(r *bytes.Reader) ([]OutputEntrys, error) {
-
 	rd := Reader{r: r}
-	var Entrys []OutputEntrys
-	Count := rd.Read4()
-
-	for range Count {
+	var entrys []OutputEntrys
+	count := rd.Read4()
+	for range count {
+		fmt.Println("================================")
 		var o OutputEntrys
 		o.TaskID = rd.Read4()
-		Status := rd.Read4()
-		if Status == 1 {
-			errorCode := rd.Read4()
-			ErrorStr := ErrorCodeMap[errorCode]
-			o.Output = []byte(ErrorStr)
-			Entrys = append(Entrys, o)
+		status := rd.Read4()
+		fmt.Printf("TASK_ID: %d\nStatus: %d\n", o.TaskID, status)
+
+		if status == 1 {
+
+			code := rd.Read4()
+			ErrorStr := ErrorCodeMap[code]
+ 			o.Output = []byte(ErrorStr)
+ 			entrys = append(entrys, o)
+ 			continue
+		}
+
+		TaskType := rd.Read4()
+		fmt.Printf("TASK_TYPE: %d\n", TaskType)
+		if TaskType > 0 {
+			if TaskType == 3 {
+				Total := rd.Read4()
+				fmt.Printf("TOTAL: %d\n", Total)
+				for range Total {
+					EntryLen := rd.Read4()
+					entryStr := rd.ReadString(EntryLen)
+					typeLen := rd.Read4()
+					typeStr := rd.ReadString(typeLen)
+					fmt.Printf("Name: %s | type %s\n", entryStr,typeStr)
+				}
+				continue
+			}
+		}
+		fmt.Println("================================")
+		HasData := rd.Read4()
+		if HasData > 1 {
+			SuccessString := SuccessMap[HasData]
+			o.Output = []byte(SuccessString)
+			entrys = append(entrys, o)
 			continue
 		}
-		hasData := rd.Read4()
-		if hasData == 1 {
-			o.Output = []byte("Agent Completed task")
-			Entrys = append(Entrys, o)
-			continue
-		}
-		dataLen := rd.Read4()
-		o.Output = []byte(rd.ReadString(dataLen))
-		fmt.Printf("Data: %s\n", string(o.Output))
-		Entrys = append(Entrys, o)
+		OutputLen := rd.Read4()
+		o.Output = []byte(rd.ReadString(OutputLen))
+		entrys = append(entrys, o)
 	}
+		if rd.err != nil {
+ 		return nil, rd.err
+ 	}
 
-	if rd.err != nil {
-		return nil, rd.err
+ 	return entrys, nil
+}
+
+
+
+
+/*
+	[total] 4 bytes
+	repeated
+	[entry len] 4 bytes
+	[entry string] N bytes
+	[type len] 4 bytes
+	[type string] N bytes
+*/
+
+func ParseLSOutput(r *Reader) string {
+	fmt.Println("Parsing LS")
+
+	Total := r.Read4()
+	fmt.Println(Total)
+	for range Total {
+		EntryLen := r.Read4()
+		entryStr := r.ReadString(EntryLen)
+		typeLen := r.Read4()
+		typeStr := r.ReadString(typeLen)
+		fmt.Printf("Name: %s | type %s\n", entryStr,typeStr)
 	}
-
-	return Entrys, nil
+	return ""
 }

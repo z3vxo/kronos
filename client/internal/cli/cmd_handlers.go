@@ -131,7 +131,7 @@ func (c *CLI) HandlePS(args []string) {
 		return
 	}
 
-	c.sendTask("ps", strings.Join(args, " "), "")
+	c.sendTask("ps", "", "")
 }
 
 func (c *CLI) HandlePWD(args []string) {
