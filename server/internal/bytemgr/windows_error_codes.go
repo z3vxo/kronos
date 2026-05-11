@@ -1,5 +1,8 @@
 package bytemgr
 
+
+const LS_END = 0xFFFFFFFF
+
 // ErrorCodeMap maps Windows system error codes (0-499) to
 // their symbolic name and description.
 var ErrorCodeMap = map[uint32]string{

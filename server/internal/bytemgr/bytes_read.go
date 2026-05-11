@@ -3,8 +3,9 @@ package bytemgr
 import (
 	"bytes"
 	"encoding/binary"
-	"io"
 	"fmt"
+	"io"
+	"strings"
 )
 
 type Reader struct {
@@ -91,8 +92,6 @@ type ClientRegister struct {
 func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, error) {
 	rd := &Reader{r: r}
 
-
-
 	guid := rd.Read4()
 	Username := rd.ReadString(rd.Read4())
 	Hostname := rd.ReadString(rd.Read4())
@@ -107,11 +106,11 @@ func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, err
 	Major := rd.Read4()
 	BuildVer := rd.Read4()
 	if rd.err != nil {
-		fmt.Println(rd.err);
+		fmt.Println(rd.err)
 		return ClientRegister{}, rd.err
 	}
 	fmt.Printf("New Client: %s\n", Username)
-	
+
 	Res := ClientRegister{
 		Guid:       guid,
 		User:       Username,
@@ -155,7 +154,6 @@ func ParseClientOutput(r *bytes.Reader) ([]OutputEntrys, error) {
 	var entrys []OutputEntrys
 	count := rd.Read4()
 	for range count {
-		fmt.Println("================================")
 		var o OutputEntrys
 		o.TaskID = rd.Read4()
 		status := rd.Read4()
@@ -165,28 +163,31 @@ func ParseClientOutput(r *bytes.Reader) ([]OutputEntrys, error) {
 
 			code := rd.Read4()
 			ErrorStr := ErrorCodeMap[code]
- 			o.Output = []byte(ErrorStr)
- 			entrys = append(entrys, o)
- 			continue
+			o.Output = []byte(ErrorStr)
+			entrys = append(entrys, o)
+			continue
 		}
 
 		TaskType := rd.Read4()
 		fmt.Printf("TASK_TYPE: %d\n", TaskType)
 		if TaskType > 0 {
 			if TaskType == 3 {
-				Total := rd.Read4()
-				fmt.Printf("TOTAL: %d\n", Total)
-				for range Total {
-					EntryLen := rd.Read4()
-					entryStr := rd.ReadString(EntryLen)
-					typeLen := rd.Read4()
-					typeStr := rd.ReadString(typeLen)
-					fmt.Printf("Name: %s | type %s\n", entryStr,typeStr)
-				}
+				o.Output = []byte(ParsePRIVOutput(&rd))
+				entrys = append(entrys, o)
+				continue
+			}
+			if TaskType == 4 {
+				o.Output = []byte(ParseLSOutput(&rd))
+				entrys = append(entrys, o)
+				continue
+			}
+			if TaskType == 5 {
+				o.Output = []byte(ParsePSOutput(&rd))
+				entrys = append(entrys, o)
 				continue
 			}
 		}
-		fmt.Println("================================")
+		
 		HasData := rd.Read4()
 		if HasData > 1 {
 			SuccessString := SuccessMap[HasData]
@@ -198,36 +199,61 @@ func ParseClientOutput(r *bytes.Reader) ([]OutputEntrys, error) {
 		o.Output = []byte(rd.ReadString(OutputLen))
 		entrys = append(entrys, o)
 	}
-		if rd.err != nil {
- 		return nil, rd.err
- 	}
+	if rd.err != nil {
+		return nil, rd.err
+	}
 
- 	return entrys, nil
+	return entrys, nil
 }
 
 
+func ParsePSOutput(r *Reader) string {
+	var b strings.Builder
 
+	for  {
+		val := r.Read4()
+		if val == LS_END {
+			return b.String()
+		}
 
-/*
-	[total] 4 bytes
-	repeated
-	[entry len] 4 bytes
-	[entry string] N bytes
-	[type len] 4 bytes
-	[type string] N bytes
-*/
+		ProcessName := r.ReadString(val)
+		Userlen := r.Read4()
+		UserStr := r.ReadString(Userlen)
+		PID := r.Read4();
+		fmt.Fprintf(&b, "%-40s %-10s %d\n", ProcessName, UserStr, PID)
+	}
+	fmt.Println(b.String())
+	return b.String()
+
+}
 
 func ParseLSOutput(r *Reader) string {
-	fmt.Println("Parsing LS")
+	var b strings.Builder
+
+	for {
+		val := r.Read4()
+		if val == LS_END {
+			return b.String()
+		}
+		EntryStr := r.ReadString(val)
+		TypeLen := r.Read4()
+		TypeStr := r.ReadString(TypeLen)
+		fmt.Fprintf(&b, "%-40s %s\n", EntryStr, TypeStr)
+	}
+	fmt.Println(b.String())
+	return b.String()
+}
+
+func ParsePRIVOutput(r *Reader) string {
+	var b strings.Builder
 
 	Total := r.Read4()
-	fmt.Println(Total)
 	for range Total {
 		EntryLen := r.Read4()
 		entryStr := r.ReadString(EntryLen)
 		typeLen := r.Read4()
 		typeStr := r.ReadString(typeLen)
-		fmt.Printf("Name: %s | type %s\n", entryStr,typeStr)
+		fmt.Fprintf(&b, "%-40s %s\n", entryStr, typeStr)
 	}
-	return ""
+	return b.String()
 }
