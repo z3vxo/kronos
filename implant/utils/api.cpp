@@ -107,7 +107,8 @@ BOOL LoadAPIS() {
 
 	hades->Modules.NTDLL = GetModule(HASHED_NTDLL);
 	if (hades->Modules.NTDLL) {
-		hades->NtApis.NtQueryInformationToken = (decltype(hades->NtApis.NtQueryInformationToken))     GetProc(hades->Modules.NTDLL, HASHED_NtQueryInformationToken);
+		hades->NtApis.NtQuerySystemInformation  = (decltype(hades->NtApis.NtQuerySystemInformation))  GetProc(hades->Modules.NTDLL, HASHED_NtQuerySystemInformation);
+		hades->NtApis.NtQueryInformationToken   = (decltype(hades->NtApis.NtQueryInformationToken))   GetProc(hades->Modules.NTDLL, HASHED_NtQueryInformationToken);
 		hades->NtApis.RtlGetVersion				= (decltype(hades->NtApis.RtlGetVersion))			  GetProc(hades->Modules.NTDLL, HASHED_RtlGetVersion);
 	    hades->NtApis.RtlGetNtVersionNumbers	= (decltype(hades->NtApis.RtlGetNtVersionNumbers))	  GetProc(hades->Modules.NTDLL, HASHED_RtlGetNtVersionNumbers);
 		hades->NtApis.RtlRandomEx				= (decltype(hades->NtApis.RtlRandomEx))				  GetProc(hades->Modules.NTDLL, HASHED_GenRandom);

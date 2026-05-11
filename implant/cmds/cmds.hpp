@@ -11,11 +11,19 @@
 #define MV_SUCCESS    492
 #define MKDIR_SUCCESS 493
 
+#define TASK_TYPE_LS 3
+#define STATUS_OK 0
+
+#define TASK_TYPE_NO_PARSE 0
+
 
 #define ERROR_OUT_OF_MEMORY 550
 #define ERROR_TOKEN_SIZE 551
 #define ERROR_FAILED_TOKENS 552
 #define ERROR_LOOKUPPRIV_FAILED 553
+#define ERROR_PS_LIST 554
+
+#define COL_WIDTH 35
 
 class commanders {
 
@@ -29,6 +37,7 @@ class commanders {
 	void do_cp();
 	void do_rmdir();
 	void do_mkdir();
+	void do_ps();
 
 
 public:

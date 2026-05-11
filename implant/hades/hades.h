@@ -70,6 +70,7 @@ typedef struct {
 		DECL(RtlGetNtVersionNumbers);
 		DECL(NtDelayExecution);
 		DECL(NtQueryInformationToken);
+		DECL(NtQuerySystemInformation);
 
 	} NtApis;
 
@@ -118,3 +119,4 @@ T* AllocMemory(size_t size) {
 BOOL RunHades();
 BOOL InitAgent();
 DWORD Hasher(PCHAR str);
+INT IntToStr(DWORD val, CHAR* out);

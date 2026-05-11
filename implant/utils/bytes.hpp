@@ -6,6 +6,7 @@
 #define STATUS_ERROR 1
 #define RESP_NO_DATA 1
 #define RESP_HAS_DATA 0
+#define TASK_TYPE_NO_PARSE 0
 
 class bytes {
 public:
@@ -16,9 +17,9 @@ public:
 	PBYTE OutData;
 
 	UINT BeginTask();
-	void EndOk();
+	void EndOk(UINT SucessCode);
 	void EndErr(UINT errCode);
-	void EndOkData(PBYTE data, UINT len);
+	void EndOkData(UINT TaskType, UINT len, PBYTE data);
 
 	BOOL EnsureBuffer(PBYTE& Buffer, UINT size);
 	void InitRead(PBYTE data, INT DataSize);

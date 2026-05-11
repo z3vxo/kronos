@@ -26,15 +26,29 @@ void bytes::InitRead(PBYTE data, INT DataSize) {
 }
 
 
+
+
+/*
+  [task output count] 4 bytes
+ // looped
+ [TASKID] 4 BYTES
+ [STATUS] 4 bytes -> if 0 == success read next, if 1 == read read4() for error code
+ [TASK_TYPE] 4 BYTES -> parse this, jump to handler and parse it, if task type == 0, continue below, single string output no further parsing
+ ------
+ [HAS_DATA] 4 BYTES -> if > 1 lookup in success map else below
+ [OUTPUT LEN] 4 BYTES
+ [OUTPUT DATA] N BYTES
+*/
 UINT bytes::BeginTask() {
 	UINT taskID = this->Read4();
 	this->Write4(taskID);
 	return taskID;
 }
 
-void bytes::EndOk() {
+void bytes::EndOk(UINT SuccessCode) {
 	this->Write4(STATUS_OK);
-	this->Write4(RESP_NO_DATA);
+	this->Write4(TASK_TYPE_NO_PARSE);
+	this->Write4(SuccessCode);
 }
 
 void bytes::EndErr(UINT errCode) {
@@ -42,8 +56,9 @@ void bytes::EndErr(UINT errCode) {
 	this->Write4(errCode);
 }
 
-void bytes::EndOkData(PBYTE data, UINT len) {
+void bytes::EndOkData(UINT TaskType, UINT len, PBYTE data) {
 	this->Write4(STATUS_OK);
+	this->Write4(TaskType);
 	this->Write4(RESP_HAS_DATA);
 	this->Write4(len);
 	this->WriteString(data, len);
