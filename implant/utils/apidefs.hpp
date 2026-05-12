@@ -44,6 +44,8 @@
 #define HASHED_HttpQueryInfoA						 0x94887ec7
 #define HASHED_InternetCloseHandle					 0x54ea3e04
 #define HASHED_InternetSetOptionA					 0x2a15e3ce
+#define HASHED_GetFileAttributesA					 0x6f81b238
+#define HASHED_GetFullPathNameA						 0x988d675d
 #define HASHED_NtQueryInformationProcess			 0x8047d43f
 #define HASHED_RtlGetNtVersionNumbers				 0x2e8c8a48
 #define HASHED_LookupAccountSidA					 0x932fbdf5
@@ -66,6 +68,7 @@
 #define HASHED_WinHttpDetectAutoProxyConfigUrl		 0x9bd580a5
 #define HASHED_WinHttpGetDefaultProxyConfiguration	 0x1da3264a
 #define HASHED_HeapReAlloc							 0xd8e13b91
+#define HASHED_ConvertSidToStringSidA				 0xe943efd1
 
 
 

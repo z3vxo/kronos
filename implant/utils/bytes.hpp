@@ -29,6 +29,7 @@ public:
 	void  FreeString(PCHAR s);
 	void InitWrite();
 	void Write4(UINT val);
+	void Write8(ULONGLONG val);
 	void Write1(BOOL val);
 	void WriteString(PBYTE Data, UINT Length);
 

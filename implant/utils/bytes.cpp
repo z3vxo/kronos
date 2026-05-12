@@ -115,6 +115,13 @@ void bytes::Write4(UINT val) {
 
 }
 
+void bytes::Write8(ULONGLONG val) {
+	this->EnsureBuffer(this->OutData, sizeof(val));
+	memcpy(this->OutData + this->WriteIndex, &val, sizeof(val));
+	this->WriteIndex += 8;
+
+}
+
 void bytes::Write1(BOOL val) {
 
 	this->EnsureBuffer(this->OutData, 1);
