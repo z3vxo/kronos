@@ -22,6 +22,15 @@ func (r *Reader) Read4() uint32 {
 	return val
 }
 
+func (r *Reader) Read8() uint64 {
+	if r.err != nil {
+		return 0
+	}
+	var val uint64
+	r.err = binary.Read(r.r, binary.LittleEndian, &val)
+	return val
+}
+
 func (r *Reader) Read1() byte {
 	if r.err != nil {
 		return 0
@@ -137,6 +146,60 @@ type OutputEntrys struct {
 	Output []byte
 }
 
+type taskOutputParser func(*Reader) string
+
+var taskOutputParsers = map[uint32]taskOutputParser{
+	3: ParsePRIVOutput,
+	4: ParseLSOutput,
+	5: ParsePSOutput,
+}
+
+var privilegeStatusNames = map[uint32]string{
+	1: "Removed",
+	2: "Enabled",
+	3: "Enabled by Default",
+	4: "Disabled",
+}
+
+var privilegeDescriptions = map[string]string{
+	"SeAssignPrimaryTokenPrivilege":             "Replace a process level token",
+	"SeAuditPrivilege":                          "Generate security audits",
+	"SeBackupPrivilege":                         "Back up files and directories",
+	"SeChangeNotifyPrivilege":                   "Bypass traverse checking",
+	"SeCreateGlobalPrivilege":                   "Create global objects",
+	"SeCreatePagefilePrivilege":                 "Create a pagefile",
+	"SeCreatePermanentPrivilege":                "Create permanent shared objects",
+	"SeCreateSymbolicLinkPrivilege":             "Create symbolic links",
+	"SeCreateTokenPrivilege":                    "Create a token object",
+	"SeDebugPrivilege":                          "Debug programs",
+	"SeDelegateSessionUserImpersonatePrivilege": "Obtain an impersonation token for another user in the same session",
+	"SeEnableDelegationPrivilege":               "Enable computer and user accounts to be trusted for delegation",
+	"SeImpersonatePrivilege":                    "Impersonate a client after authentication",
+	"SeIncreaseBasePriorityPrivilege":           "Increase scheduling priority",
+	"SeIncreaseQuotaPrivilege":                  "Adjust memory quotas for a process",
+	"SeIncreaseWorkingSetPrivilege":             "Increase a process working set",
+	"SeLoadDriverPrivilege":                     "Load and unload device drivers",
+	"SeLockMemoryPrivilege":                     "Lock pages in memory",
+	"SeMachineAccountPrivilege":                 "Add workstations to domain",
+	"SeManageVolumePrivilege":                   "Perform volume maintenance tasks",
+	"SeProfileSingleProcessPrivilege":           "Profile single process",
+	"SeRelabelPrivilege":                        "Modify an object label",
+	"SeRemoteShutdownPrivilege":                 "Force shutdown from a remote system",
+	"SeRestorePrivilege":                        "Restore files and directories",
+	"SeSecurityPrivilege":                       "Manage auditing and security log",
+	"SeShutdownPrivilege":                       "Shut down the system",
+	"SeSyncAgentPrivilege":                      "Synchronize directory service data",
+	"SeSystemEnvironmentPrivilege":              "Modify firmware environment values",
+	"SeSystemProfilePrivilege":                  "Profile system performance",
+	"SeSystemtimePrivilege":                     "Change the system time",
+	"SeTakeOwnershipPrivilege":                  "Take ownership of files or other objects",
+	"SeTcbPrivilege":                            "Act as part of the operating system",
+	"SeTimeZonePrivilege":                       "Change the time zone",
+	"SeTrustedCredManAccessPrivilege":           "Access Credential Manager as a trusted caller",
+	"SeUndockPrivilege":                         "Remove computer from docking station",
+	"SeUnsolicitedInputPrivilege":               "Read unsolicited input from a terminal device",
+}
+
 /*
   [task output count] 4 bytes
  // looped
@@ -170,24 +233,12 @@ func ParseClientOutput(r *bytes.Reader) ([]OutputEntrys, error) {
 
 		TaskType := rd.Read4()
 		fmt.Printf("TASK_TYPE: %d\n", TaskType)
-		if TaskType > 0 {
-			if TaskType == 3 {
-				o.Output = []byte(ParsePRIVOutput(&rd))
-				entrys = append(entrys, o)
-				continue
-			}
-			if TaskType == 4 {
-				o.Output = []byte(ParseLSOutput(&rd))
-				entrys = append(entrys, o)
-				continue
-			}
-			if TaskType == 5 {
-				o.Output = []byte(ParsePSOutput(&rd))
-				entrys = append(entrys, o)
-				continue
-			}
+		if parser, ok := taskOutputParsers[TaskType]; ok {
+			o.Output = []byte(parser(&rd))
+			entrys = append(entrys, o)
+			continue
 		}
-		
+
 		HasData := rd.Read4()
 		if HasData > 1 {
 			SuccessString := SuccessMap[HasData]
@@ -206,21 +257,20 @@ func ParseClientOutput(r *bytes.Reader) ([]OutputEntrys, error) {
 	return entrys, nil
 }
 
-
 func ParsePSOutput(r *Reader) string {
 	var b strings.Builder
 
-	for  {
+	for {
 		val := r.Read4()
 		if val == LS_END {
 			return b.String()
 		}
 
 		ProcessName := r.ReadString(val)
-		Userlen := r.Read4()
-		UserStr := r.ReadString(Userlen)
-		PID := r.Read4();
-		fmt.Fprintf(&b, "%-40s %-10s %d\n", ProcessName, UserStr, PID)
+		UserLen := r.Read4()
+		UserStr := r.ReadString(UserLen)
+		PID := r.Read4()
+		fmt.Fprintf(&b, "%-40s %-25s %d\n", ProcessName, UserStr, PID)
 	}
 	fmt.Println(b.String())
 	return b.String()
@@ -238,7 +288,8 @@ func ParseLSOutput(r *Reader) string {
 		EntryStr := r.ReadString(val)
 		TypeLen := r.Read4()
 		TypeStr := r.ReadString(TypeLen)
-		fmt.Fprintf(&b, "%-40s %s\n", EntryStr, TypeStr)
+		FileSize := r.Read8()
+		fmt.Fprintf(&b, "%-40s %-15s %d\n", EntryStr, TypeStr, FileSize)
 	}
 	fmt.Println(b.String())
 	return b.String()
@@ -247,13 +298,39 @@ func ParseLSOutput(r *Reader) string {
 func ParsePRIVOutput(r *Reader) string {
 	var b strings.Builder
 
-	Total := r.Read4()
-	for range Total {
-		EntryLen := r.Read4()
-		entryStr := r.ReadString(EntryLen)
-		typeLen := r.Read4()
-		typeStr := r.ReadString(typeLen)
-		fmt.Fprintf(&b, "%-40s %s\n", entryStr, typeStr)
+	NameLen := r.Read4()
+	Name := r.ReadString(NameLen)
+	DomainLen := r.Read4()
+	Domain := r.ReadString(DomainLen)
+	SidLen := r.Read4()
+	Sid := r.ReadString(SidLen)
+	UserName := strings.ToLower(fmt.Sprintf("%s\\%s", Domain, Name))
+
+	fmt.Fprintf(&b, "USER INFORMATION\n")
+	fmt.Fprintf(&b, "----------------\n\n")
+	fmt.Fprintf(&b, "%-22s %s\n", "User Name", "SID")
+	fmt.Fprintf(&b, "%-22s %s\n", strings.Repeat("=", 22), strings.Repeat("=", 46))
+	fmt.Fprintf(&b, "%-22s %s\n\n", UserName, Sid)
+
+	fmt.Fprintf(&b, "PRIVILEGES INFORMATION\n")
+	fmt.Fprintf(&b, "----------------------\n\n")
+	fmt.Fprintf(&b, "%-29s %-36s %s\n", "Privilege Name", "Description", "State")
+	fmt.Fprintf(&b, "%-29s %-36s %s\n", strings.Repeat("=", 29), strings.Repeat("=", 36), strings.Repeat("=", 8))
+
+	for {
+		PrivNameLen := r.Read4()
+		if r.err != nil || PrivNameLen == LS_END {
+			return b.String()
+		}
+
+		PrivName := r.ReadString(PrivNameLen)
+		PrivStatus := r.Read4()
+		Status, ok := privilegeStatusNames[PrivStatus]
+		if !ok {
+			Status = fmt.Sprintf("Unknown (%d)", PrivStatus)
+		}
+		Description := privilegeDescriptions[PrivName]
+
+		fmt.Fprintf(&b, "%-29s %-36s %s\n", PrivName, Description, Status)
 	}
-	return b.String()
 }

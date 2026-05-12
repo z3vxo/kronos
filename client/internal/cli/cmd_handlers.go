@@ -9,7 +9,7 @@ import (
 )
 
 var CmdCodeMap = map[string]int{
-	"ps":  	 0,
+	"proc":  	 0,
 	"cmd": 	 1,
 	"cat": 	 2,
 	"ls":  	 3,
@@ -122,16 +122,12 @@ func(c *CLI) HandleCAT(args []string) {
 	c.sendTask("cat", strings.Join(args, " "), "")
 }
 
-func (c *CLI) HandlePS(args []string) {
+func (c *CLI) HandlePROC(args []string) {
 	if !c.requireAgent() {
 		return
 	}
-	if len(args) == 0 {
-		c.ui.Send(ui.BAD.Sprint("Usage: ps <args>"))
-		return
-	}
 
-	c.sendTask("ps", "", "")
+	c.sendTask("proc", "", "")
 }
 
 func (c *CLI) HandlePWD(args []string) {

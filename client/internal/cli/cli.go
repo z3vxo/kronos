@@ -58,7 +58,7 @@ func (c *CLI) SetupDispatchTable() {
 		"info":     	c.ListAgentInfo,
 		"help":      	c.Help,
 		"pwd":       	c.HandlePWD,
-		"ps":        	c.HandlePS,
+		"proc":        	c.HandlePROC,
 		"ai":        	c.ai.HandleAI,
 		"tasks":     	c.ParseTasks,
 		"mv":        	c.HandleMV,
@@ -68,7 +68,7 @@ func (c *CLI) SetupDispatchTable() {
 		"rmdir":        c.HandleRMDIR,
 		"mkdir":        c.HandleMKDIR,
 		"cp":           c.HandleCP,
-		"get-privs":    c.HandleGETPRIVS,
+		"whoami":       c.HandleGETPRIVS,
 		"ls":           c.HandleLS,
 	}
 }
