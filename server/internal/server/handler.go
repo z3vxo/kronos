@@ -116,6 +116,12 @@ func (h *AgentHandler) HandleAgentOutput(r *bytes.Reader, id string) {
 				fmt.Println(err)
 				continue
 			}
+			if result.Started {
+				err = h.DB.DeleteTask(id, strconv.FormatUint(uint64(o.TaskID), 10))
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
 			if result.Done {
 				data, err := json.Marshal(Event{
 					CmdType: 2,
@@ -130,10 +136,6 @@ func (h *AgentHandler) HandleAgentOutput(r *bytes.Reader, id string) {
 					return
 				}
 				h.Broker.Broadcast(string(data))
-				err = h.DB.DeleteTask(id, strconv.FormatUint(uint64(o.TaskID), 10))
-				if err != nil {
-					fmt.Println(err)
-				}
 			}
 			continue
 		}

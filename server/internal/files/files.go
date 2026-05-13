@@ -47,6 +47,7 @@ type Chunk struct {
 }
 
 type ProcessResult struct {
+	Started   bool
 	Done      bool
 	FinalPath string
 	BytesSeen uint64
@@ -88,11 +89,13 @@ func (m *Manager) InsertNewFileTask(agentid string, taskid uint32, filename stri
 const (
 	UploadChunked uint32 = iota + 1
 	UploadNoChunked
+	UploadDone
 )
 
 func (m *Manager) ProcessFileChunk(id string, taskID uint32, chunk Chunk) (ProcessResult, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	result := ProcessResult{}
 
 	key := Key{AgentID: id, TaskID: taskID}
 
@@ -102,6 +105,7 @@ func (m *Manager) ProcessFileChunk(id string, taskID uint32, chunk Chunk) (Proce
 	}
 
 	if task.File == nil {
+		result.Started = true
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return ProcessResult{}, err
@@ -132,9 +136,9 @@ func (m *Manager) ProcessFileChunk(id string, taskID uint32, chunk Chunk) (Proce
 		}
 		task.BytesSeen += uint64(len(chunk.Data))
 		task.Status = StatusOngoing
-		return ProcessResult{}, nil
+		return result, nil
 
-	case UploadNoChunked:
+	case UploadNoChunked, UploadDone:
 		if _, err := task.File.Write(chunk.Data); err != nil {
 			task.Status = StatusFailed
 			return ProcessResult{}, err
@@ -166,11 +170,10 @@ func (m *Manager) ProcessFileChunk(id string, taskID uint32, chunk Chunk) (Proce
 		if err := m.db.InsertFile(id, finalPath, task.BytesSeen); err != nil {
 			return ProcessResult{}, err
 		}
-		return ProcessResult{
-			Done:      true,
-			FinalPath: finalPath,
-			BytesSeen: task.BytesSeen,
-		}, nil
+		result.Done = true
+		result.FinalPath = finalPath
+		result.BytesSeen = task.BytesSeen
+		return result, nil
 	default:
 		return ProcessResult{}, ErrUnknownUploadStatus
 	}
