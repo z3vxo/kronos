@@ -70,6 +70,7 @@ func (c *CLI) SetupDispatchTable() {
 		"cp":           c.HandleCP,
 		"whoami":       c.HandleGETPRIVS,
 		"ls":           c.HandleLS,
+		"download":     c.HandleDOWNLOAD,
 	}
 }
 

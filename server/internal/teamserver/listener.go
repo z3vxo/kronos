@@ -16,6 +16,7 @@ import (
 	"github.com/z3vxo/kronos/internal/config"
 	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/server"
+	"github.com/z3vxo/kronos/internal/files"
 )
 
 var listenerAdjectives = []string{"golden", "cursed", "sacred", "eternal", "fallen", "divine", "forsaken", "ancient", "wrathful", "fated", "hollow", "sunken", "boundless", "immortal", "exiled"}
@@ -52,8 +53,8 @@ func (ts *TeamServer) UpdateListenerMapStatus(id string, status bool) {
 	ts.Listeners.Mu.Unlock()
 }
 
-func BuildListenerHttp(port int, protocol string, db *database.DB, sse *broker.Broker, host string, letsEncrypt bool) (*http.Server, error) {
-	h := &server.AgentHandler{DB: db, Broker: sse, Host: host}
+func BuildListenerHttp(port int, protocol string, db *database.DB, sse *broker.Broker, host string, letsEncrypt bool, mgr *files.Manager) (*http.Server, error) {
+	h := &server.AgentHandler{DB: db, Broker: sse, Host: host, FileMgr: mgr}
 	r := chi.NewRouter()
 	r.Get("/ms/download", h.AgentCheckInHandler)
 	r.Post(config.Cfg.Server.PostEndpoint, h.AgentUploadHandler)
@@ -94,7 +95,7 @@ func (ts *TeamServer) StartListenersFromDB() error {
 	}
 	for _, l := range ToStart {
 
-		srv, err := BuildListenerHttp(l.Port, l.Protocol, ts.db, ts.SSE, l.Host, l.CertType)
+		srv, err := BuildListenerHttp(l.Port, l.Protocol, ts.db, ts.SSE, l.Host, l.CertType, ts.FileMgr)
 		if err != nil {
 			return err
 		}
@@ -168,7 +169,7 @@ func (ts *TeamServer) StartListener(id string) error {
 		return errors.New("listener already running!")
 	}
 
-	srv, err := BuildListenerHttp(l.Port, l.Protocol, ts.db, ts.SSE, l.Host, l.certType)
+	srv, err := BuildListenerHttp(l.Port, l.Protocol, ts.db, ts.SSE, l.Host, l.certType, ts.FileMgr)
 	if err != nil {
 		return errors.New("Failed Creating server object")
 	}

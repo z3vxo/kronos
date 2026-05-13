@@ -11,6 +11,8 @@ import (
 	"github.com/z3vxo/kronos/internal/httputil"
 )
 
+const TASK_DOWNLOAD = 12
+
 func GenTaskID() uint32 {
 	var b [4]byte
 	rand.Read(b[:])
@@ -24,7 +26,16 @@ func (ts *TeamServer) CommandNewHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err := ts.db.InsertCommand(cmd.Cmd_type, GenTaskID(), cmd.Guid, cmd.Param1, cmd.Param2)
+	taskID := GenTaskID()
+
+	if(cmd.Cmd_type == TASK_DOWNLOAD) {
+		if err := ts.FileMgr.InsertNewFileTask(cmd.Guid, taskID, cmd.Param1); err != nil {
+			httputil.SendJSONError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	err := ts.db.InsertCommand(cmd.Cmd_type, taskID, cmd.Guid, cmd.Param1, cmd.Param2)
 	if err != nil {
 		httputil.SendJSONError(w, "failed inserting command", http.StatusInternalServerError)
 		return

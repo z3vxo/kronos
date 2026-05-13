@@ -7,6 +7,7 @@ import (
 	"github.com/z3vxo/kronos/internal/auth"
 	"github.com/z3vxo/kronos/internal/broker"
 	"github.com/z3vxo/kronos/internal/database"
+	"github.com/z3vxo/kronos/internal/files"
 )
 
 type TaskDelete struct {
@@ -39,6 +40,7 @@ type TeamServer struct {
 	db         *database.DB
 	Listeners  *Listeners
 	Logger     *slog.Logger
+	FileMgr    *files.Manager
 }
 
 type ListenerEntry struct {

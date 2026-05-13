@@ -26,6 +26,7 @@ func setupDirs(home string) error {
 		filepath.Join(basePath, "config"),
 		filepath.Join(basePath, "database"),
 		filepath.Join(basePath, "certs"),
+		filepath.Join(basePath, "files"),
 		filepath.Join(basePath, "logs"),
 	} {
 		if err := os.MkdirAll(dir, 0755); err != nil {

@@ -59,43 +59,8 @@ func (r *Reader) ReadString(len uint32) string {
 
 }
 
-/*
-	[MSG TYPE]		  4 BYTES
-	[HADES ID]		  4 BYTES
-	[UserLen]         4 BYTES
-	[Username]		  N BYTES
-	[HostLen]		  4 BYTES
-	[Hostname]		  N BYTES
-	[IP LEN]		  4 BYTES
-	[IP STR]		  N BYTES
-	[ProcessPath Len] 4 BYTES
-	[PROCESS PATH]    N BYTES
-	[PID]			  4 BYTES
-	[TID]			  4 BYTES
-	[PPID]			  4 BYTES
-	[IsElev]		  1 BYTES
-	[Arch]			  1 BYTES
-	[Minor]			  4 BYTES
-	[Major]			  4 BYTES
-	[Build]			  4 BYTES
-
-*/
-
-type ClientRegister struct {
-	Guid       uint32
-	User       string
-	Host       string
-	InternaIP  string
-	ExternalIP string
-	ProcPath   string
-	Pid        uint32
-	Tid        uint32
-	Ppid       uint32
-	IsElev     byte
-	Arch       byte
-	Minor      uint32
-	Major      uint32
-	Build      uint32
+func (r *Reader) Remaining() int {
+	return r.r.Len()
 }
 
 func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, error) {
@@ -140,83 +105,14 @@ func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, err
 	return Res, nil
 }
 
-type OutputEntrys struct {
-	//Type   uint32
-	TaskID uint32
-	Output []byte
-}
-
-type taskOutputParser func(*Reader) string
-
-var taskOutputParsers = map[uint32]taskOutputParser{
-	3: ParsePRIVOutput,
-	4: ParseLSOutput,
-	5: ParsePSOutput,
-}
-
-var privilegeStatusNames = map[uint32]string{
-	1: "Removed",
-	2: "Enabled",
-	3: "Enabled by Default",
-	4: "Disabled",
-}
-
-var privilegeDescriptions = map[string]string{
-	"SeAssignPrimaryTokenPrivilege":             "Replace a process level token",
-	"SeAuditPrivilege":                          "Generate security audits",
-	"SeBackupPrivilege":                         "Back up files and directories",
-	"SeChangeNotifyPrivilege":                   "Bypass traverse checking",
-	"SeCreateGlobalPrivilege":                   "Create global objects",
-	"SeCreatePagefilePrivilege":                 "Create a pagefile",
-	"SeCreatePermanentPrivilege":                "Create permanent shared objects",
-	"SeCreateSymbolicLinkPrivilege":             "Create symbolic links",
-	"SeCreateTokenPrivilege":                    "Create a token object",
-	"SeDebugPrivilege":                          "Debug programs",
-	"SeDelegateSessionUserImpersonatePrivilege": "Obtain an impersonation token for another user in the same session",
-	"SeEnableDelegationPrivilege":               "Enable computer and user accounts to be trusted for delegation",
-	"SeImpersonatePrivilege":                    "Impersonate a client after authentication",
-	"SeIncreaseBasePriorityPrivilege":           "Increase scheduling priority",
-	"SeIncreaseQuotaPrivilege":                  "Adjust memory quotas for a process",
-	"SeIncreaseWorkingSetPrivilege":             "Increase a process working set",
-	"SeLoadDriverPrivilege":                     "Load and unload device drivers",
-	"SeLockMemoryPrivilege":                     "Lock pages in memory",
-	"SeMachineAccountPrivilege":                 "Add workstations to domain",
-	"SeManageVolumePrivilege":                   "Perform volume maintenance tasks",
-	"SeProfileSingleProcessPrivilege":           "Profile single process",
-	"SeRelabelPrivilege":                        "Modify an object label",
-	"SeRemoteShutdownPrivilege":                 "Force shutdown from a remote system",
-	"SeRestorePrivilege":                        "Restore files and directories",
-	"SeSecurityPrivilege":                       "Manage auditing and security log",
-	"SeShutdownPrivilege":                       "Shut down the system",
-	"SeSyncAgentPrivilege":                      "Synchronize directory service data",
-	"SeSystemEnvironmentPrivilege":              "Modify firmware environment values",
-	"SeSystemProfilePrivilege":                  "Profile system performance",
-	"SeSystemtimePrivilege":                     "Change the system time",
-	"SeTakeOwnershipPrivilege":                  "Take ownership of files or other objects",
-	"SeTcbPrivilege":                            "Act as part of the operating system",
-	"SeTimeZonePrivilege":                       "Change the time zone",
-	"SeTrustedCredManAccessPrivilege":           "Access Credential Manager as a trusted caller",
-	"SeUndockPrivilege":                         "Remove computer from docking station",
-	"SeUnsolicitedInputPrivilege":               "Read unsolicited input from a terminal device",
-}
-
-/*
-  [task output count] 4 bytes
- // looped
- [TASKID] 4 BYTES
- [STATUS] 4 bytes -> if 0 == success read next, if 1 == read read4() for error code
- [TASK_TYPE] 4 BYTES -> parse this, jump to handler and parse it, if task type == 0, continue below, single string output no further parsing
- ------
- [HAS_DATA] 4 BYTES -> if > 1 lookup in success map else below
- [OUTPUT LEN] 4 BYTES
- [OUTPUT DATA] N BYTES
-*/
-
 func ParseClientOutput(r *bytes.Reader) ([]OutputEntrys, error) {
 	rd := Reader{r: r}
 	var entrys []OutputEntrys
-	count := rd.Read4()
-	for range count {
+	for rd.Remaining() > 0 {
+		if rd.Remaining() < 12 {
+			return nil, io.ErrUnexpectedEOF
+		}
+
 		var o OutputEntrys
 		o.TaskID = rd.Read4()
 		status := rd.Read4()
@@ -233,8 +129,19 @@ func ParseClientOutput(r *bytes.Reader) ([]OutputEntrys, error) {
 
 		TaskType := rd.Read4()
 		fmt.Printf("TASK_TYPE: %d\n", TaskType)
+		if TaskType == 6 {
+			o.FileOutput = ParseFileOutput(&rd)
+			if rd.err != nil {
+				return nil, rd.err
+			}
+			entrys = append(entrys, o)
+			continue
+		}
 		if parser, ok := taskOutputParsers[TaskType]; ok {
 			o.Output = []byte(parser(&rd))
+			if rd.err != nil {
+				return nil, rd.err
+			}
 			entrys = append(entrys, o)
 			continue
 		}
@@ -248,13 +155,36 @@ func ParseClientOutput(r *bytes.Reader) ([]OutputEntrys, error) {
 		}
 		OutputLen := rd.Read4()
 		o.Output = []byte(rd.ReadString(OutputLen))
+		if rd.err != nil {
+			return nil, rd.err
+		}
 		entrys = append(entrys, o)
-	}
-	if rd.err != nil {
-		return nil, rd.err
 	}
 
 	return entrys, nil
+}
+
+func ParseFileOutput(r *Reader) *FileOutput {
+	status := FileStatus(r.Read4())
+	if r.err != nil {
+		return nil
+	}
+
+	dataLen := r.Read4()
+	if r.err != nil {
+		return nil
+	}
+
+	data := []byte(r.ReadString(dataLen))
+	if r.err != nil {
+		return nil
+	}
+
+	return &FileOutput{
+		Status:  status,
+		DataLen: dataLen,
+		Data:    data,
+	}
 }
 
 func ParsePSOutput(r *Reader) string {

@@ -14,6 +14,7 @@ import (
 	"github.com/z3vxo/kronos/internal/broker"
 	"github.com/z3vxo/kronos/internal/config"
 	"github.com/z3vxo/kronos/internal/database"
+	"github.com/z3vxo/kronos/internal/files"
 )
 
 func GetLogFile() string {
@@ -46,6 +47,7 @@ func NewTeamServer() (*TeamServer, error) {
 		db:        d,
 		Listeners: &Listeners{ListenerMap: make(map[string]Listener), GetEndpoint: config.Cfg.Server.GetEndpoint, PostEndpoint: config.Cfg.Server.PostEndpoint},
 		Logger:    slog.New(slog.NewJSONHandler(file, nil)),
+		FileMgr:   files.NewFileManager(d),
 	}, nil
 }
 
@@ -74,6 +76,9 @@ func (ts *TeamServer) Start() error {
 			r.Post("/rest/tasks/new", ts.CommandNewHandler)
 			r.Delete("/rest/tasks/delete/{guid}/{taskID}", ts.CommandDeleteHandler)
 			r.Get("/rest/tasks/list/{guid}", ts.ListTasksHandler)
+
+			// r.Get("/rest/files/list", ts.FilesListHandler)
+			// r.Get("/rest/files/sync/{code}", ts.FilesSyncHandler)
 
 			r.Get("/rest/listeners/list", ts.ListListenerHandler)
 			r.Post("/rest/listeners/new", ts.NewListenerHandler)

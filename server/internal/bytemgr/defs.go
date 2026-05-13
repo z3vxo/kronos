@@ -1,81 +1,80 @@
 package bytemgr
 
-
 const LS_END = 0xFFFFFFFF
 
 // ErrorCodeMap maps Windows system error codes (0-499) to
 // their symbolic name and description.
 var ErrorCodeMap = map[uint32]string{
-	0: "ERROR_SUCCESS: The operation completed successfully.",
-	1: "ERROR_INVALID_FUNCTION: Incorrect function.",
-	2: "ERROR_FILE_NOT_FOUND: The system cannot find the file specified.",
-	3: "ERROR_PATH_NOT_FOUND: The system cannot find the path specified.",
-	4: "ERROR_TOO_MANY_OPEN_FILES: The system cannot open the file.",
-	5: "ERROR_ACCESS_DENIED: Access is denied.",
-	6: "ERROR_INVALID_HANDLE: The handle is invalid.",
-	7: "ERROR_ARENA_TRASHED: The storage control blocks were destroyed.",
-	8: "ERROR_NOT_ENOUGH_MEMORY: Not enough storage is available to process this command.",
-	9: "ERROR_INVALID_BLOCK: The storage control block address is invalid.",
-	10: "ERROR_BAD_ENVIRONMENT: The environment is incorrect.",
-	11: "ERROR_BAD_FORMAT: An attempt was made to load a program with an incorrect format.",
-	12: "ERROR_INVALID_ACCESS: The access code is invalid.",
-	13: "ERROR_INVALID_DATA: The data is invalid.",
-	14: "ERROR_OUTOFMEMORY: Not enough storage is available to complete this operation.",
-	15: "ERROR_INVALID_DRIVE: The system cannot find the drive specified.",
-	16: "ERROR_CURRENT_DIRECTORY: The directory cannot be removed.",
-	17: "ERROR_NOT_SAME_DEVICE: The system cannot move the file to a different disk drive.",
-	18: "ERROR_NO_MORE_FILES: There are no more files.",
-	19: "ERROR_WRITE_PROTECT: The media is write protected.",
-	20: "ERROR_BAD_UNIT: The system cannot find the device specified.",
-	21: "ERROR_NOT_READY: The device is not ready.",
-	22: "ERROR_BAD_COMMAND: The device does not recognize the command.",
-	23: "ERROR_CRC: Data error cyclic redundancy check.",
-	24: "ERROR_BAD_LENGTH: The program issued a command but the command length is incorrect.",
-	25: "ERROR_SEEK: The drive cannot locate a specific area or track on the disk.",
-	26: "ERROR_NOT_DOS_DISK: The specified disk or diskette cannot be accessed.",
-	27: "ERROR_SECTOR_NOT_FOUND: The drive cannot find the sector requested.",
-	28: "ERROR_OUT_OF_PAPER: The printer is out of paper.",
-	29: "ERROR_WRITE_FAULT: The system cannot write to the specified device.",
-	30: "ERROR_READ_FAULT: The system cannot read from the specified device.",
-	31: "ERROR_GEN_FAILURE: A device attached to the system is not functioning.",
-	32: "ERROR_SHARING_VIOLATION: The process cannot access the file because it is being used by another process.",
-	33: "ERROR_LOCK_VIOLATION: The process cannot access the file because another process has locked a portion of the file.",
-	34: "ERROR_WRONG_DISK: The wrong diskette is in the drive. Insert %2 Volume Serial Number: %3 into drive %1.",
-	36: "ERROR_SHARING_BUFFER_EXCEEDED: Too many files opened for sharing.",
-	38: "ERROR_HANDLE_EOF: Reached the end of the file.",
-	39: "ERROR_HANDLE_DISK_FULL: The disk is full.",
-	50: "ERROR_NOT_SUPPORTED: The request is not supported.",
-	51: "ERROR_REM_NOT_LIST: Windows cannot find the network path. Verify that the network path is correct and the destination computer is not busy or turned off. If Windows still cannot find the network path contact your network administrator.",
-	52: "ERROR_DUP_NAME: You were not connected because a duplicate name exists on the network. If joining a domain go to System in Control Panel to change the computer name and try again. If joining a workgroup choose another workgroup name.",
-	53: "ERROR_BAD_NETPATH: The network path was not found.",
-	54: "ERROR_NETWORK_BUSY: The network is busy.",
-	55: "ERROR_DEV_NOT_EXIST: The specified network resource or device is no longer available.",
-	56: "ERROR_TOO_MANY_CMDS: The network BIOS command limit has been reached.",
-	57: "ERROR_ADAP_HDW_ERR: A network adapter hardware error occurred.",
-	58: "ERROR_BAD_NET_RESP: The specified server cannot perform the requested operation.",
-	59: "ERROR_UNEXP_NET_ERR: An unexpected network error occurred.",
-	60: "ERROR_BAD_REM_ADAP: The remote adapter is not compatible.",
-	61: "ERROR_PRINTQ_FULL: The printer queue is full.",
-	62: "ERROR_NO_SPOOL_SPACE: Space to store the file waiting to be printed is not available on the server.",
-	63: "ERROR_PRINT_CANCELLED: Your file waiting to be printed was deleted.",
-	64: "ERROR_NETNAME_DELETED: The specified network name is no longer available.",
-	65: "ERROR_NETWORK_ACCESS_DENIED: Network access is denied.",
-	66: "ERROR_BAD_DEV_TYPE: The network resource type is not correct.",
-	67: "ERROR_BAD_NET_NAME: The network name cannot be found.",
-	68: "ERROR_TOO_MANY_NAMES: The name limit for the local computer network adapter card was exceeded.",
-	69: "ERROR_TOO_MANY_SESS: The network BIOS session limit was exceeded.",
-	70: "ERROR_SHARING_PAUSED: The remote server has been paused or is in the process of being started.",
-	71: "ERROR_REQ_NOT_ACCEP: No more connections can be made to this remote computer at this time because there are already as many connections as the computer can accept.",
-	72: "ERROR_REDIR_PAUSED: The specified printer or disk device has been paused.",
-	80: "ERROR_FILE_EXISTS: The file exists.",
-	82: "ERROR_CANNOT_MAKE: The directory or file cannot be created.",
-	83: "ERROR_FAIL_I24: Fail on INT 24.",
-	84: "ERROR_OUT_OF_STRUCTURES: Storage to process this request is not available.",
-	85: "ERROR_ALREADY_ASSIGNED: The local device name is already in use.",
-	86: "ERROR_INVALID_PASSWORD: The specified network password is not correct.",
-	87: "ERROR_INVALID_PARAMETER: The parameter is incorrect.",
-	88: "ERROR_NET_WRITE_FAULT: A write fault occurred on the network.",
-	89: "ERROR_NO_PROC_SLOTS: The system cannot start another process at this time.",
+	0:   "ERROR_SUCCESS: The operation completed successfully.",
+	1:   "ERROR_INVALID_FUNCTION: Incorrect function.",
+	2:   "ERROR_FILE_NOT_FOUND: The system cannot find the file specified.",
+	3:   "ERROR_PATH_NOT_FOUND: The system cannot find the path specified.",
+	4:   "ERROR_TOO_MANY_OPEN_FILES: The system cannot open the file.",
+	5:   "ERROR_ACCESS_DENIED: Access is denied.",
+	6:   "ERROR_INVALID_HANDLE: The handle is invalid.",
+	7:   "ERROR_ARENA_TRASHED: The storage control blocks were destroyed.",
+	8:   "ERROR_NOT_ENOUGH_MEMORY: Not enough storage is available to process this command.",
+	9:   "ERROR_INVALID_BLOCK: The storage control block address is invalid.",
+	10:  "ERROR_BAD_ENVIRONMENT: The environment is incorrect.",
+	11:  "ERROR_BAD_FORMAT: An attempt was made to load a program with an incorrect format.",
+	12:  "ERROR_INVALID_ACCESS: The access code is invalid.",
+	13:  "ERROR_INVALID_DATA: The data is invalid.",
+	14:  "ERROR_OUTOFMEMORY: Not enough storage is available to complete this operation.",
+	15:  "ERROR_INVALID_DRIVE: The system cannot find the drive specified.",
+	16:  "ERROR_CURRENT_DIRECTORY: The directory cannot be removed.",
+	17:  "ERROR_NOT_SAME_DEVICE: The system cannot move the file to a different disk drive.",
+	18:  "ERROR_NO_MORE_FILES: There are no more files.",
+	19:  "ERROR_WRITE_PROTECT: The media is write protected.",
+	20:  "ERROR_BAD_UNIT: The system cannot find the device specified.",
+	21:  "ERROR_NOT_READY: The device is not ready.",
+	22:  "ERROR_BAD_COMMAND: The device does not recognize the command.",
+	23:  "ERROR_CRC: Data error cyclic redundancy check.",
+	24:  "ERROR_BAD_LENGTH: The program issued a command but the command length is incorrect.",
+	25:  "ERROR_SEEK: The drive cannot locate a specific area or track on the disk.",
+	26:  "ERROR_NOT_DOS_DISK: The specified disk or diskette cannot be accessed.",
+	27:  "ERROR_SECTOR_NOT_FOUND: The drive cannot find the sector requested.",
+	28:  "ERROR_OUT_OF_PAPER: The printer is out of paper.",
+	29:  "ERROR_WRITE_FAULT: The system cannot write to the specified device.",
+	30:  "ERROR_READ_FAULT: The system cannot read from the specified device.",
+	31:  "ERROR_GEN_FAILURE: A device attached to the system is not functioning.",
+	32:  "ERROR_SHARING_VIOLATION: The process cannot access the file because it is being used by another process.",
+	33:  "ERROR_LOCK_VIOLATION: The process cannot access the file because another process has locked a portion of the file.",
+	34:  "ERROR_WRONG_DISK: The wrong diskette is in the drive. Insert %2 Volume Serial Number: %3 into drive %1.",
+	36:  "ERROR_SHARING_BUFFER_EXCEEDED: Too many files opened for sharing.",
+	38:  "ERROR_HANDLE_EOF: Reached the end of the file.",
+	39:  "ERROR_HANDLE_DISK_FULL: The disk is full.",
+	50:  "ERROR_NOT_SUPPORTED: The request is not supported.",
+	51:  "ERROR_REM_NOT_LIST: Windows cannot find the network path. Verify that the network path is correct and the destination computer is not busy or turned off. If Windows still cannot find the network path contact your network administrator.",
+	52:  "ERROR_DUP_NAME: You were not connected because a duplicate name exists on the network. If joining a domain go to System in Control Panel to change the computer name and try again. If joining a workgroup choose another workgroup name.",
+	53:  "ERROR_BAD_NETPATH: The network path was not found.",
+	54:  "ERROR_NETWORK_BUSY: The network is busy.",
+	55:  "ERROR_DEV_NOT_EXIST: The specified network resource or device is no longer available.",
+	56:  "ERROR_TOO_MANY_CMDS: The network BIOS command limit has been reached.",
+	57:  "ERROR_ADAP_HDW_ERR: A network adapter hardware error occurred.",
+	58:  "ERROR_BAD_NET_RESP: The specified server cannot perform the requested operation.",
+	59:  "ERROR_UNEXP_NET_ERR: An unexpected network error occurred.",
+	60:  "ERROR_BAD_REM_ADAP: The remote adapter is not compatible.",
+	61:  "ERROR_PRINTQ_FULL: The printer queue is full.",
+	62:  "ERROR_NO_SPOOL_SPACE: Space to store the file waiting to be printed is not available on the server.",
+	63:  "ERROR_PRINT_CANCELLED: Your file waiting to be printed was deleted.",
+	64:  "ERROR_NETNAME_DELETED: The specified network name is no longer available.",
+	65:  "ERROR_NETWORK_ACCESS_DENIED: Network access is denied.",
+	66:  "ERROR_BAD_DEV_TYPE: The network resource type is not correct.",
+	67:  "ERROR_BAD_NET_NAME: The network name cannot be found.",
+	68:  "ERROR_TOO_MANY_NAMES: The name limit for the local computer network adapter card was exceeded.",
+	69:  "ERROR_TOO_MANY_SESS: The network BIOS session limit was exceeded.",
+	70:  "ERROR_SHARING_PAUSED: The remote server has been paused or is in the process of being started.",
+	71:  "ERROR_REQ_NOT_ACCEP: No more connections can be made to this remote computer at this time because there are already as many connections as the computer can accept.",
+	72:  "ERROR_REDIR_PAUSED: The specified printer or disk device has been paused.",
+	80:  "ERROR_FILE_EXISTS: The file exists.",
+	82:  "ERROR_CANNOT_MAKE: The directory or file cannot be created.",
+	83:  "ERROR_FAIL_I24: Fail on INT 24.",
+	84:  "ERROR_OUT_OF_STRUCTURES: Storage to process this request is not available.",
+	85:  "ERROR_ALREADY_ASSIGNED: The local device name is already in use.",
+	86:  "ERROR_INVALID_PASSWORD: The specified network password is not correct.",
+	87:  "ERROR_INVALID_PARAMETER: The parameter is incorrect.",
+	88:  "ERROR_NET_WRITE_FAULT: A write fault occurred on the network.",
+	89:  "ERROR_NO_PROC_SLOTS: The system cannot start another process at this time.",
 	100: "ERROR_TOO_MANY_SEMAPHORES: Cannot create another system semaphore.",
 	101: "ERROR_EXCL_SEM_ALREADY_OWNED: The exclusive semaphore is owned by another process.",
 	102: "ERROR_SEM_IS_SET: The semaphore is set and cannot be closed.",
@@ -250,18 +249,29 @@ var ErrorCodeMap = map[uint32]string{
 	402: "ERROR_PROCESS_MODE_ALREADY_BACKGROUND: The process is already in background processing mode.",
 	403: "ERROR_PROCESS_MODE_NOT_BACKGROUND: The process is not in background processing mode.",
 	487: "ERROR_INVALID_ADDRESS: Attempt to access invalid address.",
-	
+
 	// custom error below
 	550: "ERROR_OUT_OF_MEMORY: Not enough memory to allocate",
 	551: "ERROR_TOKEN_SIZE: Failed Getting the total size of priv tokens",
 	552: "ERROR_FAILED_TOKENS: NtQueryInformationToken Failed getting privileges",
 	553: "ERROR_LOOKUPPRIV_FAILED: LookupPrivileg Failed",
-
-
 }
 
+type FileStatus uint32
 
-var SuccessMap  = map[uint32]string {
+const (
+	UploadChunked FileStatus = iota + 1
+	UploadNoChunked
+)
+
+type FileOutput struct {
+	Status FileStatus
+	//TotalSize uint64
+	DataLen uint32
+	Data    []byte
+}
+
+var SuccessMap = map[uint32]string{
 	// custom success below
 	488: "CP_SUCCESS: Succesfully copied files",
 	489: "CD_SUCCESS: Succesfully Changed Dirs",
@@ -269,5 +279,82 @@ var SuccessMap  = map[uint32]string {
 	491: "RMDIR_SUCCESS: Succesfully Deleted Directory",
 	492: "MV_SUCCESS: Succesfully renamed file",
 	493: "MKDIR_SUCCESS: Succesfully Created Directory",
+}
 
+type ClientRegister struct {
+	Guid       uint32
+	User       string
+	Host       string
+	InternaIP  string
+	ExternalIP string
+	ProcPath   string
+	Pid        uint32
+	Tid        uint32
+	Ppid       uint32
+	IsElev     byte
+	Arch       byte
+	Minor      uint32
+	Major      uint32
+	Build      uint32
+}
+
+type OutputEntrys struct {
+	//Type   uint32
+	TaskID     uint32
+	Output     []byte
+	FileOutput *FileOutput
+}
+
+type taskOutputParser func(*Reader) string
+
+var taskOutputParsers = map[uint32]taskOutputParser{
+	3: ParsePRIVOutput,
+	4: ParseLSOutput,
+	5: ParsePSOutput,
+}
+
+var privilegeStatusNames = map[uint32]string{
+	1: "Removed",
+	2: "Enabled",
+	3: "Enabled by Default",
+	4: "Disabled",
+}
+
+var privilegeDescriptions = map[string]string{
+	"SeAssignPrimaryTokenPrivilege":             "Replace a process level token",
+	"SeAuditPrivilege":                          "Generate security audits",
+	"SeBackupPrivilege":                         "Back up files and directories",
+	"SeChangeNotifyPrivilege":                   "Bypass traverse checking",
+	"SeCreateGlobalPrivilege":                   "Create global objects",
+	"SeCreatePagefilePrivilege":                 "Create a pagefile",
+	"SeCreatePermanentPrivilege":                "Create permanent shared objects",
+	"SeCreateSymbolicLinkPrivilege":             "Create symbolic links",
+	"SeCreateTokenPrivilege":                    "Create a token object",
+	"SeDebugPrivilege":                          "Debug programs",
+	"SeDelegateSessionUserImpersonatePrivilege": "Obtain an impersonation token for another user in the same session",
+	"SeEnableDelegationPrivilege":               "Enable computer and user accounts to be trusted for delegation",
+	"SeImpersonatePrivilege":                    "Impersonate a client after authentication",
+	"SeIncreaseBasePriorityPrivilege":           "Increase scheduling priority",
+	"SeIncreaseQuotaPrivilege":                  "Adjust memory quotas for a process",
+	"SeIncreaseWorkingSetPrivilege":             "Increase a process working set",
+	"SeLoadDriverPrivilege":                     "Load and unload device drivers",
+	"SeLockMemoryPrivilege":                     "Lock pages in memory",
+	"SeMachineAccountPrivilege":                 "Add workstations to domain",
+	"SeManageVolumePrivilege":                   "Perform volume maintenance tasks",
+	"SeProfileSingleProcessPrivilege":           "Profile single process",
+	"SeRelabelPrivilege":                        "Modify an object label",
+	"SeRemoteShutdownPrivilege":                 "Force shutdown from a remote system",
+	"SeRestorePrivilege":                        "Restore files and directories",
+	"SeSecurityPrivilege":                       "Manage auditing and security log",
+	"SeShutdownPrivilege":                       "Shut down the system",
+	"SeSyncAgentPrivilege":                      "Synchronize directory service data",
+	"SeSystemEnvironmentPrivilege":              "Modify firmware environment values",
+	"SeSystemProfilePrivilege":                  "Profile system performance",
+	"SeSystemtimePrivilege":                     "Change the system time",
+	"SeTakeOwnershipPrivilege":                  "Take ownership of files or other objects",
+	"SeTcbPrivilege":                            "Act as part of the operating system",
+	"SeTimeZonePrivilege":                       "Change the time zone",
+	"SeTrustedCredManAccessPrivilege":           "Access Credential Manager as a trusted caller",
+	"SeUndockPrivilege":                         "Remove computer from docking station",
+	"SeUnsolicitedInputPrivilege":               "Read unsolicited input from a terminal device",
 }
