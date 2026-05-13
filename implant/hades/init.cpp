@@ -140,10 +140,11 @@ ULONG GetPPID() {
 BOOL InitAgent() {
 	
 	
-	hades         = AllocMemory<Hades>(sizeof(Hades));
+	hades         =  AllocMemory <Hades>     (sizeof(Hades));
 	g_ByteMgr     =  AllocMemory <bytes>     (sizeof(bytes));
 	g_Network	  =  AllocMemory <Network>   (sizeof(Network));
 	g_Commander	  =  AllocMemory <commanders>(sizeof(commanders));
+	g_FileMgr     =  AllocMemory <FileMgr>   (sizeof(FileMgr));
 	if (!LoadAPIS()) { return FALSE; }
 	
 	if (!LoadConfig()) { return FALSE; }

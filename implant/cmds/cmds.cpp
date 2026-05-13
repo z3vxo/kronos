@@ -15,7 +15,6 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 	g_ByteMgr->InitRead(Data, size);
 	g_ByteMgr->Write4(MSG_TYPE_OUTPUT);
 	UINT TotalCommands = g_ByteMgr->Read4();
-	g_ByteMgr->Write4(TotalCommands);
 	for (INT i = 0; i < TotalCommands; i++) {
 		UINT CmdCode = g_ByteMgr->Read4();
 		switch (CmdCode)
@@ -77,7 +76,7 @@ void commanders::do_upload() {
 	ULONGLONG size = 0;
 	DWORD high = 0;
 	DWORD low = 0;
-	DWORD chunksize = 12 * 1024;
+	DWORD chunksize = FILE_CHUNK_SIZE;
 	DWORD BytesRead = 0;
 
 	UINT TaskID = g_ByteMgr->BeginTask();
@@ -119,12 +118,12 @@ void commanders::do_upload() {
 		g_ByteMgr->Write4(BytesRead);
 		g_ByteMgr->WriteString(buf, BytesRead);
 
-		/*if (!g_FileMgr->InsertTask(TaskID, hFile)) {
+		if (!g_FileMgr->InsertTask(TaskID, hFile)) {
 			g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
 			goto CLEANUP;
-		}*/
+		}
 
-		hFile = NULL; // FileMgr owns it now.
+		hFile = NULL;
 	}
 	else {
 		g_ByteMgr->Write4(UPLOAD_NO_CHUNKED);

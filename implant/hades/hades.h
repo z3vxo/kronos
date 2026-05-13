@@ -4,12 +4,15 @@
 #include "../networkd/network.hpp"
 #include "../utils/bytes.hpp"
 #include "../utils/apidefs.hpp"
+#include "../fileops/files.hpp"
 #include <wininet.h>
 #include <iphlpapi.h>
 #include <sddl.h>
 
 
 #define DECL(x) decltype(x) * x;
+
+#define FILE_CHUNK_SIZE (64 * 1024)
 
 #ifdef _DEBUG
 #define DEBUG_LOG(msg, ...) printf(msg "\n", ##__VA_ARGS__)
