@@ -61,13 +61,7 @@ Network::Network(ULONG id) {
 
 
 BOOL Network::DoPostSingle(PBYTE toSend, SIZE_T len, DomainEntry* domain) {
-	printf("SENDING:\n");
-	for(INT i = 0; i < 30; i++) {
-		if (i % 16 == 0) {
-			printf("\n");
-		}
-		printf("0x%02x ", toSend[i]);
-	}
+	
 	HINTERNET hSession = NULL, hConnect = NULL, hRequest = NULL;
 	BOOL bResults = FALSE;
 	DWORD flags = INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD;

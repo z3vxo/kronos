@@ -13,7 +13,6 @@
 
 BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 	g_ByteMgr->InitRead(Data, size);
-	g_ByteMgr->Write4(MSG_TYPE_OUTPUT);
 	UINT TotalCommands = g_ByteMgr->Read4();
 	for (INT i = 0; i < TotalCommands; i++) {
 		UINT CmdCode = g_ByteMgr->Read4();

