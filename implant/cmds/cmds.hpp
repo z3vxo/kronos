@@ -47,6 +47,7 @@ class commanders {
 		CMD_CODE_WHOAMI,
 		CMD_CODE_MKDIR,
 		CMD_CODE_UPLOAD,
+		CMD_CODE_DOWNLOAD,
 	};
 
 	enum PrivStatus : UINT32 {

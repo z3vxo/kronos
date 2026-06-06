@@ -12,7 +12,7 @@
 
 #define DECL(x) decltype(x) * x;
 
-#define FILE_CHUNK_SIZE (1 * 1024)
+#define FILE_CHUNK_SIZE (12 * 1024)
 
 #ifdef _DEBUG
 #define DEBUG_LOG(msg, ...) printf(msg "\n", ##__VA_ARGS__)
