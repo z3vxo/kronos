@@ -71,6 +71,7 @@ func (c *CLI) SetupDispatchTable() {
 		"whoami":       c.HandleGETPRIVS,
 		"ls":           c.HandleLS,
 		"download":     c.HandleDOWNLOAD,
+		"files":        c.HandleFiles,
 	}
 }
 

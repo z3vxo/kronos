@@ -77,8 +77,8 @@ func (ts *TeamServer) Start() error {
 			r.Delete("/rest/tasks/delete/{guid}/{taskID}", ts.CommandDeleteHandler)
 			r.Get("/rest/tasks/list/{guid}", ts.ListTasksHandler)
 
-			// r.Get("/rest/files/list", ts.FilesListHandler)
-			// r.Get("/rest/files/sync/{code}", ts.FilesSyncHandler)
+			r.Get("/rest/files/list", ts.FilesListHandler)
+			r.Get("/rest/files/sync/{code}", ts.FilesSyncHandler)
 
 			r.Get("/rest/listeners/list", ts.ListListenerHandler)
 			r.Post("/rest/listeners/new", ts.NewListenerHandler)

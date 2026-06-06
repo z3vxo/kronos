@@ -56,7 +56,7 @@ func (ts *TeamServer) UpdateListenerMapStatus(id string, status bool) {
 func BuildListenerHttp(port int, protocol string, db *database.DB, sse *broker.Broker, host string, letsEncrypt bool, mgr *files.Manager) (*http.Server, error) {
 	h := &server.AgentHandler{DB: db, Broker: sse, Host: host, FileMgr: mgr}
 	r := chi.NewRouter()
-	r.Get("/ms/download", h.AgentCheckInHandler)
+	r.Get(config.Cfg.Server.GetEndpoint, h.AgentCheckInHandler)
 	r.Post(config.Cfg.Server.PostEndpoint, h.AgentUploadHandler)
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")

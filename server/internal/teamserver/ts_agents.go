@@ -5,12 +5,48 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/httputil"
 )
+
+
+func (ts *TeamServer) FilesSyncHandler(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "code")
+	diskPath, err := ts.db.GetFilePath(id)
+	if err != nil {
+		httputil.SendJSONError(w, "Could not find File", http.StatusNotFound)
+		return
+	}
+	f, err := os.Open(diskPath)
+	if err != nil {
+		httputil.SendJSONError(w, "Could not open file", http.StatusInternalServerError)
+		return
+	}
+	defer f.Close()
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(diskPath)))
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.WriteHeader(http.StatusOK)
+	io.Copy(w, f)
+}
+
+func (ts *TeamServer) FilesListHandler(w http.ResponseWriter, r *http.Request) {
+	files, err := ts.db.GetFiles()
+	if err != nil {
+		httputil.SendJSONError(w, "Failed Retreiving files", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(&files)
+}
 
 func (ts *TeamServer) AgentListHandler(w http.ResponseWriter, r *http.Request) {
 

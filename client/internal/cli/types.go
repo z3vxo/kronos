@@ -97,3 +97,17 @@ type ListenerStartResp struct {
 type Generic200 struct {
 	Status string `json:"status"`
 }
+
+// ----- Files -----
+
+type FileEntry struct {
+	ID      uint32 `json:"id"`
+	AgentID string `json:"agent_id"`
+	Name    string `json:"filename"`
+	Size    uint64 `json:"size"`
+}
+
+type FilesResp struct {
+	Total int         `json:"total"`
+	Files []FileEntry `json:"files"`
+}
