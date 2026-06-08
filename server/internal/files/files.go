@@ -32,6 +32,7 @@ type Key struct {
 type UploadTask struct {
 	AgentID      string
 	TaskID       uint32
+	FileID       int64
 	TempPath     string
 	FinalPath    string
 	OriginalPath string
@@ -64,7 +65,7 @@ func NewFileManager(db *database.DB) *Manager {
 	}
 }
 
-func (m *Manager) InsertNewFileTask(agentid string, taskid uint32, filename string) error {
+func (m *Manager) InsertNewFileTask(agentid string, taskid uint32, filename string, fileID int64) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	key := Key{
@@ -79,6 +80,7 @@ func (m *Manager) InsertNewFileTask(agentid string, taskid uint32, filename stri
 	m.uploads[key] = &UploadTask{
 		AgentID:      agentid,
 		TaskID:       taskid,
+		FileID:       fileID,
 		OriginalPath: filename,
 		Status:       StatusWaiting,
 	}
@@ -167,9 +169,8 @@ func (m *Manager) ProcessFileChunk(id string, taskID uint32, chunk Chunk) (Proce
 
 		task.FinalPath = finalPath
 		delete(m.uploads, key)
-		if err := m.db.InsertFile(id, finalPath, task.BytesSeen); err != nil {
-			return ProcessResult{}, err
-		}
+		m.db.UpdateFileDone(task.FileID, 1, finalPath, task.BytesSeen)
+		
 		result.Done = true
 		result.FinalPath = finalPath
 		result.BytesSeen = task.BytesSeen

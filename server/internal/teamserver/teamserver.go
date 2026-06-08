@@ -79,6 +79,7 @@ func (ts *TeamServer) Start() error {
 
 			r.Get("/rest/files/list", ts.FilesListHandler)
 			r.Get("/rest/files/sync/{code}", ts.FilesSyncHandler)
+			r.Post("/rest/file/download/task", ts.DownloadTaskHandler)
 
 			r.Get("/rest/listeners/list", ts.ListListenerHandler)
 			r.Post("/rest/listeners/new", ts.NewListenerHandler)

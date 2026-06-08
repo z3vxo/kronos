@@ -116,9 +116,11 @@ func SetupDB(db *DB) error {
 
 	file_Query := `CREATE TABLE IF NOT EXISTS files (
 		id INTEGER PRIMARY KEY,
+		status INTEGER,
 		agentid TEXT NOT NULL,
 		onDiskPath TEXT NOT NULL,
-		size INTEGER NOT NULL);`
+		size INTEGER NOT NULL,
+	    type TEXT NOT NULL);`
 	_, err = db.conn.Exec(file_Query)
 	if err != nil {
 		return err

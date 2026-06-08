@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"path/filepath"
 	"strconv"
 )
@@ -20,13 +19,13 @@ type Files struct {
 	Files []FileEntry `json:"files"`
 }
 
-func (db *DB) InsertFile(agentID string, onDiskPath string, size uint64) error {
-	q := "INSERT INTO files(agentid, onDiskPath, size) VALUES(?, ?, ?);"
-	if _, err := db.conn.Exec(q, agentID, onDiskPath, size); err != nil {
-		fmt.Println(err)
-		return err
+func (db *DB) InsertFile(agentID string, onDiskPath string, size uint64, OpType string) (int64, error) {
+	q := "INSERT INTO files(agentid, onDiskPath, size, type) VALUES(?, ?, ?, ?);"
+	result, err := db.conn.Exec(q, agentID, onDiskPath, size, OpType)
+	if err != nil {
+		return 0, err
 	}
-	return nil
+	return result.LastInsertId()
 }
 
 func (db *DB) GetFiles() (Files, error) {
@@ -57,11 +56,18 @@ func (db *DB) GetFilePath(id string) (string, error) {
 		return "", err
 	}
 	var path string
-	if err = db.conn.QueryRow("SELECT onDiskPath FROM files WHERE id = ?", I).Scan(&path); err != nil {
+	if err = db.conn.QueryRow("SELECT onDiskPath FROM files WHERE id = ? AND type='download'", I).Scan(&path); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", errors.New("no file found for ID")
 		}
 		return "", err
 	}
 	return path, nil
+}
+
+
+func (db *DB) UpdateFileDone(id int64, status int, path string, size uint64) error {
+	q := "UPDATE files SET status = ?, onDiskPath = ?, size = ? WHERE id = ?;"
+	_, err := db.conn.Exec(q, status, path, size, id)
+	return err
 }

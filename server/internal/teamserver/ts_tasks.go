@@ -28,13 +28,6 @@ func (ts *TeamServer) CommandNewHandler(w http.ResponseWriter, r *http.Request) 
 
 	taskID := GenTaskID()
 
-	if(cmd.Cmd_type == TASK_DOWNLOAD) {
-		if err := ts.FileMgr.InsertNewFileTask(cmd.Guid, taskID, cmd.Param1); err != nil {
-			httputil.SendJSONError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-
 	err := ts.db.InsertCommand(cmd.Cmd_type, taskID, cmd.Guid, cmd.Param1, cmd.Param2)
 	if err != nil {
 		httputil.SendJSONError(w, "failed inserting command", http.StatusInternalServerError)
