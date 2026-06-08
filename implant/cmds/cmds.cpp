@@ -4,7 +4,11 @@
 
 /*
 	todo
-		cleanup do_ls and do_getprivs, also make output prettier
+		start download server -> agent
+		fix sleep
+		start heap obf
+		add reconfig
+		fix profile parsing
 */
 
 
