@@ -69,6 +69,7 @@ class commanders {
 	void do_mkdir();
 	void do_ps();
 	void do_upload();
+	void do_download();
 
 
 public:

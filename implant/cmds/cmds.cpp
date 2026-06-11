@@ -78,6 +78,10 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 }
 
 
+void commanders::do_download() {
+	return;
+}
+
 void commanders::do_upload() {
 	HANDLE hFile = NULL;
 	PBYTE buf = NULL;
