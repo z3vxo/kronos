@@ -22,6 +22,7 @@ var CmdCodeMap = map[string]int{
 	"get-privs": 10,
 	"mkdir":     11,
 	"download":  12,
+	"upload":    13,
 }
 
 func (c *CLI) requireAgent() bool {

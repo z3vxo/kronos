@@ -1,83 +1,54 @@
 package files
 
 import (
-	"errors"
 	"fmt"
-	"github.com/z3vxo/kronos/internal/database"
 	"os"
 	"path/filepath"
-	"sync"
+
+	"github.com/z3vxo/kronos/internal/database"
 )
 
-type Status uint32
 
-const (
-	StatusWaiting Status = iota + 1
-	StatusOngoing
-	StatusDone
-	StatusFailed
-)
-
-type Manager struct {
-	mu      sync.Mutex
-	uploads map[Key]*UploadTask
-	db      *database.DB
-}
-
-type Key struct {
-	AgentID string
-	TaskID  uint32
-}
-
-type UploadTask struct {
-	AgentID      string
-	TaskID       uint32
-	FileID       int64
-	TempPath     string
-	FinalPath    string
-	OriginalPath string
-	File         *os.File
-	BytesSeen    uint64
-	TotalSize    uint64
-	Status       Status
-}
-
-type Chunk struct {
-	Status uint32
-	Data   []byte
-}
-
-type ProcessResult struct {
-	Started   bool
-	Done      bool
-	FinalPath string
-	BytesSeen uint64
-}
-
-var ErrUploadTaskExists = errors.New("upload task already exists")
-var ErrUploadTaskNotFound = errors.New("upload task not found")
-var ErrUnknownUploadStatus = errors.New("unknown upload status")
 
 func NewFileManager(db *database.DB) *Manager {
 	return &Manager{
-		uploads: make(map[Key]*UploadTask),
+		Uploads: make(map[string]*UploadTask),
+		Downloads: make(map[Key]*DownloadTask),
 		db:      db,
 	}
 }
 
-func (m *Manager) InsertNewFileTask(agentid string, taskid uint32, filename string, fileID int64) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+
+func (m *Manager) InsertNewUploadFileTask(agentid string, taskid uint32, path, uuid string, hFile *os.File, rPath string) error {
+	m.ulMu.Lock()
+	defer m.ulMu.Unlock()
+
+	m.Uploads[uuid] = &UploadTask{
+		TaskID:     taskid,
+		AgentID:    agentid,
+		OnDiskFile: hFile,
+		RemotePath: rPath,
+		Status:     UploadStatusNotStarted,
+	}
+
+	return nil
+
+
+}
+
+func (m *Manager) InsertNewDownloadFileTask(agentid string, taskid uint32, filename string, fileID int64) error {
+	m.dlMu.Lock()
+	defer m.dlMu.Unlock()
 	key := Key{
 		AgentID: agentid,
 		TaskID:  taskid,
 	}
 
-	if _, ok := m.uploads[key]; ok {
-		return ErrUploadTaskExists
+	if _, ok := m.Downloads[key]; ok {
+		return ErrDownloadTaskExists
 	}
 
-	m.uploads[key] = &UploadTask{
+	m.Downloads[key] = &DownloadTask{
 		AgentID:      agentid,
 		TaskID:       taskid,
 		FileID:       fileID,
@@ -88,22 +59,43 @@ func (m *Manager) InsertNewFileTask(agentid string, taskid uint32, filename stri
 	return nil
 }
 
+const UploadChunkSize = 24 * 1024
+
 const (
 	UploadChunked uint32 = iota + 1
 	UploadNoChunked
 	UploadDone
 )
 
+func (m *Manager) ReadUploadChunk(uuid string) ([]byte, bool, error) {
+	m.ulMu.Lock()
+	defer m.ulMu.Unlock()
+
+	task, ok := m.Uploads[uuid]
+	if !ok {
+		return nil, false, fmt.Errorf("upload task not found: %s", uuid)
+	}
+
+	buf := make([]byte, UploadChunkSize)
+	n, err := task.OnDiskFile.Read(buf)
+	if n == 0 && err != nil {
+		return nil, false, err
+	}
+
+	final := n < UploadChunkSize
+	return buf[:n], final, nil
+}
+
 func (m *Manager) ProcessFileChunk(id string, taskID uint32, chunk Chunk) (ProcessResult, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.dlMu.Lock()
+	defer m.dlMu.Unlock()
 	result := ProcessResult{}
 
 	key := Key{AgentID: id, TaskID: taskID}
 
-	task, ok := m.uploads[key]
+	task, ok := m.Downloads[key]
 	if !ok {
-		return ProcessResult{}, ErrUploadTaskNotFound
+		return ProcessResult{}, ErrDownloadTaskNotFound
 	}
 
 	if task.File == nil {
@@ -150,25 +142,25 @@ func (m *Manager) ProcessFileChunk(id string, taskID uint32, chunk Chunk) (Proce
 
 		if err := task.File.Close(); err != nil {
 			task.File = nil
-			delete(m.uploads, key)
+			delete(m.Downloads, key)
 			return ProcessResult{}, err
 		}
 		task.File = nil
 
 		completedDir := filepath.Join(filepath.Dir(filepath.Dir(task.TempPath)), "completed")
 		if err := os.MkdirAll(completedDir, 0755); err != nil {
-			delete(m.uploads, key)
+			delete(m.Downloads, key)
 			return ProcessResult{}, err
 		}
 
 		finalPath := filepath.Join(completedDir, filepath.Base(task.OriginalPath))
 		if err := os.Rename(task.TempPath, finalPath); err != nil {
-			delete(m.uploads, key)
+			delete(m.Downloads, key)
 			return ProcessResult{}, err
 		}
 
 		task.FinalPath = finalPath
-		delete(m.uploads, key)
+		delete(m.Downloads, key)
 		m.db.UpdateFileDone(task.FileID, 1, finalPath, task.BytesSeen)
 		
 		result.Done = true
@@ -176,6 +168,6 @@ func (m *Manager) ProcessFileChunk(id string, taskID uint32, chunk Chunk) (Proce
 		result.BytesSeen = task.BytesSeen
 		return result, nil
 	default:
-		return ProcessResult{}, ErrUnknownUploadStatus
+		return ProcessResult{}, ErrUnknownDownloadStatus
 	}
 }

@@ -72,6 +72,7 @@ func (c *CLI) SetupDispatchTable() {
 		"ls":           c.HandleLS,
 		"download":     c.HandleDOWNLOAD,
 		"files":        c.HandleFiles,
+		"upload":       c.UploadFileHandler,
 	}
 }
 
@@ -89,6 +90,14 @@ func (c *CLI) Dispatch(cmd []string) {
 }
 
 func (c *CLI) Run() {
+	c.ui.Send("\n")
+	c.ui.Send("\033[1;35m  ██╗  ██╗██████╗  ██████╗ ███╗   ██╗ ██████╗ ███████╗\033[0m")
+	c.ui.Send("\033[1;35m  ██║ ██╔╝██╔══██╗██╔═══██╗████╗  ██║██╔═══██╗██╔════╝\033[0m")
+	c.ui.Send("\033[1;35m  █████╔╝ ██████╔╝██║   ██║██╔██╗ ██║██║   ██║███████╗\033[0m")
+	c.ui.Send("\033[1;35m  ██╔═██╗ ██╔══██╗██║   ██║██║╚██╗██║██║   ██║╚════██║\033[0m")
+	c.ui.Send("\033[1;35m  ██║  ██╗██║  ██║╚██████╔╝██║ ╚████║╚██████╔╝███████║\033[0m")
+	c.ui.Send("\033[1;35m  ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝ ╚══════╝\033[0m")
+	c.ui.Send("")
 	defer c.Close()
 	for {
 		input, err := c.ui.Rl.Readline()

@@ -52,7 +52,7 @@ func (h *AgentHandler) AgentCheckInHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	cmdBytes, err := bytemgr.CraftCmdBytes(data)
+	cmdBytes, err := bytemgr.CraftCmdBytes(data, h.FileMgr)
 	if err != nil {
 		fmt.Println(err)
 

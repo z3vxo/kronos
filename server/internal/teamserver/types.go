@@ -72,6 +72,16 @@ type AgentInfoResp struct {
 	RegisterTime int64  `json:"reg_date"`
 }
 
+
+type UploadStartReq struct {
+	AgentID  string `json:"agentid"`
+	Path     string `json:"path"`
+	FileSize int64  `json:"size"`
+}
+
+type UploadStartResp struct {
+	UploadID string `json:"upload_id"`
+}
 const notFound = `<!DOCTYPE html>
 <html>
     <head><title>404 - Not Found</title></head>

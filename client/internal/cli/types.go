@@ -111,3 +111,13 @@ type FilesResp struct {
 	Total int         `json:"total"`
 	Files []FileEntry `json:"files"`
 }
+
+type UploadStartReq struct {
+	AgentID  string `json:"agentid"`
+	Path     string `json:"path"`
+	FileSize int64  `json:"size"`
+}
+
+type UploadStartResp struct {
+	UploadID string `json:"upload_id"`
+}

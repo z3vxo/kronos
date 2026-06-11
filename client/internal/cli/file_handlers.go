@@ -150,3 +150,85 @@ func fmtFileSize(n uint64) string {
 		return fmt.Sprintf("%d b", n)
 	}
 }
+
+
+
+func (c *CLI) UploadFileHandler(args []string) {
+	if !c.requireAgent() {
+		return
+	}
+	if len(args) == 0 {
+		c.ui.Send(ui.BAD.Sprint("Usage: upload <local_file> [remote_path]"))
+		return
+	}
+
+	onDisk := args[0]
+	localBase := filepath.Base(onDisk)
+
+	var remotePath string
+	if len(args) < 2 {
+		remotePath = `.\` + localBase
+	} else if strings.HasSuffix(args[1], `\`) {
+		remotePath = args[1] + localBase
+	} else {
+		remotePath = args[1]
+	}
+
+	info, err := os.Stat(onDisk)
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Cannot access file: %s", err))
+		return
+	}
+	payload := UploadStartReq{
+		AgentID:  c.ClientInUse,
+		Path:     remotePath,
+		FileSize: info.Size(),
+	}
+
+	data, err := json.Marshal(&payload)
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Failed marshaling json: %s", err))
+		return
+	}
+
+	var resp UploadStartResp
+	if err := c.http.DoPost("ts/rest/file/upload/start", data, &resp); err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Failed starting upload: %s", err))
+		return
+	}
+
+	c.UploadFile(resp.UploadID, onDisk)
+}
+
+
+func (c *CLI) UploadFile(uploadID, onDisk string) {
+	f, err := os.Open(onDisk)
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Cannot open file: %s", err))
+		return
+	}
+	defer f.Close()
+
+	req, err := http.NewRequest("PUT",
+		fmt.Sprintf("%s/ts/rest/file/upload/%s", c.http.Hostname, uploadID), f)
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Failed creating request: %s", err))
+		return
+	}
+	req.Header.Set("Content-Type", "application/octet-stream")
+	c.http.Auth.Apply(req)
+
+	resp, err := c.http.HttpClient.Do(req)
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Upload failed: %s", err))
+		return
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		c.ui.Send(ui.BAD.Sprintf("Server returned: %s", resp.Status))
+		return
+	}
+
+	info, _ := os.Stat(onDisk)
+	c.ui.PrintTitle(fmt.Sprintf("Uploaded %s (%s)", filepath.Base(onDisk), fmtFileSize(uint64(info.Size()))))
+}

@@ -3,8 +3,6 @@ package database
 import (
 	"fmt"
 	"time"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 func (db *DB) ListAgents() ([]Agent, error) {

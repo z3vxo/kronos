@@ -358,3 +358,10 @@ var privilegeDescriptions = map[string]string{
 	"SeUndockPrivilege":                         "Remove computer from docking station",
 	"SeUnsolicitedInputPrivilege":               "Read unsolicited input from a terminal device",
 }
+
+const (
+	UPLOAD_START_NON_CHUNKED = 0xc1
+	UPLOAD_START_CHUNKED = 0xc2
+	UPLOAD_CONTINUE = 0xc3
+	UPLOAD_DONE = 0xc4
+)

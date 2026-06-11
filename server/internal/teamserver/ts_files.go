@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/z3vxo/kronos/internal/httputil"
 )
 
@@ -63,7 +64,7 @@ func (ts *TeamServer) DownloadTaskHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := ts.FileMgr.InsertNewFileTask(cmd.Guid, taskID, cmd.Param1, fileID); err != nil {
+	if err := ts.FileMgr.InsertNewDownloadFileTask(cmd.Guid, taskID, cmd.Param1, fileID); err != nil {
 		httputil.SendJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -76,4 +77,72 @@ func (ts *TeamServer) DownloadTaskHandler(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "OK"})
+}
+
+
+
+func (ts *TeamServer) UploadStartHandler(w http.ResponseWriter, r *http.Request) {
+	var req UploadStartReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httputil.SendJSONError(w, "Error decoding json", http.StatusInternalServerError)
+		return
+	}
+
+	taskID := GenTaskID()
+	Uuid := uuid.NewString()
+	home, _ := os.UserHomeDir()
+	dir := filepath.Join(home, ".kronos", "files", "tmp")
+	
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		httputil.SendJSONError(w, "Failed opening tmp file", http.StatusInternalServerError)
+		return
+	}
+	name := fmt.Sprintf("%s_%d.tmp", req.AgentID, taskID)
+	tmppath := filepath.Join(dir, name)
+	f, err := os.Create(tmppath)
+	if err != nil {
+		httputil.SendJSONError(w, "Failed opening tmp file", http.StatusInternalServerError)
+		return
+	}
+
+	if err := ts.FileMgr.InsertNewUploadFileTask(req.AgentID, taskID, tmppath, Uuid, f, req.Path); err != nil {
+		httputil.SendJSONError(w, "Failed Inserting Into FileMgr", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"upload_id": Uuid})
+}
+
+
+func (ts *TeamServer) HandleUpload(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	entry, ok := ts.FileMgr.Uploads[id]
+	if !ok {
+		httputil.SendJSONError(w, "No upload entry found", http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := io.Copy(entry.OnDiskFile, r.Body); err != nil {
+		entry.OnDiskFile.Close()
+		os.Remove(entry.OnDiskFile.Name())
+		delete(ts.FileMgr.Uploads, id)
+		httputil.SendJSONError(w, "failed writing to disk", http.StatusInternalServerError)
+		return
+	}
+
+	if err := ts.db.InsertCommand(13, entry.TaskID, entry.AgentID, entry.RemotePath, id); err != nil {
+		os.Remove(entry.OnDiskFile.Name())
+		delete(ts.FileMgr.Uploads, id)
+		httputil.SendJSONError(w, "failed to insert into DB", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+
+
+
 }
