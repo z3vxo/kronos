@@ -105,6 +105,7 @@ BOOL LoadAPIS() {
 		hades->WinApis.GetTickCount         = (decltype(hades->WinApis.GetTickCount))         GetProc(hades->Modules.K32, HASHED_GetTickCount);
 		hades->WinApis.CloseHandle          = (decltype(hades->WinApis.CloseHandle))          GetProc(hades->Modules.K32, HASHED_CloseHandle);
 		hades->WinApis.CreateDirectoryA     = (decltype(hades->WinApis.CreateDirectoryA))	  GetProc(hades->Modules.K32, HASHED_CreateDirectoryA);
+		hades->WinApis.WriteFile            = (decltype(hades->WinApis.WriteFile))GetProc(hades->Modules.K32, HASHED_WriteFile);
 	}
 
 	hades->Modules.NTDLL = GetModule(HASHED_NTDLL);

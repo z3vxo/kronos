@@ -40,6 +40,7 @@
 #define HASHED_InternetConnect						 0xe4a86f61
 #define HASHED_OpenRequest							 0x15eddc50
 #define HASHED_SendRequest							 0xeda89fa7
+#define HASHED_WriteFile							 0xc1b09c27
 #define HASHED_InternetReadFile						 0x43d53dd0
 #define HASHED_HttpQueryInfoA						 0x94887ec7
 #define HASHED_InternetCloseHandle					 0x54ea3e04

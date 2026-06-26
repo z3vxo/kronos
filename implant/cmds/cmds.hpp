@@ -10,6 +10,7 @@
 #define RMDIR_SUCCESS 491 
 #define MV_SUCCESS    492
 #define MKDIR_SUCCESS 493
+#define DOWNLOAD_SUCCESS 494
 
 #define TASK_TYPE_GETPRIVS 3
 #define TASK_TYPE_LS 4
@@ -55,6 +56,13 @@ class commanders {
 		PrivEnabled = 2,
 		PrivEnabledByDefault = 3,
 		PrivDisabled = 4
+	};
+
+	enum UPLOAD_TYPES : UINT {
+		UPLOAD_START_NON_CHUNKED = 0xc1,
+		UPLOAD_START_CHUNKED = 0xc2,
+		UPLOAD_CONTINUE = 0xc3,
+		TS_UPLOAD_DONE = 0xc4
 	};
 
 	void do_mv();

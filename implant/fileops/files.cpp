@@ -1,7 +1,7 @@
 #include "files.hpp"
 #include <stdio.h>
 
-BOOL FileMgr::InsertTask(UINT32 TaskID, HANDLE handle) {
+BOOL FileMgr::InsertTask(UINT32 TaskID, HANDLE handle, TaskType type) {
     for (FileTasks* cur = this->head; cur != NULL; cur = cur->next) {
         if (cur->TaskID == TaskID) {
             return FALSE;
@@ -16,6 +16,7 @@ BOOL FileMgr::InsertTask(UINT32 TaskID, HANDLE handle) {
     task->TaskID = TaskID;
     task->hProc = handle;
     task->Status = FileOnGoing;
+    task->type = type;
 
     task->next = this->head;
     this->head = task;
@@ -78,13 +79,42 @@ BOOL FileMgr::ProcessEntry(FileTasks* task) {
 }
 
 
+HANDLE FileMgr::GetHandle(UINT32 TaskID) {
+    for (FileTasks* cur = this->head; cur != NULL; cur = cur->next) {
+        if (cur->TaskID = TaskID) {
+            return cur->hProc;
+        }
+    }
+    return INVALID_HANDLE_VALUE;
+}
+
+
+BOOL FileMgr::RemoveTask(UINT32 TaskID) {
+    FileTasks* prev = NULL;
+    for (FileTasks* cur = this->head; cur != NULL; cur = cur->next) {
+        if (cur->TaskID == TaskID) {
+            if (prev) {
+                prev->next = cur->next;
+            }
+            else {
+                this->head = cur->next;
+            }
+            HeapFree(GetProcessHeap(), 0, cur);
+            return TRUE;
+        }
+        prev = cur;
+    }
+    return FALSE;
+}
+
+
 BOOL FileMgr::CheckTasks() {
     FileTasks* prev = NULL;
     FileTasks* cur = this->head;
 
     while (cur) {
         FileTasks* next = cur->next;
-        BOOL remove = this->ProcessEntry(cur);
+        BOOL remove = (cur->type == FileUpload) ? FALSE : this->ProcessEntry(cur);
         if (remove) {
             if (prev) {
                 prev->next = next;

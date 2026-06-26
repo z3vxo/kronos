@@ -102,6 +102,7 @@ typedef struct {
 		DECL(CreateDirectoryA);
 		DECL(GetFullPathNameA);
 		DECL(GetFileAttributesA);
+		DECL(WriteFile);
 
 		DECL(GetUserNameA);
 		DECL(GetTokenInformation);

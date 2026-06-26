@@ -6,6 +6,7 @@
 
 BOOL RunHades() {
 
+
 	if (!InitAgent()) {
 		DEBUG_LOG("Failed Loading\n");
 		return FALSE;

