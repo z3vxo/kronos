@@ -132,6 +132,14 @@ func (ts *TeamServer) HandleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, err := entry.OnDiskFile.Seek(0, io.SeekStart); err != nil {
+		entry.OnDiskFile.Close()
+		os.Remove(entry.OnDiskFile.Name())
+		delete(ts.FileMgr.Uploads, id)
+		httputil.SendJSONError(w, "failed seeking file", http.StatusInternalServerError)
+		return
+	}
+
 	if err := ts.db.InsertCommand(13, entry.TaskID, entry.AgentID, entry.RemotePath, id); err != nil {
 		os.Remove(entry.OnDiskFile.Name())
 		delete(ts.FileMgr.Uploads, id)

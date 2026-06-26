@@ -279,6 +279,7 @@ var SuccessMap = map[uint32]string{
 	491: "RMDIR_SUCCESS: Succesfully Deleted Directory",
 	492: "MV_SUCCESS: Succesfully renamed file",
 	493: "MKDIR_SUCCESS: Succesfully Created Directory",
+	494: "DOWNLOAD_SUCCESS: Succesfully wrote file to disk",
 }
 
 type ClientRegister struct {

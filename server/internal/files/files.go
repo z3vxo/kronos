@@ -59,7 +59,7 @@ func (m *Manager) InsertNewDownloadFileTask(agentid string, taskid uint32, filen
 	return nil
 }
 
-const UploadChunkSize = 24 * 1024
+const UploadChunkSize = 512 * 1024
 
 const (
 	UploadChunked uint32 = iota + 1
