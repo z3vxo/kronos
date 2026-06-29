@@ -1,7 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <winhttp.h>
-#include <wininet.h>
+//#include <wininet.h>
 #include "../hades/hades.h"
 #include "../hades/config.hpp"
 
@@ -28,7 +28,7 @@ struct HTTPAPIS {
 	DECL(WinHttpGetDefaultProxyConfiguration);
 
 
-	DECL(InternetOpenA);
+	/*DECL(InternetOpenA);
 	DECL(InternetConnectA);
 	DECL(HttpOpenRequestA);
 	DECL(HttpSendRequestA);
@@ -36,7 +36,7 @@ struct HTTPAPIS {
 	DECL(InternetCloseHandle);
 	DECL(InternetSetOptionA);
 	DECL(HttpAddRequestHeadersA);
-	DECL(HttpQueryInfoA);
+	DECL(HttpQueryInfoA);*/
 };
 
 #define MAX_RETRYS 5
