@@ -64,7 +64,7 @@ BOOL Network::DoPostSingle(PBYTE toSend, SIZE_T len, DomainEntry* domain) {
 	
 	HINTERNET hSession = NULL, hConnect = NULL, hRequest = NULL;
 	BOOL bResults = FALSE;
-	DWORD flags = INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD;
+	DWORD flags = WINHTTP_FLAG_REFRESH;
 	BOOL ok = FALSE;
 	
 	DEBUG_LOG_WIDE(L"Sending Request to %s%s\n", domain->domain, conf->PostEndpoint);

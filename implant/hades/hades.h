@@ -1,13 +1,15 @@
 #pragma once
-#include <Windows.h>
+#include <WinSock2.h>
+#include <windows.h>
+#include <iphlpapi.h>
+#include <sddl.h>
+
 #include "../shared/nt.hpp"
 #include "../networkd/network.hpp"
 #include "../utils/bytes.hpp"
 #include "../utils/apidefs.hpp"
 #include "../fileops/files.hpp"
-#include <wininet.h>
-#include <iphlpapi.h>
-#include <sddl.h>
+
 
 
 #define DECL(x) decltype(x) * x;
