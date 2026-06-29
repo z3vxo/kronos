@@ -16,6 +16,6 @@ func main() {
 	}
 
 	if err := kronos.Run(); err != nil {
-		log.Fatalf("Failed to sstart: %v", err)
+		log.Fatalf("Failed to ssstart: %v", err)
 	}
 }
