@@ -72,8 +72,7 @@ endpoints:
   get: "/ms/download"
   post: "/ms/upload"
 
-headers:
-  User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
 sleep:
   interval: 10

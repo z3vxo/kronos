@@ -67,6 +67,7 @@ func (h *AgentHandler) AgentCheckInHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *AgentHandler) AgentUploadHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("POST HIT")
 	AgentGuid := r.Header.Get("X-Agent-ID")
 	fmt.Println(AgentGuid)
 	Host := r.Host

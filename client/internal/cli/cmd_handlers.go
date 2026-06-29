@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/z3vxo/kronos/internal/ui"
+	"github.com/z3vxo/kronos/internal/payloadgen"
 )
 
 var CmdCodeMap = map[string]int{
@@ -174,3 +175,27 @@ func (c *CLI) HandleMV(args []string) {
 	c.sendTask("mv", args[0], args[1])
 }
 
+
+
+func (c *CLI) HandleGenerate(args []string) {
+	if len(args) < 1 || len(args) > 2 {
+		c.ui.Send(ui.BAD.Sprint("Usage: generate <name> [debug]"))
+		return
+	}
+	name := args[0]
+	debug := len(args) == 2 && args[1] == "debug"
+
+	err := payloadgen.GenerateProfile()
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Profile generation failed: %s", err))
+		return
+	}
+	c.ui.Send(ui.INFO.Sprint("Generating payload...."))
+
+	str, err := payloadgen.Compile(name, debug)
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Compilation failed:\n%s", err))
+		return
+	}
+	c.ui.Send(ui.GOOD.Sprintf("Implant compiled: %s", str))
+}
