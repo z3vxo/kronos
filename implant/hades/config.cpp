@@ -10,10 +10,14 @@
 
 // todo, clean this up, test code below
 BOOL LoadConfig() {
+	UINT Key = 0xff;
 
 	conf = AllocMemory<Config>(sizeof(struct Config));
 	UINT ProfileSize = GetProfileSize();
 	g_ByteMgr->InitRead(GetProfile(), ProfileSize);
+	/*for (int i; i < ProfileSize; i++) {
+		g_ByteMgr->InData[i] ^= Key;
+	}*/
 
 	conf->domaincounts = g_ByteMgr->Read4();
 	for (int i = 0; i < conf->domaincounts; i++) {
@@ -43,7 +47,7 @@ BOOL LoadConfig() {
 	//g_ByteMgr->ReadInto((PBYTE)conf->UA, UaLen);
 
 
-	DEBUG_LOG_WIDE(L"Domain: %s\nPort: % d\nIsHttps: % d\nGet : %s\nPost: %s\nUA: %s\n",
+	DEBUG_LOG_WIDE(L"Domain: %ls\nPort: %d\nIsHttps: %d\nGet: %ls\nPost: %ls\nUA: %ls\n",
 		conf->domains[0].domain,
 		conf->domains[0].port,
 		conf->domains[0].isHttps,
