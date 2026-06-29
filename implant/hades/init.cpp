@@ -1,6 +1,6 @@
-#include <WS2tcpip.h>
+
 #include <stdio.h>
-#include <iphlpapi.h>
+
 
 #include "../utils/apidefs.hpp"
 #include "../utils/bytes.hpp"
