@@ -11,8 +11,8 @@ teamserver:
   key: "~/.kronos/certs/server.key"
 
 server:
-  getEndpoint: "/ms/download"
-  postEndpoint: "/ms/upload"
+  getEndpoint: "/api/v2/users"
+  postEndpoint: "/api/v2/login"
   GetResponseHeaders:
     Server: "apache"
   PostResponseHeaders:

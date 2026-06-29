@@ -4,15 +4,18 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v2"
 )
 
 type HttpConf struct {
-	User   string `yaml:"user"`
-	Passwd string `yaml:"pass"`
-	Host   string `yaml:"host"`
+	User     string `yaml:"user"`
+	Passwd   string `yaml:"pass"`
+	Host     string `yaml:"host"`
+	PostPath string `yaml:"postPath"`
+	GetPath  string `yaml:"getPath"`
 }
 
 type Config struct {
@@ -33,16 +36,62 @@ func Setup() error {
 	user := prompt("Username: ")
 	passwd := prompt("Password: ")
 
-	cfg := Config{Http: HttpConf{Host: host, User: user, Passwd: passwd}}
+	cfg := Config{Http: HttpConf{Host: host, User: user, Passwd: passwd, PostPath: "/api/v2/login", GetPath: "/api/v2/users"}}
 	data, err := yaml.Marshal(&cfg)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile("./client.yaml", data, 0600)
+
+	dir, err := kronosDir()
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(dir, "client.yaml"), data, 0600); err != nil {
+		return err
+	}
+
+	profilePath := filepath.Join(dir, "profile.yaml")
+	if _, err := os.Stat(profilePath); os.IsNotExist(err) {
+		return os.WriteFile(profilePath, defaultProfile, 0600)
+	}
+	return nil
 }
 
+var defaultProfile = []byte(`domains:
+  - host: "127.0.0.1"
+    port: 443
+    https: true
+  - host: "127.0.0.1"
+    port: 80
+    https: false
+
+endpoints:
+  get: "/ms/download"
+  post: "/ms/upload"
+
+headers:
+  User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+
+sleep:
+  interval: 10
+  jitter: 20
+
+obfuscation:
+  syscall: "none"
+  heap: false
+  sleep: false
+  stack_spoof: false
+`)
+
 func LoadCfg() error {
-	data, err := os.ReadFile("./client.yaml")
+	dir, err := kronosDir()
+	if err != nil {
+		return err
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "client.yaml"))
 	if os.IsNotExist(err) {
 		return fmt.Errorf("missing config: run ./client setup")
 	}
@@ -51,4 +100,12 @@ func LoadCfg() error {
 	}
 	Cfg = &Config{}
 	return yaml.Unmarshal(data, Cfg)
+}
+
+func kronosDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".kronos"), nil
 }
