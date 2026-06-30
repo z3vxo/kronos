@@ -11,6 +11,7 @@
 #define MV_SUCCESS    492
 #define MKDIR_SUCCESS 493
 #define DOWNLOAD_SUCCESS 494
+#define RECONFIG_DONE 495
 
 #define TASK_TYPE_GETPRIVS 3
 #define TASK_TYPE_LS 4
@@ -49,6 +50,7 @@ class commanders {
 		CMD_CODE_MKDIR,
 		CMD_CODE_UPLOAD,
 		CMD_CODE_DOWNLOAD,
+		CMD_CODE_RECONFIG,
 	};
 
 	enum PrivStatus : UINT32 {
@@ -78,6 +80,7 @@ class commanders {
 	void do_ps();
 	void do_upload();
 	void do_download();
+	void do_reconfig();
 
 
 public:

@@ -1,25 +1,11 @@
 #include "../hades/hades.h"
 
 
-INT IntToStr(DWORD val, CHAR* out) {
-	INT i = 0;
-
-	if (val == 0) {
-		out[i++] = '0';
-		out[i++] = '\0';
-		return i;
+INT IntFromStr(PCHAR str) {
+	UINT val = 0;
+	while (*str >= '0' && *str <= '9') {
+		val = val * 10 + (*str - '0');
+		str++;
 	}
-
-	CHAR tmp[16];
-	INT j = 0;
-
-	while (val > 0) {
-		tmp[j++] = '0' + (val % 10);
-		val /= 10;
-	}
-	while (j > 0) {
-		out[i++] = tmp[--j];
-	}
-	out[i] = '\0';
-	return i;
+	return val;
 }

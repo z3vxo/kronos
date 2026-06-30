@@ -84,44 +84,44 @@ BOOL LoadAPIS() {
 
 	hades->Modules.K32 = GetModule(HASHED_Kernel322);
 	if (hades->Modules.K32) {
-		hades->WinApis.GetFullPathNameA     = (decltype(hades->WinApis.GetFullPathNameA))GetProc(hades->Modules.K32, HASHED_GetFullPathNameA);
-		hades->WinApis.GetFileAttributesA   = (decltype(hades->WinApis.GetFileAttributesA))GetProc(hades->Modules.K32, HASHED_GetFileAttributesA);
-		hades->WinApis.LoadLibraryA         = (decltype(hades->WinApis.LoadLibraryA))         GetProc(hades->Modules.K32, HASHED_LoadLibraryA);
-		hades->WinApis.GetProcAddress       = (decltype(hades->WinApis.GetProcAddress))		  GetProc(hades->Modules.K32, HASHED_GetProcAddress);
-		hades->WinApis.HeapReAlloc          = (decltype(hades->WinApis.HeapReAlloc))		  GetProc(hades->Modules.K32, HASHED_HeapReAlloc);
-		hades->WinApis.HeapAlloc            = (decltype(hades->WinApis.HeapAlloc))			  GetProc(hades->Modules.K32, HASHED_HeapAlloc);
-		hades->WinApis.DeleteFileA			= (decltype(hades->WinApis.DeleteFileA))		  GetProc(hades->Modules.K32, HASHED_DeleteFileA);
-		hades->WinApis.RemoveDirectoryA		= (decltype(hades->WinApis.RemoveDirectoryA))	  GetProc(hades->Modules.K32, HASHED_RemoveDirectoryA);
-		hades->WinApis.ReadFile             = (decltype(hades->WinApis.ReadFile))			  GetProc(hades->Modules.K32, HASHED_ReadFile);
-		hades->WinApis.CreateFileA          = (decltype(hades->WinApis.CreateFileA))		  GetProc(hades->Modules.K32, HASHED_CreateFileA);
-		hades->WinApis.FindFirstFileA		= (decltype(hades->WinApis.FindFirstFileA))		  GetProc(hades->Modules.K32, HASHED_FindFirstFileA);
-		hades->WinApis.FindNextFileA		= (decltype(hades->WinApis.FindNextFileA))	      GetProc(hades->Modules.K32, HASHED_FindNextFileA);
-		hades->WinApis.CopyFileA			= (decltype(hades->WinApis.CopyFileA))			  GetProc(hades->Modules.K32, HASHED_CopyFileA);
-;		hades->WinApis.SetCurrentDirectoryA = (decltype(hades->WinApis.SetCurrentDirectoryA)) GetProc(hades->Modules.K32, HASHED_SetCurrentDirectoryA);
-		hades->WinApis.GetCurrentDirectoryA = (decltype(hades->WinApis.GetCurrentDirectoryA)) GetProc(hades->Modules.K32, HASHED_GetCurrentDirectoryA);
-		hades->WinApis.MoveFileA            = (decltype(hades->WinApis.MoveFileA))            GetProc(hades->Modules.K32, HASHED_MoveFileA);
-		hades->WinApis.GetComputerNameExA   = (decltype(hades->WinApis.GetComputerNameExA))   GetProc(hades->Modules.K32, HASHED_GetComputerNameExA);
-		hades->WinApis.GetModuleFileNameA   = (decltype(hades->WinApis.GetModuleFileNameA))   GetProc(hades->Modules.K32, HASHED_GetModuleFileNameA);
-		hades->WinApis.GetTickCount         = (decltype(hades->WinApis.GetTickCount))         GetProc(hades->Modules.K32, HASHED_GetTickCount);
-		hades->WinApis.CloseHandle          = (decltype(hades->WinApis.CloseHandle))          GetProc(hades->Modules.K32, HASHED_CloseHandle);
-		hades->WinApis.CreateDirectoryA     = (decltype(hades->WinApis.CreateDirectoryA))	  GetProc(hades->Modules.K32, HASHED_CreateDirectoryA);
-		hades->WinApis.WriteFile            = (decltype(hades->WinApis.WriteFile))GetProc(hades->Modules.K32, HASHED_WriteFile);
+		hades->WinApis.GetFullPathNameA = (decltype(hades->WinApis.GetFullPathNameA))GetProc(hades->Modules.K32, HASHED_GetFullPathNameA);
+		hades->WinApis.GetFileAttributesA = (decltype(hades->WinApis.GetFileAttributesA))GetProc(hades->Modules.K32, HASHED_GetFileAttributesA);
+		hades->WinApis.LoadLibraryA = (decltype(hades->WinApis.LoadLibraryA))GetProc(hades->Modules.K32, HASHED_LoadLibraryA);
+		hades->WinApis.GetProcAddress = (decltype(hades->WinApis.GetProcAddress))GetProc(hades->Modules.K32, HASHED_GetProcAddress);
+		hades->WinApis.HeapReAlloc = (decltype(hades->WinApis.HeapReAlloc))GetProc(hades->Modules.K32, HASHED_HeapReAlloc);
+		hades->WinApis.HeapAlloc = (decltype(hades->WinApis.HeapAlloc))GetProc(hades->Modules.K32, HASHED_HeapAlloc);
+		hades->WinApis.DeleteFileA = (decltype(hades->WinApis.DeleteFileA))GetProc(hades->Modules.K32, HASHED_DeleteFileA);
+		hades->WinApis.RemoveDirectoryA = (decltype(hades->WinApis.RemoveDirectoryA))GetProc(hades->Modules.K32, HASHED_RemoveDirectoryA);
+		hades->WinApis.ReadFile = (decltype(hades->WinApis.ReadFile))GetProc(hades->Modules.K32, HASHED_ReadFile);
+		hades->WinApis.CreateFileA = (decltype(hades->WinApis.CreateFileA))GetProc(hades->Modules.K32, HASHED_CreateFileA);
+		hades->WinApis.FindFirstFileA = (decltype(hades->WinApis.FindFirstFileA))GetProc(hades->Modules.K32, HASHED_FindFirstFileA);
+		hades->WinApis.FindNextFileA = (decltype(hades->WinApis.FindNextFileA))GetProc(hades->Modules.K32, HASHED_FindNextFileA);
+		hades->WinApis.CopyFileA = (decltype(hades->WinApis.CopyFileA))GetProc(hades->Modules.K32, HASHED_CopyFileA);
+		;		hades->WinApis.SetCurrentDirectoryA = (decltype(hades->WinApis.SetCurrentDirectoryA))GetProc(hades->Modules.K32, HASHED_SetCurrentDirectoryA);
+		hades->WinApis.GetCurrentDirectoryA = (decltype(hades->WinApis.GetCurrentDirectoryA))GetProc(hades->Modules.K32, HASHED_GetCurrentDirectoryA);
+		hades->WinApis.MoveFileA = (decltype(hades->WinApis.MoveFileA))GetProc(hades->Modules.K32, HASHED_MoveFileA);
+		hades->WinApis.GetComputerNameExA = (decltype(hades->WinApis.GetComputerNameExA))GetProc(hades->Modules.K32, HASHED_GetComputerNameExA);
+		hades->WinApis.GetModuleFileNameA = (decltype(hades->WinApis.GetModuleFileNameA))GetProc(hades->Modules.K32, HASHED_GetModuleFileNameA);
+		hades->WinApis.GetTickCount = (decltype(hades->WinApis.GetTickCount))GetProc(hades->Modules.K32, HASHED_GetTickCount);
+		hades->WinApis.CloseHandle = (decltype(hades->WinApis.CloseHandle))GetProc(hades->Modules.K32, HASHED_CloseHandle);
+		hades->WinApis.CreateDirectoryA = (decltype(hades->WinApis.CreateDirectoryA))GetProc(hades->Modules.K32, HASHED_CreateDirectoryA);
+		hades->WinApis.WriteFile = (decltype(hades->WinApis.WriteFile))GetProc(hades->Modules.K32, HASHED_WriteFile);
 	}
 
 	hades->Modules.NTDLL = GetModule(HASHED_NTDLL);
 	if (hades->Modules.NTDLL) {
-		hades->NtApis.NtOpenProcess				= (decltype(hades->NtApis.NtOpenProcess))             GetProc(hades->Modules.NTDLL, HASHED_NtOpenProcess);
-		hades->NtApis.NtQuerySystemInformation  = (decltype(hades->NtApis.NtQuerySystemInformation))  GetProc(hades->Modules.NTDLL, HASHED_NtQuerySystemInformation);
-		hades->NtApis.NtQueryInformationToken   = (decltype(hades->NtApis.NtQueryInformationToken))   GetProc(hades->Modules.NTDLL, HASHED_NtQueryInformationToken);
-		hades->NtApis.RtlGetVersion				= (decltype(hades->NtApis.RtlGetVersion))			  GetProc(hades->Modules.NTDLL, HASHED_RtlGetVersion);
-	    hades->NtApis.RtlGetNtVersionNumbers	= (decltype(hades->NtApis.RtlGetNtVersionNumbers))	  GetProc(hades->Modules.NTDLL, HASHED_RtlGetNtVersionNumbers);
-		hades->NtApis.RtlRandomEx				= (decltype(hades->NtApis.RtlRandomEx))				  GetProc(hades->Modules.NTDLL, HASHED_GenRandom);
-		hades->NtApis.NtOpenProcessToken		= (decltype(hades->NtApis.NtOpenProcessToken))	      GetProc(hades->Modules.NTDLL, HASHED_OpenProcessToken);
-		hades->NtApis.NtOpenThreadToken         = (decltype(hades->NtApis.NtOpenThreadToken))         GetProc(hades->Modules.NTDLL, HASHED_OpenThreadToken);
-		hades->NtApis.NtQueryInformationProcess = (decltype(hades->NtApis.NtQueryInformationProcess)) GetProc(hades->Modules.NTDLL, HASHED_NtQueryInformationProcess);
-		hades->NtApis.NtDelayExecution          = (decltype(hades->NtApis.NtDelayExecution))		  GetProc(hades->Modules.NTDLL, HASHED_NtDelayExecution);
+		hades->NtApis.NtOpenProcess = (decltype(hades->NtApis.NtOpenProcess))GetProc(hades->Modules.NTDLL, HASHED_NtOpenProcess);
+		hades->NtApis.NtQuerySystemInformation = (decltype(hades->NtApis.NtQuerySystemInformation))GetProc(hades->Modules.NTDLL, HASHED_NtQuerySystemInformation);
+		hades->NtApis.NtQueryInformationToken = (decltype(hades->NtApis.NtQueryInformationToken))GetProc(hades->Modules.NTDLL, HASHED_NtQueryInformationToken);
+		hades->NtApis.RtlGetVersion = (decltype(hades->NtApis.RtlGetVersion))GetProc(hades->Modules.NTDLL, HASHED_RtlGetVersion);
+		hades->NtApis.RtlGetNtVersionNumbers = (decltype(hades->NtApis.RtlGetNtVersionNumbers))GetProc(hades->Modules.NTDLL, HASHED_RtlGetNtVersionNumbers);
+		hades->NtApis.RtlRandomEx = (decltype(hades->NtApis.RtlRandomEx))GetProc(hades->Modules.NTDLL, HASHED_GenRandom);
+		hades->NtApis.NtOpenProcessToken = (decltype(hades->NtApis.NtOpenProcessToken))GetProc(hades->Modules.NTDLL, HASHED_OpenProcessToken);
+		hades->NtApis.NtOpenThreadToken = (decltype(hades->NtApis.NtOpenThreadToken))GetProc(hades->Modules.NTDLL, HASHED_OpenThreadToken);
+		hades->NtApis.NtQueryInformationProcess = (decltype(hades->NtApis.NtQueryInformationProcess))GetProc(hades->Modules.NTDLL, HASHED_NtQueryInformationProcess);
+		hades->NtApis.NtDelayExecution = (decltype(hades->NtApis.NtDelayExecution))GetProc(hades->Modules.NTDLL, HASHED_NtDelayExecution);
 	}
-	
+
 
 	char buf[13];
 	buf[0] = 'a';
@@ -139,27 +139,27 @@ BOOL LoadAPIS() {
 	buf[12] = '\0';
 	hades->Modules.ADVAPI32 = hades->WinApis.LoadLibraryA(buf);
 
-	if (hades->Modules.ADVAPI32) {  
-		hades->WinApis.LookupAccountSidA    = (decltype(hades->WinApis.LookupAccountSidA))GetProc(hades->Modules.ADVAPI32, HASHED_LookupAccountSidA);
-		hades->WinApis.LookupPrivilegeNameA = (decltype(hades->WinApis.LookupPrivilegeNameA)) GetProc(hades->Modules.ADVAPI32, HASHED_LookupPrivilegeNameA);
-		hades->WinApis.GetUserNameA         = (decltype(hades->WinApis.GetUserNameA))         GetProc(hades->Modules.ADVAPI32, HASHED_GetUserNameA);
-		hades->WinApis.GetTokenInformation  = (decltype(hades->WinApis.GetTokenInformation))  GetProc(hades->Modules.ADVAPI32, HASHED_GetTokenInformation);
+	if (hades->Modules.ADVAPI32) {
+		hades->WinApis.LookupAccountSidA = (decltype(hades->WinApis.LookupAccountSidA))GetProc(hades->Modules.ADVAPI32, HASHED_LookupAccountSidA);
+		hades->WinApis.LookupPrivilegeNameA = (decltype(hades->WinApis.LookupPrivilegeNameA))GetProc(hades->Modules.ADVAPI32, HASHED_LookupPrivilegeNameA);
+		hades->WinApis.GetUserNameA = (decltype(hades->WinApis.GetUserNameA))GetProc(hades->Modules.ADVAPI32, HASHED_GetUserNameA);
+		hades->WinApis.GetTokenInformation = (decltype(hades->WinApis.GetTokenInformation))GetProc(hades->Modules.ADVAPI32, HASHED_GetTokenInformation);
 		hades->WinApis.ConvertSidToStringSidA = (decltype(hades->WinApis.ConvertSidToStringSidA))GetProc(hades->Modules.ADVAPI32, HASHED_ConvertSidToStringSidA);
 	}
 
 
 
 	char buf2[13];
-	buf2[0]  = 'i';
-	buf2[1]  = 'p';
-	buf2[2]  = 'h';
-	buf2[3]  = 'l';
-	buf2[4]  = 'p';
-	buf2[5]  = 'a';
-	buf2[6]  = 'p';
-	buf2[7]  = 'i';
-	buf2[8]  = '.';
-	buf2[9]  = 'd';
+	buf2[0] = 'i';
+	buf2[1] = 'p';
+	buf2[2] = 'h';
+	buf2[3] = 'l';
+	buf2[4] = 'p';
+	buf2[5] = 'a';
+	buf2[6] = 'p';
+	buf2[7] = 'i';
+	buf2[8] = '.';
+	buf2[9] = 'd';
 	buf2[10] = 'l';
 	buf2[11] = 'l';
 	buf2[12] = '\0';

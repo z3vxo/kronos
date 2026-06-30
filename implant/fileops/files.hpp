@@ -1,5 +1,5 @@
 #pragma once
-#include "../hades/hades.h"
+#include <windows.h>
 
 #define FILE_CHUNK_SIZE (256 * 1024)
 
@@ -18,7 +18,7 @@ struct FileTasks {
 	UINT Status;
 	UINT TaskID;
 	TaskType type;
-	
+
 
 	FileTasks* next;
 };
@@ -32,7 +32,7 @@ class FileMgr {
 		FileDone,
 		FileFail,
 	};
-	
+
 	FileTasks* head;
 	UINT ChunkSize = FILE_CHUNK_SIZE;
 

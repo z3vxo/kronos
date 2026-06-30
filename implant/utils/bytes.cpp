@@ -1,4 +1,5 @@
 #include "bytes.hpp"
+#include "../hades/hades.h"
 #include <stdio.h>
 
 BOOL bytes::EnsureBuffer(PBYTE& Buffer, UINT datasize) {
@@ -89,10 +90,11 @@ void bytes::ReadInto(PBYTE dst, UINT len) {
 
 
 void bytes::InitWrite() {
-	if (this->OutData) { HeapFree(GetProcessHeap(), 0, this->OutData); }
-	this->OutData = AllocMemory<BYTE>(BASE_BUFFER_SIZE);
+	if (!this->OutData) {
+		this->OutData = AllocMemory<BYTE>(BASE_BUFFER_SIZE);
+		this->size = BASE_BUFFER_SIZE;
+	}
 	this->WriteIndex = 0;
-	this->size = BASE_BUFFER_SIZE;
 }
 
 void bytes::Write4(UINT val) {

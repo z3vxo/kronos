@@ -5,12 +5,13 @@
 #include <sddl.h>
 
 #include "../shared/nt.hpp"
-#include "../networkd/network.hpp"
 #include "../utils/bytes.hpp"
 #include "../utils/apidefs.hpp"
 #include "../fileops/files.hpp"
 
 
+
+struct Config;
 
 #define DECL(x) decltype(x) * x;
 
@@ -91,7 +92,7 @@ typedef struct {
 		DECL(FindNextFileA);
 		DECL(CopyFileA);
 		DECL(GetCurrentDirectoryA)
-		DECL(MoveFileA);
+			DECL(MoveFileA);
 		DECL(SetCurrentDirectoryA);
 		DECL(GetModuleFileNameA);
 		DECL(GetComputerNameExA);
@@ -118,6 +119,8 @@ typedef struct {
 
 	} WinApis;
 
+	Config* config;
+
 } Hades;
 
 extern Hades* hades;
@@ -131,4 +134,4 @@ T* AllocMemory(size_t size) {
 BOOL RunHades();
 BOOL InitAgent();
 DWORD Hasher(PCHAR str);
-INT IntToStr(DWORD val, CHAR* out);
+INT IntFromStr(PCHAR str);

