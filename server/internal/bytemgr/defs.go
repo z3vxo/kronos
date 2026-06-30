@@ -280,6 +280,7 @@ var SuccessMap = map[uint32]string{
 	492: "MV_SUCCESS: Succesfully renamed file",
 	493: "MKDIR_SUCCESS: Succesfully Created Directory",
 	494: "DOWNLOAD_SUCCESS: Succesfully wrote file to disk",
+	495: "RECONFIG_DONE: Succesfully updated agent config",
 }
 
 type ClientRegister struct {

@@ -73,7 +73,8 @@ func (c *CLI) SetupDispatchTable() {
 		"download":     c.HandleDOWNLOAD,
 		"files":        c.HandleFiles,
 		"upload":       c.UploadFileHandler,
-		"generate":     c.HandleGenerate,
+		"hades":        c.HandleGenerate,
+		"reconfig":     c.HandleReconfig,
 	}
 }
 

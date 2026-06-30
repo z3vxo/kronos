@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"github.com/spf13/pflag"
 
 	"github.com/z3vxo/kronos/internal/ui"
 	"github.com/z3vxo/kronos/internal/payloadgen"
@@ -24,6 +25,7 @@ var CmdCodeMap = map[string]int{
 	"mkdir":     11,
 	"download":  12,
 	"upload":    13,
+	"reconfig":  14,
 }
 
 func (c *CLI) requireAgent() bool {
@@ -176,26 +178,61 @@ func (c *CLI) HandleMV(args []string) {
 }
 
 
+func (c *CLI) HandleReconfig(args []string) {
+	if !c.requireAgent() {
+		return
+	}
+
+	if len(args) != 2 {
+		c.ui.Send(ui.BAD.Sprint("Usage: reconfig <sleep> <jitter>"))
+		return
+	}
+
+	c.sendTask("reconfig", args[0], args[1])
+}
+
 
 func (c *CLI) HandleGenerate(args []string) {
-	if len(args) < 1 || len(args) > 2 {
-		c.ui.Send(ui.BAD.Sprint("Usage: generate <name> [debug]"))
+	if len(args) < 1 {
+		c.ui.Send(ui.BAD.Sprint("Usage: hades generate/profile"))
 		return
 	}
-	name := args[0]
-	debug := len(args) == 2 && args[1] == "debug"
 
-	err := payloadgen.GenerateProfile()
-	if err != nil {
-		c.ui.Send(ui.BAD.Sprintf("Profile generation failed: %s", err))
+	action := args[0]
+	switch action {
+	case "generate":
+		c.GenerateAgent(args[1:])
 		return
+	case "profile":
+		return
+	default:
+		c.ui.Send(ui.BAD.Sprint("Unknown sub command"))
 	}
-	c.ui.Send(ui.INFO.Sprint("Generating payload...."))
 
-	str, err := payloadgen.Compile(name, debug)
-	if err != nil {
-		c.ui.Send(ui.BAD.Sprintf("Compilation failed:\n%s", err))
+}
+
+func (c *CLI) GenerateAgent(args []string) {
+	fs := pflag.NewFlagSet("generate", pflag.ContinueOnError)
+	payloadFormat := fs.StringP("format", "f", "exe", "")
+	name := fs.StringP("name", "o", "hades", "")
+	debug := fs.BoolP("debug", "d", false, "")
+
+	if err := fs.Parse(args); err != nil {
+		c.ui.Send(ui.WARN.Sprintf("[!] %v", err))
 		return
 	}
-	c.ui.Send(ui.GOOD.Sprintf("Implant compiled: %s", str))
+
+	if err := payloadgen.GenerateProfile(); err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Failed Generating profile: %v", err))
+		return
+	}
+
+	file, err := payloadgen.Compile(*name, *payloadFormat, *debug)
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Failed Generating profile: %v", err))
+		return
+	}
+
+	c.ui.Send(ui.GOOD.Sprintf("Agent Generate: %s", file))
+	return
 }

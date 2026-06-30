@@ -72,7 +72,13 @@ endpoints:
   get: "/ms/download"
   post: "/ms/upload"
 
-user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+headers:
+  - key: "User-Agent"
+    value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+  - key: "Accept"
+    value: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+  - key: "Accept-Language"
+    value: "en-US,en;q=0.9"
 
 sleep:
   interval: 10
