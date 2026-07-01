@@ -2,24 +2,21 @@ package config
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"gopkg.in/yaml.v2"
 )
 
 type HttpConf struct {
-	User     string `yaml:"user"`
-	Passwd   string `yaml:"pass"`
-	Host     string `yaml:"host"`
-	PostPath string `yaml:"postPath"`
-	GetPath  string `yaml:"getPath"`
+	User   string `json:"user"`
+	Passwd string `json:"pass"`
+	Host   string `json:"host"`
 }
 
 type Config struct {
-	Http HttpConf `yaml:"http"`
+	Http HttpConf `json:"http"`
 }
 
 var Cfg *Config
@@ -36,8 +33,8 @@ func Setup() error {
 	user := prompt("Username: ")
 	passwd := prompt("Password: ")
 
-	cfg := Config{Http: HttpConf{Host: host, User: user, Passwd: passwd, PostPath: "/api/v2/login", GetPath: "/api/v2/users"}}
-	data, err := yaml.Marshal(&cfg)
+	cfg := Config{Http: HttpConf{Host: host, User: user, Passwd: passwd}}
+	data, err := json.MarshalIndent(&cfg, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -49,46 +46,36 @@ func Setup() error {
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(dir, "client.yaml"), data, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "client.json"), data, 0600); err != nil {
 		return err
 	}
 
-	profilePath := filepath.Join(dir, "profile.yaml")
+	profilePath := filepath.Join(dir, "profile.json")
 	if _, err := os.Stat(profilePath); os.IsNotExist(err) {
 		return os.WriteFile(profilePath, defaultProfile, 0600)
 	}
 	return nil
 }
 
-var defaultProfile = []byte(`domains:
-  - host: "127.0.0.1"
-    port: 443
-    https: true
-  - host: "127.0.0.1"
-    port: 80
-    https: false
-
-endpoints:
-  get: "/ms/download"
-  post: "/ms/upload"
-
-headers:
-  - key: "User-Agent"
-    value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-  - key: "Accept"
-    value: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-  - key: "Accept-Language"
-    value: "en-US,en;q=0.9"
-
-sleep:
-  interval: 10
-  jitter: 20
-
-obfuscation:
-  syscall: "none"
-  heap: false
-  sleep: false
-  stack_spoof: false
+var defaultProfile = []byte(`{
+  "name": "default",
+  "domains": [
+    { "domain_value": "192.168.1.24", "port": 8080, "is_https": false }
+  ],
+  "headers": [
+    { "key": "User-Agent", "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+    { "key": "Accept", "value": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" },
+    { "key": "Accept-Language", "value": "en-US,en;q=0.9" }
+  ],
+  "sleep": 10,
+  "jitter": 20,
+  "get_endpoint": "/api/v2/users",
+  "post_endpoint": "/api/v2/login",
+  "sleep_obf": false,
+  "heap_obf": false,
+  "stack_spoof": false,
+  "syscall": 0
+}
 `)
 
 func LoadCfg() error {
@@ -96,7 +83,7 @@ func LoadCfg() error {
 	if err != nil {
 		return err
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "client.yaml"))
+	data, err := os.ReadFile(filepath.Join(dir, "client.json"))
 	if os.IsNotExist(err) {
 		return fmt.Errorf("missing config: run ./client setup")
 	}
@@ -104,7 +91,7 @@ func LoadCfg() error {
 		return err
 	}
 	Cfg = &Config{}
-	return yaml.Unmarshal(data, Cfg)
+	return json.Unmarshal(data, Cfg)
 }
 
 func kronosDir() (string, error) {

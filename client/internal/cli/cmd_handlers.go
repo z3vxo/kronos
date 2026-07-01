@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"github.com/spf13/pflag"
 
 	"github.com/z3vxo/kronos/internal/ui"
-	"github.com/z3vxo/kronos/internal/payloadgen"
+	//"github.com/z3vxo/kronos/internal/payloadgen"
 )
 
 var CmdCodeMap = map[string]int{
@@ -192,47 +191,5 @@ func (c *CLI) HandleReconfig(args []string) {
 }
 
 
-func (c *CLI) HandleGenerate(args []string) {
-	if len(args) < 1 {
-		c.ui.Send(ui.BAD.Sprint("Usage: hades generate/profile"))
-		return
-	}
 
-	action := args[0]
-	switch action {
-	case "generate":
-		c.GenerateAgent(args[1:])
-		return
-	case "profile":
-		return
-	default:
-		c.ui.Send(ui.BAD.Sprint("Unknown sub command"))
-	}
 
-}
-
-func (c *CLI) GenerateAgent(args []string) {
-	fs := pflag.NewFlagSet("generate", pflag.ContinueOnError)
-	payloadFormat := fs.StringP("format", "f", "exe", "")
-	name := fs.StringP("name", "o", "hades", "")
-	debug := fs.BoolP("debug", "d", false, "")
-
-	if err := fs.Parse(args); err != nil {
-		c.ui.Send(ui.WARN.Sprintf("[!] %v", err))
-		return
-	}
-
-	if err := payloadgen.GenerateProfile(); err != nil {
-		c.ui.Send(ui.BAD.Sprintf("Failed Generating profile: %v", err))
-		return
-	}
-
-	file, err := payloadgen.Compile(*name, *payloadFormat, *debug)
-	if err != nil {
-		c.ui.Send(ui.BAD.Sprintf("Failed Generating profile: %v", err))
-		return
-	}
-
-	c.ui.Send(ui.GOOD.Sprintf("Agent Generate: %s", file))
-	return
-}

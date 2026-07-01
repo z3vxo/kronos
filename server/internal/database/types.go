@@ -34,3 +34,29 @@ type TaskEntrys struct {
 	Total int    `json:"total"`
 	Tasks []Task `json:"tasks"`
 }
+
+type ProfileDomain struct {
+	Domain  string `json:"domain_value"`
+	Port    int    `json:"port"`
+	IsHttps bool   `json:"is_https"`
+}
+
+type ProfileHeader struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type Profile struct {
+	ID          int             `json:"id"`
+	Name        string          `json:"name"`
+	Domains     []ProfileDomain `json:"domains"`
+	Headers     []ProfileHeader `json:"headers"`
+	Sleep       int             `json:"sleep"`
+	Jitter      int             `json:"jitter"`
+	Get         string          `json:"get_endpoint"`
+	Post        string          `json:"post_endpoint"`
+	SleepObf    bool            `json:"sleep_obf"`
+	HeapObf     bool            `json:"heap_obf"`
+	StackSpoof  bool            `json:"stack_spoof"`
+	Syscall     int             `json:"syscall"`
+}

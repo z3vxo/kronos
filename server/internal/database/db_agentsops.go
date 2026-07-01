@@ -7,7 +7,7 @@ import (
 
 func (db *DB) ListAgents() ([]Agent, error) {
 
-	qeuery := `SELECT code_name, username, hostname, external_ip, internal_ip, is_elevated, pid, process_path, windows_version, last_checkin, registration_date FROM agents`
+	qeuery := `SELECT code_name, username, hostname, external_ip, internal_ip, is_elevated, pid, process_path, windows_version, last_checkin, registration_date FROM agents WHERE registered = 1`
 
 	rows, err := db.conn.Query(qeuery)
 	if err != nil {
@@ -53,13 +53,13 @@ func (db *DB) ResolveCodename(name string) (string, error) {
 }
 
 func (db *DB) InsertAgent(guid uint32, codeName, User, Host, InIP, ExIP, ProcPath, WinVer string, Pid, PPid, tid uint32, IsElev, Arch byte) error {
-	query := `INSERT INTO agents(guid, code_name,
-	  						username, hostname,
-							external_ip, internal_ip,
-							is_elevated, arch, pid,ppid,tid, process_path,
-							windows_version, session_key, last_checkin, registration_date) VALUES(
-							?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	_, err := db.conn.Exec(query, guid, codeName, User, Host, ExIP, InIP, IsElev, Arch, Pid, PPid,tid, ProcPath, WinVer, "32324234", time.Now().UTC().Unix(), time.Now().UTC().Unix())
+	query := `UPDATE agents SET code_name=?, username=?, hostname=?,
+		external_ip=?, internal_ip=?, is_elevated=?, arch=?, pid=?, ppid=?, tid=?,
+		process_path=?, windows_version=?, registered=1,
+		last_checkin=?, registration_date=?
+		WHERE guid=?`
+	now := time.Now().UTC().Unix()
+	_, err := db.conn.Exec(query, codeName, User, Host, ExIP, InIP, IsElev, Arch, Pid, PPid, tid, ProcPath, WinVer, now, now, guid)
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -114,3 +114,14 @@ func (db *DB) DeleteAgent(name string) error {
 	}
 	return nil
 }
+
+
+func (db *DB) InsertKeyAndId(id, key uint32, sleep, jitter int) error {
+	q := `INSERT INTO agents (guid, session_key, sleep, jitter) VALUES (?, ?, ?, ?)`
+	_, err := db.conn.Exec(q, id, key, sleep, jitter)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+

@@ -89,6 +89,11 @@ func (ts *TeamServer) Start() error {
 			r.Post("/rest/listeners/stop/{name}", ts.StopListenerHandler)
 			r.Delete("/rest/listeners/delete/{name}", ts.DeleteListnerHandler)
 
+			r.Post("/rest/agent/profiles/new", ts.HandleNewProfile)
+			r.Get("/rest/agent/profiles/list", ts.HandleListProfiles)
+			r.Post("/rest/agent/generate/{profile}", ts.HandleProfileGenerate)
+			r.Post("/rest/agent/profiles/delete/{profile}", ts.HandleDeleteProfile)
+
 		})
 	})
 	fmt.Println("Server Started!")

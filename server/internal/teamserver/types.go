@@ -82,6 +82,15 @@ type UploadStartReq struct {
 type UploadStartResp struct {
 	UploadID string `json:"upload_id"`
 }
+
+
+type GeneratePayloadReq struct {
+	Name string `json:"name"`
+	Debug bool `json:"debug"`
+	Format string `json:"format"`
+}
+
+
 const notFound = `<!DOCTYPE html>
 <html>
     <head><title>404 - Not Found</title></head>

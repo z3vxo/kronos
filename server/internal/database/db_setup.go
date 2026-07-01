@@ -59,32 +59,35 @@ func InitDB(db *DB) error {
 
 func SetupDB(db *DB) error {
 
-	agents_querys := `CREATE TABLE IF NOT EXISTS agents (
+	agents := `CREATE TABLE IF NOT EXISTS agents (
 		guid 			INTEGER NOT NULL,
-		code_name 		TEXT NOT NULL,
-		username 		TEXT NOT NULL,
-		hostname 		TEXT NOT NULL,
-		external_ip	 	TEXT NOT NULL,
-		internal_ip 	TEXT NOT NULL,
-		is_elevated 	BOOLEAN NOT NULL,
-		arch			INTEGER NOT NULL,
-		pid 			INTEGER NOT NULL,
-		tid      		INTEGER NOT NULL,
-		ppid			INTEGER NOT NULL,
-		process_path 	TEXT NOT NULL,
-		windows_version TEXT NOT NULL,
-		session_key    	BLOB NOT NULL,
-		last_checkin    INTEGER NOT NULL,
-		registration_date INTEGER NOT NULL);`
+		code_name 		TEXT NOT NULL DEFAULT '',
+		username 		TEXT NOT NULL DEFAULT '',
+		hostname 		TEXT NOT NULL DEFAULT '',
+		external_ip	 	TEXT NOT NULL DEFAULT '',
+		internal_ip 	TEXT NOT NULL DEFAULT '',
+		is_elevated 	BOOLEAN NOT NULL DEFAULT 0,
+		arch			INTEGER NOT NULL DEFAULT 0,
+		pid 			INTEGER NOT NULL DEFAULT 0,
+		tid      		INTEGER NOT NULL DEFAULT 0,
+		ppid			INTEGER NOT NULL DEFAULT 0,
+		process_path 	TEXT NOT NULL DEFAULT '',
+		windows_version TEXT NOT NULL DEFAULT '',
+		session_key    	INTEGER NOT NULL,
+		sleep           INTEGER NOT NULL DEFAULT 0,
+		jitter          INTEGER NOT NULL DEFAULT 0,
+		registered      BOOLEAN NOT NULL DEFAULT 0,
+		last_checkin    INTEGER NOT NULL DEFAULT 0,
+		registration_date INTEGER NOT NULL DEFAULT 0);`
 
-	_, err := db.conn.Exec(agents_querys)
+	_, err := db.conn.Exec(agents)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("agents")
 		return err
 	}
 
-	commands_query := `CREATE TABLE IF NOT EXISTS commands (
+	commands := `CREATE TABLE IF NOT EXISTS commands (
 		guid INTEGER NOT NULL,
 		command_type INTEGER NOT NULL,
 		task_id      INTEGER NOT NULL,
@@ -93,13 +96,13 @@ func SetupDB(db *DB) error {
 		executed     BOOLEAN NOT NULL,
 		tasked_at    INTEGER NOT NULL);`
 
-	_, err = db.conn.Exec(commands_query)
+	_, err = db.conn.Exec(commands)
 	if err != nil {
 
 		return err
 	}
 
-	listeners_query := `CREATE TABLE IF NOT EXISTS listeners (
+	listeners := `CREATE TABLE IF NOT EXISTS listeners (
 		id INTEGER PRIMARY KEY,
 		guid TEXT NOT NULL,
 		port INTEGER NOT NULL,
@@ -109,19 +112,57 @@ func SetupDB(db *DB) error {
 		protocol TEXT NOT NULL,
 		status INTEGER NOT NULL);
 		`
-	_, err = db.conn.Exec(listeners_query)
+	_, err = db.conn.Exec(listeners)
 	if err != nil {
 		return err
 	}
 
-	file_Query := `CREATE TABLE IF NOT EXISTS files (
+	files := `CREATE TABLE IF NOT EXISTS files (
 		id INTEGER PRIMARY KEY,
 		status INTEGER,
 		agentid TEXT NOT NULL,
 		onDiskPath TEXT NOT NULL,
 		size INTEGER NOT NULL,
 	    type TEXT NOT NULL);`
-	_, err = db.conn.Exec(file_Query)
+	_, err = db.conn.Exec(files)
+	if err != nil {
+		return err
+	}
+
+	profiles := `CREATE TABLE IF NOT EXISTS profiles (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		GetEndpoint TEXT NOT NULL,
+		PostEndpoint TEXT NOT NULL,
+		jitter INTEGER NOT NULL,
+		sleep INTEGER NOT NULL,
+		SleepObf BOOLEAN,
+		HeapObf BOOLEAN,
+		StackSpoof BOOLEAN,
+		Syscall INTEGER
+	);`
+
+	_, err = db.conn.Exec(profiles)
+	if err != nil {
+		return err
+	}
+
+	profile_domains := `CREATE TABLE IF NOT EXISTS profile_domains (
+		id INTEGER NOT NULL REFERENCES profiles(id),
+		domain TEXT NOT NULL,
+		port INTEGER NOT NULL,
+		isHttps BOOLEAN
+	);`
+	_, err = db.conn.Exec(profile_domains)
+	if err != nil {
+		return err
+	}
+	profile_headers := `CREATE TABLE IF NOT EXISTS profile_headers (
+		id INTEGER NOT NULL REFERENCES profiles(id),
+		Key TEXT NOT NULL,
+		Value TEXT NOT NULL
+	);`
+	_, err = db.conn.Exec(profile_headers)
 	if err != nil {
 		return err
 	}

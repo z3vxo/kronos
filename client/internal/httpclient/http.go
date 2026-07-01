@@ -168,6 +168,33 @@ func (c *Client) DoPost(endpoint string, data []byte, out any) error {
 	return c.Do(req, out)
 }
 
+func (c *Client) DoPostRaw(endpoint string, data []byte) (*http.Response, error) {
+	var body *bytes.Reader
+	if data != nil {
+		body = bytes.NewReader(data)
+	} else {
+		body = bytes.NewReader([]byte{})
+	}
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s", c.Hostname, endpoint), body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	c.Auth.Apply(req)
+
+	resp, err := c.HttpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		var e ErrorRes
+		_ = json.NewDecoder(resp.Body).Decode(&e)
+		resp.Body.Close()
+		return nil, fmt.Errorf("%s | %d", e.ErrorStr, resp.StatusCode)
+	}
+	return resp, nil
+}
+
 func (c *Client) Do(req *http.Request, out any) error {
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
