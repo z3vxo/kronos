@@ -4,31 +4,22 @@
 #include <stdio.h>
 
 BOOL FileMgr::InsertTask(UINT32 TaskID, HANDLE handle, TaskType type) {
-    for (FileTasks* cur = this->head; cur != NULL; cur = cur->next) {
-        if (cur->TaskID == TaskID) {
+    for (Node<FileTasks>* cur = Tasks.Head(); cur; cur = cur->next) {
+        if (cur->data.TaskID == TaskID) {
             return FALSE;
         }
     }
+    FileTasks task = {};
+    task.hProc = handle;
+    task.TaskID = TaskID;
+    task.Status = FileOnGoing;
+    task.type = type;
+    return Tasks.Add(task) != NULL;
 
-    FileTasks* task = (FileTasks*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(FileTasks));
-    if (!task) {
-        return FALSE;
-    }
-
-    task->TaskID = TaskID;
-    task->hProc = handle;
-    task->Status = FileOnGoing;
-    task->type = type;
-
-    task->next = this->head;
-    this->head = task;
-
-    return TRUE;
 }
 
 
 BOOL FileMgr::ProcessEntry(FileTasks* task) {
-    printf("Processing %u\n", task->TaskID);
     if (!task) {
         return TRUE;
     }
@@ -82,9 +73,9 @@ BOOL FileMgr::ProcessEntry(FileTasks* task) {
 
 
 HANDLE FileMgr::GetHandle(UINT32 TaskID) {
-    for (FileTasks* cur = this->head; cur != NULL; cur = cur->next) {
-        if (cur->TaskID == TaskID) {
-            return cur->hProc;
+    for (Node<FileTasks>* cur = Tasks.Head(); cur; cur = cur->next) {
+        if (cur->data.TaskID == TaskID) {
+            return cur->data.hProc;
         }
     }
     return INVALID_HANDLE_VALUE;
@@ -92,16 +83,11 @@ HANDLE FileMgr::GetHandle(UINT32 TaskID) {
 
 
 BOOL FileMgr::RemoveTask(UINT32 TaskID) {
-    FileTasks* prev = NULL;
-    for (FileTasks* cur = this->head; cur != NULL; cur = cur->next) {
-        if (cur->TaskID == TaskID) {
-            if (prev) {
-                prev->next = cur->next;
-            }
-            else {
-                this->head = cur->next;
-            }
-            HeapFree(GetProcessHeap(), 0, cur);
+
+    Node<FileTasks>* prev = NULL;
+    for (Node<FileTasks>* cur = Tasks.Head(); cur; cur = cur->next) {
+        if (cur->data.TaskID == TaskID) {
+            Tasks.Remove(prev, cur);
             return TRUE;
         }
         prev = cur;
@@ -111,38 +97,29 @@ BOOL FileMgr::RemoveTask(UINT32 TaskID) {
 
 
 BOOL FileMgr::CheckTasks() {
-    FileTasks* prev = NULL;
-    FileTasks* cur = this->head;
+
+    Node<FileTasks>* prev = NULL;
+    Node<FileTasks>* cur = Tasks.Head();
 
     while (cur) {
-        FileTasks* next = cur->next;
-        BOOL remove = (cur->type == FileUpload) ? FALSE : this->ProcessEntry(cur);
+        Node<FileTasks>* next = cur->next;
+        BOOL remove = (cur->data.type == FileUpload) ? FALSE : this->ProcessEntry(&cur->data);
+
         if (remove) {
-            if (prev) {
-                prev->next = next;
+            if (cur->data.hProc && cur->data.hProc != INVALID_HANDLE_VALUE) {
+                hades->WinApis.CloseHandle(cur->data.hProc);
             }
-            else {
-                this->head = next;
-            }
-
-            if (cur->hProc && cur->hProc != INVALID_HANDLE_VALUE) {
-                hades->WinApis.CloseHandle(cur->hProc);
-                cur->hProc = NULL;
-            }
-
-            HeapFree(GetProcessHeap(), 0, cur);
+            Tasks.Remove(prev, cur);
         }
         else {
             prev = cur;
         }
 
         cur = next;
-    }
 
+    }
 
     return TRUE;
 }
-
-
 
 FileMgr* g_FileMgr = NULL;

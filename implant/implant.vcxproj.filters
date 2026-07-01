@@ -77,5 +77,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
+    <None Include="hades\config.hpp.tmpl" />
   </ItemGroup>
 </Project>

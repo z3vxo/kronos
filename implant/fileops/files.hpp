@@ -1,5 +1,6 @@
 #pragma once
 #include <windows.h>
+#include "../shared/list.hpp"
 
 #define FILE_CHUNK_SIZE (256 * 1024)
 
@@ -18,9 +19,6 @@ struct FileTasks {
 	UINT Status;
 	UINT TaskID;
 	TaskType type;
-
-
-	FileTasks* next;
 };
 
 
@@ -33,15 +31,17 @@ class FileMgr {
 		FileFail,
 	};
 
-	FileTasks* head;
-	UINT ChunkSize = FILE_CHUNK_SIZE;
+
 
 	BOOL ProcessEntry(FileTasks* task);
+	List<FileTasks> Tasks;
 public:
 	BOOL CheckTasks();
 	BOOL InsertTask(UINT32 TaskID, HANDLE handle, TaskType type);
 	HANDLE GetHandle(UINT32 TaskID);
 	BOOL RemoveTask(UINT32 TaskID);
+
+
 };
 
 extern FileMgr* g_FileMgr;

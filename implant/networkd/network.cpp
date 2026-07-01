@@ -4,8 +4,8 @@
 
 
 
-Network::Network(ULONG id) {
-	this->HadesID = id;
+Network::Network() {
+	this->HadesID = hades->config->HadesID;
 	this->HttpApis = AllocMemory<HTTPAPIS>(sizeof(struct HTTPAPIS));
 	if (this->HttpApis == NULL) {
 		DEBUG_LOG("Failed Allocating HttpApis: %d", GetLastError());

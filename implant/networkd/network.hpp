@@ -55,7 +55,7 @@ class Network {
 	void NetSleep(LONGLONG time);
 
 public:
-	Network(ULONG id);
+	Network();
 	BOOL RegisterClient(PBYTE Data, SIZE_T DataLength);
 	BOOL GetTask(PBYTE* OutData, SIZE_T BufSize, UINT* FinalSize, UINT* Capacity);
 	BOOL SendOutput(PBYTE InData, SIZE_T InLen);

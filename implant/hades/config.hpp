@@ -22,7 +22,8 @@ struct Config {
 	WCHAR Headers[REPLACE_HEADER_LEN_MARKER];
 
 
-
+	UINT32 HadesID;
+	UINT32 SessionKey;
 	UINT Sleep;
 	UINT Jitter;
 	UINT SyscallType; // 0 = no syscalls | 1 = direct | 2 = indirect

