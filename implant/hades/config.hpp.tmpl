@@ -23,6 +23,7 @@ struct Config {
 
 
 	UINT32 HadesID;
+	UINT32 RegisterID;
 	UINT32 SessionKey;
 	UINT Sleep;
 	UINT Jitter;
