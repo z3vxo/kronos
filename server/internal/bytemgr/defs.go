@@ -284,7 +284,8 @@ var SuccessMap = map[uint32]string{
 }
 
 type ClientRegister struct {
-	Guid       uint32
+	PayloadID  uint32
+	AgentID    uint32
 	User       string
 	Host       string
 	InternaIP  string

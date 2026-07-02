@@ -48,6 +48,7 @@ type TaskEntry struct {
 	TaskID   uint32    `json:"task_id"`
 	Param1   string `json:"param_1"`
 	Param2   string `json:"param_2"`
+	DataType string `json:"data_type"`
 }
 
 type Task struct {

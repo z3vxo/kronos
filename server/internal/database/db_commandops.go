@@ -5,21 +5,21 @@ import (
 	"time"
 )
 
-func (db *DB) InsertCommand(cmdType int, taskid uint32, guid, param1, param2 string) error {
+func (db *DB) InsertCommand(cmdType int, taskid uint32, guid, param1, param2 string, params []byte) error {
 
-	query := `INSERT INTO commands(guid, command_type, task_id, param_1, param_2,executed, tasked_at) VALUES(?, ?, ?, ?, ?, ?, ?)`
+	q := `INSERT INTO commands(guid, task_id, command_type, param_1, param_2, params, executed, tasked_at) VALUES(?,?,?,?,?,?,?,?) `
 
-	_, err := db.conn.Exec(query, guid, cmdType, taskid, param1, param2, 0, time.Now().Unix())
+	_, err := db.conn.Exec(q, guid, taskid, cmdType, param1, param2, params, 0, time.Now().Unix())
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	return nil
 
 }
 
+
 func (db *DB) GetTasks(id string) ([]Task, error) {
-	q := `SELECT guid, command_type, task_id, param_1, param_2 FROM commands WHERE guid = ? AND executed = 0 LIMIT 3`
+	q := "SELECT guid, command_type, task_id, params, param_1, param_2 FROM commands WHERE guid = ? AND executed = 0 LIMIT 3"
 	rows, err := db.conn.Query(q, id)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (db *DB) GetTasks(id string) ([]Task, error) {
 	for rows.Next() {
 		var t Task
 		t.ID = i
-		err := rows.Scan(&t.Guid, &t.CmdCode, &t.TaskID, &t.Param1, &t.Param2)
+		err := rows.Scan(&t.Guid, &t.CmdCode, &t.TaskID, &t.Params, &t.Param1, &t.Param2)
 		if err != nil {
 			return nil, err
 		}

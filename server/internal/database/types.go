@@ -26,7 +26,8 @@ type Task struct {
 	CmdCode  int    `json:"cmd_code"`
 	Param1   string `json:"param_1"`
 	Param2   string `json:"param_2"`
-	TaskID   uint32  `json:"task_id"`
+	Params   []byte `json:"params"`
+ 	TaskID   uint32  `json:"task_id"`
 	TaskedAt int    `json:"tasked_at"`
 }
 
@@ -49,6 +50,8 @@ type ProfileHeader struct {
 type Profile struct {
 	ID          int             `json:"id"`
 	Name        string          `json:"name"`
+	Payload_id  uint32          `json:"pay_id"`
+	Key         []byte		    `json:"Key"`
 	Domains     []ProfileDomain `json:"domains"`
 	Headers     []ProfileHeader `json:"headers"`
 	Sleep       int             `json:"sleep"`

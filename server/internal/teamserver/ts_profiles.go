@@ -2,11 +2,10 @@ package teamserver
 
 
 import (
-	"encoding/binary"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
-	"crypto/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -26,7 +25,11 @@ func (ts *TeamServer) HandleNewProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := ts.db.InsertProfile(req); err != nil {
+	id := uint32(time.Now().UnixNano() >> 1)
+	var keyBytes [4]byte
+	rand.Read(keyBytes[:])
+
+	if err := ts.db.InsertProfile(req, id, keyBytes[:]); err != nil {
 		httputil.SendJSONError(w, "failed inseting profile into db", http.StatusInternalServerError)
 		return
 	}
@@ -77,22 +80,12 @@ func (ts *TeamServer) HandleProfileGenerate(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	id := uint32(time.Now().UnixNano() >> 1)
-	var keyBytes [4]byte
-	rand.Read(keyBytes[:])
-	key := binary.LittleEndian.Uint32(keyBytes[:])
-
-	compiledPath, err := hadesgen.GeneratePayload(profile, id, key, req.Name, req.Format, req.Debug)
+	compiledPath, err := hadesgen.GeneratePayload(profile, req.Name, req.Format, req.Debug)
 	if err != nil {
 		httputil.SendJSONError(w, "failed generating payload", http.StatusInternalServerError)
 		return
 	}
 	defer os.Remove(compiledPath)
-
-	if err := ts.db.InsertKeyAndId(id, key, profile.Sleep, profile.Jitter); err != nil {
-		httputil.SendJSONError(w, "failed storing agent key", http.StatusInternalServerError)
-		return
-	}
 
 	f, err := os.Open(compiledPath)
 	if err != nil {

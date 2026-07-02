@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/z3vxo/kronos/internal/httputil"
+	"github.com/z3vxo/kronos/internal/bytemgr"
 )
 
 func (ts *TeamServer) FilesSyncHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +70,12 @@ func (ts *TeamServer) DownloadTaskHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := ts.db.InsertCommand(cmd.Cmd_type, taskID, cmd.Guid, cmd.Param1, cmd.Param2); err != nil {
+	blob, err := bytemgr.CraftCmdFormat(uint32(cmd.Cmd_type), taskID, cmd.Param1, "", "string")
+	if err != nil {
+		httputil.SendJSONError(w, "failed Crafting command", http.StatusInternalServerError)
+		return
+	}
+	if err := ts.db.InsertCommand(cmd.Cmd_type, taskID, cmd.Guid, cmd.Param1, "", blob); err != nil {
 		httputil.SendJSONError(w, "failed inserting command", http.StatusInternalServerError)
 		return
 	}
@@ -84,6 +90,7 @@ func (ts *TeamServer) DownloadTaskHandler(w http.ResponseWriter, r *http.Request
 func (ts *TeamServer) UploadStartHandler(w http.ResponseWriter, r *http.Request) {
 	var req UploadStartReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		fmt.Println(err)
 		httputil.SendJSONError(w, "Error decoding json", http.StatusInternalServerError)
 		return
 	}
@@ -94,18 +101,22 @@ func (ts *TeamServer) UploadStartHandler(w http.ResponseWriter, r *http.Request)
 	dir := filepath.Join(home, ".kronos", "files", "tmp")
 	
 	if err := os.MkdirAll(dir, 0o755); err != nil {
+		fmt.Println(err)
 		httputil.SendJSONError(w, "Failed opening tmp file", http.StatusInternalServerError)
+		
 		return
 	}
 	name := fmt.Sprintf("%s_%d.tmp", req.AgentID, taskID)
 	tmppath := filepath.Join(dir, name)
 	f, err := os.Create(tmppath)
 	if err != nil {
+		fmt.Println(err)
 		httputil.SendJSONError(w, "Failed opening tmp file", http.StatusInternalServerError)
 		return
 	}
 
 	if err := ts.FileMgr.InsertNewUploadFileTask(req.AgentID, taskID, tmppath, Uuid, f, req.Path); err != nil {
+		fmt.Println(err)
 		httputil.SendJSONError(w, "Failed Inserting Into FileMgr", http.StatusInternalServerError)
 		return
 	}
@@ -120,11 +131,13 @@ func (ts *TeamServer) HandleUpload(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	entry, ok := ts.FileMgr.Uploads[id]
 	if !ok {
+		fmt.Println("doestn exist")
 		httputil.SendJSONError(w, "No upload entry found", http.StatusInternalServerError)
 		return
 	}
 
 	if _, err := io.Copy(entry.OnDiskFile, r.Body); err != nil {
+		fmt.Println(err)
 		entry.OnDiskFile.Close()
 		os.Remove(entry.OnDiskFile.Name())
 		delete(ts.FileMgr.Uploads, id)
@@ -133,6 +146,7 @@ func (ts *TeamServer) HandleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := entry.OnDiskFile.Seek(0, io.SeekStart); err != nil {
+		fmt.Println(err)
 		entry.OnDiskFile.Close()
 		os.Remove(entry.OnDiskFile.Name())
 		delete(ts.FileMgr.Uploads, id)
@@ -140,7 +154,8 @@ func (ts *TeamServer) HandleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := ts.db.InsertCommand(13, entry.TaskID, entry.AgentID, entry.RemotePath, id); err != nil {
+	if err := ts.db.InsertCommand(13, entry.TaskID, entry.AgentID, entry.RemotePath, id, []byte{}); err != nil {
+		fmt.Println(err)
 		os.Remove(entry.OnDiskFile.Name())
 		delete(ts.FileMgr.Uploads, id)
 		httputil.SendJSONError(w, "failed to insert into DB", http.StatusInternalServerError)

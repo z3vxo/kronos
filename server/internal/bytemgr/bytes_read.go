@@ -66,7 +66,8 @@ func (r *Reader) Remaining() int {
 func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, error) {
 	rd := &Reader{r: r}
 
-	guid := rd.Read4()
+	payloadID := rd.Read4()
+	agentID := rd.Read4()
 	Username := rd.ReadString(rd.Read4())
 	Hostname := rd.ReadString(rd.Read4())
 	InternalIP := rd.ReadString(rd.Read4())
@@ -86,7 +87,8 @@ func ExtractRegistrationDetails(IP string, r *bytes.Reader) (ClientRegister, err
 	fmt.Printf("New Client: %s\n", Username)
 
 	Res := ClientRegister{
-		Guid:       guid,
+		PayloadID:  payloadID,
+		AgentID:    agentID,
 		User:       Username,
 		Host:       Hostname,
 		InternaIP:  InternalIP,

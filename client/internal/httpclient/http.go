@@ -27,7 +27,7 @@ func PrintTitle(msg string) string {
 func NewClient(h *ui.UI) (*Client, error) {
 
 	c := &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout: 60 * time.Second,
 		Transport: &http.Transport{
 			MaxIdleConns:        100,
 			MaxIdleConnsPerHost: 10,

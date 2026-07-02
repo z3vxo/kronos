@@ -2,16 +2,16 @@ package database
 
 import "fmt"
 
-func (db *DB) InsertProfile(p Profile) error {
+func (db *DB) InsertProfile(p Profile, id uint32, Key []byte) error {
 	tx, err := db.conn.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	res, err := tx.Exec(`INSERT INTO profiles (name, GetEndpoint, PostEndpoint, jitter, sleep, SleepObf, HeapObf, StackSpoof, Syscall)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		p.Name, p.Get, p.Post, p.Jitter, p.Sleep, p.SleepObf, p.HeapObf, p.StackSpoof, p.Syscall)
+	res, err := tx.Exec(`INSERT INTO profiles (name, payload_id, Key, GetEndpoint, PostEndpoint, jitter, sleep, SleepObf, HeapObf, StackSpoof, Syscall)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		p.Name, id, Key, p.Get, p.Post, p.Jitter, p.Sleep, p.SleepObf, p.HeapObf, p.StackSpoof, p.Syscall)
 	if err != nil {
 		return fmt.Errorf("insert profile: %w", err)
 	}
@@ -92,8 +92,8 @@ func (db *DB) ListProfiles() ([]Profile, error) {
 
 func (db *DB) GetProfile(name string) (Profile, error) {
 	var p Profile
-	err := db.conn.QueryRow(`SELECT id, name, GetEndpoint, PostEndpoint, jitter, sleep, SleepObf, HeapObf, StackSpoof, Syscall FROM profiles WHERE name = ?`, name).
-		Scan(&p.ID, &p.Name, &p.Get, &p.Post, &p.Jitter, &p.Sleep, &p.SleepObf, &p.HeapObf, &p.StackSpoof, &p.Syscall)
+	err := db.conn.QueryRow(`SELECT id, payload_id, Key, name, GetEndpoint, PostEndpoint, jitter, sleep, SleepObf, HeapObf, StackSpoof, Syscall FROM profiles WHERE name = ?`, name).
+		Scan(&p.ID, &p.Payload_id, &p.Key, &p.Name, &p.Get, &p.Post, &p.Jitter, &p.Sleep, &p.SleepObf, &p.HeapObf, &p.StackSpoof, &p.Syscall)
 	if err != nil {
 		return Profile{}, fmt.Errorf("profile not found: %w", err)
 	}

@@ -35,12 +35,13 @@ func (c *CLI) requireAgent() bool {
 	return true
 }
 
-func (c *CLI) sendTask(cmd string, param1 string, param2 string) bool {
+func (c *CLI) sendTask(cmd string, param1 string, param2, DataType string) bool {
 	payload := TaskEntry{
 		Guid:     c.ClientInUse,
 		Cmd_type: CmdCodeMap[cmd],
 		Param1:   param1,
 		Param2:   param2,
+		DataType: DataType,
 	}
 
 	data, err := json.Marshal(&payload)
@@ -66,7 +67,7 @@ func (c *CLI) HandleRMDIR(args []string) {
 		c.ui.Send(ui.BAD.Sprint("Usage: rmdir <dir>"))
 		return
 	}
-	c.sendTask("rmdir", strings.Join(args, " "), "")
+	c.sendTask("rmdir", strings.Join(args, " "), "", "string")
 }
 
 func (c *CLI) HandleLS(args []string) {
@@ -80,7 +81,7 @@ func (c *CLI) HandleLS(args []string) {
 		dir = strings.Join(args, " ")
 	}
 
-	c.sendTask("ls", dir, "")
+	c.sendTask("ls", dir, "", "string")
 }
 
 func (c *CLI) HandleMKDIR(args []string) {
@@ -91,7 +92,7 @@ func (c *CLI) HandleMKDIR(args []string) {
 		c.ui.Send(ui.BAD.Sprint("Usage: mkdir <dir>"))
 		return
 	}
-	c.sendTask("mkdir", strings.Join(args, " "), "")
+	c.sendTask("mkdir", strings.Join(args, " "), "", "string")
 }
 
 func (c *CLI) HandleGETPRIVS(args []string) {
@@ -99,7 +100,7 @@ func (c *CLI) HandleGETPRIVS(args []string) {
 		return
 	}
 
-	c.sendTask("get-privs", "", "")
+	c.sendTask("get-privs", "", "", "")
 }
 
 func (c *CLI) HandleRM(args []string) {
@@ -110,7 +111,7 @@ func (c *CLI) HandleRM(args []string) {
 		c.ui.Send(ui.BAD.Sprint("Usage: rm <file>"))
 		return
 	}
-	c.sendTask("rm", strings.Join(args, " "), "")
+	c.sendTask("rm", strings.Join(args, " "), "", "string")
 }
 
 func (c *CLI) HandleCAT(args []string) {
@@ -121,7 +122,7 @@ func (c *CLI) HandleCAT(args []string) {
 		c.ui.Send(ui.BAD.Sprint("Usage: cat <file>"))
 		return
 	}
-	c.sendTask("cat", strings.Join(args, " "), "")
+	c.sendTask("cat", strings.Join(args, " "), "", "string")
 }
 
 func (c *CLI) HandlePROC(args []string) {
@@ -129,7 +130,7 @@ func (c *CLI) HandlePROC(args []string) {
 		return
 	}
 
-	c.sendTask("proc", "", "")
+	c.sendTask("proc", "", "", "")
 }
 
 func (c *CLI) HandlePWD(args []string) {
@@ -137,7 +138,7 @@ func (c *CLI) HandlePWD(args []string) {
 		return
 	}
 
-	c.sendTask("pwd", "", "")
+	c.sendTask("pwd", "", "", "")
 }
 
 func (c *CLI) HandleCD(args []string) {
@@ -149,7 +150,7 @@ func (c *CLI) HandleCD(args []string) {
 		return
 	}
 
-	c.sendTask("cd", args[0], "")
+	c.sendTask("cd", args[0], "", "string")
 }
 
 func (c *CLI) HandleCP(args []string) {
@@ -161,7 +162,7 @@ func (c *CLI) HandleCP(args []string) {
 		return
 	}
 
-	c.sendTask("cp", args[0], args[1])
+	c.sendTask("cp", args[0], args[1], "string")
 }
 
 func (c *CLI) HandleMV(args []string) {
@@ -173,7 +174,7 @@ func (c *CLI) HandleMV(args []string) {
 		return
 	}
 
-	c.sendTask("mv", args[0], args[1])
+	c.sendTask("mv", args[0], args[1], "string")
 }
 
 
@@ -187,7 +188,7 @@ func (c *CLI) HandleReconfig(args []string) {
 		return
 	}
 
-	c.sendTask("reconfig", args[0], args[1])
+	c.sendTask("reconfig", args[0], args[1], "int")
 }
 
 

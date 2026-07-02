@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/httputil"
+	"github.com/z3vxo/kronos/internal/bytemgr"
 )
 
 const TASK_DOWNLOAD = 12
@@ -28,11 +29,19 @@ func (ts *TeamServer) CommandNewHandler(w http.ResponseWriter, r *http.Request) 
 
 	taskID := GenTaskID()
 
-	err := ts.db.InsertCommand(cmd.Cmd_type, taskID, cmd.Guid, cmd.Param1, cmd.Param2)
+	Buf, err := bytemgr.CraftCmdFormat(uint32(cmd.Cmd_type), taskID, cmd.Param1, cmd.Param2, cmd.DataType)
+	if err != nil {
+		httputil.SendJSONError(w, "failed crafting format", http.StatusInternalServerError)
+		return
+	}
+
+
+	err = ts.db.InsertCommand(cmd.Cmd_type, taskID, cmd.Guid, cmd.Param1, cmd.Param2, Buf)
 	if err != nil {
 		httputil.SendJSONError(w, "failed inserting command", http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "OK"})

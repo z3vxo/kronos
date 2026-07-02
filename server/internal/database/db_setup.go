@@ -89,10 +89,11 @@ func SetupDB(db *DB) error {
 
 	commands := `CREATE TABLE IF NOT EXISTS commands (
 		guid INTEGER NOT NULL,
-		command_type INTEGER NOT NULL,
-		task_id      INTEGER NOT NULL,
-		param_1      TEXT NOT NULL,
-		param_2      TEXT NOT NULL,
+		command_type INTEGER NOT NULL DEFAULT '',
+		task_id      INTEGER NOT NULL DEFAULT '',
+		params       BLOB NOT NULL DEFAULT '',
+		param_1      TEXT NOT NULL DEFAULT '',
+		param_2      TEXT NOT NULL DEFAULT '',
 		executed     BOOLEAN NOT NULL,
 		tasked_at    INTEGER NOT NULL);`
 
@@ -132,6 +133,8 @@ func SetupDB(db *DB) error {
 	profiles := `CREATE TABLE IF NOT EXISTS profiles (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT NOT NULL,
+		payload_id INTEGER NOT NULL,
+		Key BLOB NOT NULL,
 		GetEndpoint TEXT NOT NULL,
 		PostEndpoint TEXT NOT NULL,
 		jitter INTEGER NOT NULL,

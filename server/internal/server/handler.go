@@ -73,7 +73,7 @@ func (h *AgentHandler) HandleClientRegister(ip string, r *bytes.Reader) error {
 
 	ver := ConvertToWindowsVer(Client.Major, Client.Minor, Client.Build)
 	CodeName := GenCodeName()
-	err = h.DB.InsertAgent(Client.Guid, CodeName,
+	err = h.DB.InsertAgent(Client.AgentID, CodeName,
 		Client.User, Client.Host,
 		Client.InternaIP, Client.ExternalIP,
 		Client.ProcPath, ver, Client.Pid, Client.Ppid, Client.Tid, Client.IsElev, Client.Arch)

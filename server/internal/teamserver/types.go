@@ -19,6 +19,7 @@ type TaskEntry struct {
 	Guid     string `json:"guid"`
 	Param1   string `json:"param_1"`
 	Param2   string `json:"param_2"`
+	DataType string `json:"data_type"`
 }
 
 type UserLogin struct {
