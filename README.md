@@ -1,4 +1,5 @@
 # Kronos C2
+![](imgs/B7EF2F66-EC50-447B-8010-B79928404484.png)
 
 > **Work in Progress** — not ready for production use.
 
