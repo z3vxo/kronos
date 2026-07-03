@@ -3,7 +3,7 @@
 
 > **Work in Progress** — not ready for production use.
 
-Kronos is a command-and-control framework written in Go. It consists of a teamserver, an operator CLI client, and a Windows agent.
+Kronos is a command-and-control framework written in Go and c++. It consists of a teamserver, an operator CLI client, and a Windows agent.
 
 ![Kronos CLI](imgs/2026-04-22_04-08.png)
 
@@ -16,7 +16,8 @@ Kronos is a command-and-control framework written in Go. It consists of a teamse
 ## Features
 
 - JWT-authenticated operator sessions
-- HTTP/HTTPS listeners with named identifiers
+- HTTP/HTTPS listeners
+- Fully encrypted communications
 - Agent registration and check-in
 - Real-time event streaming to connected operators
 - SQLite persistence for agents, tasks, and listeners
