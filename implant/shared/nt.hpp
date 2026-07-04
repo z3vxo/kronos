@@ -324,6 +324,71 @@ typedef enum _SYSTEM_INFORMATION_CLASS
     MaxSystemInfoClass
 } SYSTEM_INFORMATION_CLASS;
 
+typedef enum _THREADINFOCLASS
+{
+    ThreadBasicInformation,                         // q: THREAD_BASIC_INFORMATION
+    ThreadTimes,                                    // q: KERNEL_USER_TIMES // since VISTA
+    ThreadPriority,                                 // s: KPRIORITY (requires SeIncreaseBasePriorityPrivilege)
+    ThreadBasePriority,                             // s: KPRIORITY
+    ThreadAffinityMask,                             // s: KAFFINITY
+    ThreadImpersonationToken,                       // s: HANDLE
+    ThreadDescriptorTableEntry,                     // q: DESCRIPTOR_TABLE_ENTRY (or WOW64_DESCRIPTOR_TABLE_ENTRY)
+    ThreadEnableAlignmentFaultFixup,                // s: BOOLEAN
+    ThreadEventPair,                                // q: Obsolete
+    ThreadQuerySetWin32StartAddress,                // q: PVOID
+    ThreadZeroTlsCell,                              // s: ULONG // TlsIndex // 10
+    ThreadPerformanceCount,                         // q: LARGE_INTEGER
+    ThreadAmILastThread,                            // q: ULONG
+    ThreadIdealProcessor,                           // s: ULONG
+    ThreadPriorityBoost,                            // qs: ULONG
+    ThreadSetTlsArrayAddress,                       // s: ULONG_PTR
+    ThreadIsIoPending,                              // q: ULONG
+    ThreadHideFromDebugger,                         // qs: BOOLEAN
+    ThreadBreakOnTermination,                       // qs: ULONG
+    ThreadSwitchLegacyState,                        // s: void // NtCurrentThread // NPX/FPU
+    ThreadIsTerminated,                             // q: ULONG // 20
+    ThreadLastSystemCall,                           // q: THREAD_LAST_SYSCALL_INFORMATION
+    ThreadIoPriority,                               // qs: IO_PRIORITY_HINT (s: requires SeIncreaseBasePriorityPrivilege)
+    ThreadCycleTime,                                // q: THREAD_CYCLE_TIME_INFORMATION (requires THREAD_QUERY_LIMITED_INFORMATION)
+    ThreadPagePriority,                             // qs: PAGE_PRIORITY_INFORMATION
+    ThreadActualBasePriority,                       // q: LONG
+    ThreadTebInformation,                           // q: THREAD_TEB_INFORMATION (requires THREAD_GET_CONTEXT + THREAD_SET_CONTEXT)
+    ThreadCSwitchMon,                               // q: Obsolete
+    ThreadCSwitchPmu,                               // q: Obsolete
+    ThreadWow64Context,                             // qs: WOW64_CONTEXT, ARM_NT_CONTEXT since 20H1
+    ThreadGroupInformation,                         // qs: GROUP_AFFINITY // 30
+    ThreadUmsInformation,                           // q: THREAD_UMS_INFORMATION // Obsolete
+    ThreadCounterProfiling,                         // qs: THREAD_PROFILING_INFORMATION
+    ThreadIdealProcessorEx,                         // qs: PROCESSOR_NUMBER; s: previous PROCESSOR_NUMBER on return
+    ThreadCpuAccountingInformation,                 // s: HANDLE // since WIN8
+    ThreadSuspendCount,                             // q: ULONG // since WINBLUE
+    ThreadHeterogeneousCpuPolicy,                   // qs: KHETERO_CPU_POLICY // since THRESHOLD
+    ThreadContainerId,                              // q: GUID
+    ThreadNameInformation,                          // qs: THREAD_NAME_INFORMATION (requires THREAD_SET_LIMITED_INFORMATION)
+    ThreadSelectedCpuSets,                          // qs: ULONG[]
+    ThreadSystemThreadInformation,                  // q: SYSTEM_THREAD_INFORMATION // 40
+    ThreadActualGroupAffinity,                      // q: GROUP_AFFINITY // since THRESHOLD2
+    ThreadDynamicCodePolicyInfo,                    // qs: ULONG // NtCurrentThread
+    ThreadExplicitCaseSensitivity,                  // qs: ULONG; s: 0 disables, otherwise enables // (requires SeDebugPrivilege and PsProtectedSignerAntimalware)
+    ThreadWorkOnBehalfTicket,                       // q: RTL_WORK_ON_BEHALF_TICKET_EX; s: ALPC_WORK_ON_BEHALF_TICKET // NtCurrentThread
+    ThreadSubsystemInformation,                     // q: SUBSYSTEM_INFORMATION_TYPE // since REDSTONE2
+    ThreadDbgkWerReportActive,                      // s: ULONG
+    ThreadAttachContainer,                          // s: HANDLE (job object) // NtCurrentThread
+    ThreadManageWritesToExecutableMemory,           // s: MANAGE_WRITES_TO_EXECUTABLE_MEMORY // since REDSTONE3
+    ThreadPowerThrottlingState,                     // qs: POWER_THROTTLING_THREAD_STATE // since REDSTONE3 (set), WIN11 22H2 (query)
+    ThreadWorkloadClass,                            // qs: THREAD_WORKLOAD_CLASS // since REDSTONE5 // 50
+    ThreadCreateStateChange,                        // s: Obsolete // since WIN11
+    ThreadApplyStateChange,                         // s: Obsolete
+    ThreadStrongerBadHandleChecks,                  // qs: ULONG // NtCurrentThread // since 22H1
+    ThreadEffectiveIoPriority,                      // q: IO_PRIORITY_HINT
+    ThreadEffectivePagePriority,                    // q: ULONG
+    ThreadUpdateLockOwnership,                      // s: THREAD_LOCK_OWNERSHIP // since 24H2
+    ThreadSchedulerSharedDataSlot,                  // qs: THREAD_SCHEDULER_SHARED_DATA_SLOT_INFORMATION
+    ThreadTebInformationAtomic,                     // q: THREAD_TEB_INFORMATION (requires THREAD_GET_CONTEXT + THREAD_QUERY_INFORMATION)
+    ThreadIndexInformation,                         // q: THREAD_INDEX_INFORMATION
+    MaxThreadInfoClass
+} THREADINFOCLASS;
+
 
 #define InitializeObjectAttributes( p, n, a, r, s ) { \
     (p)->Length = sizeof( OBJECT_ATTRIBUTES );          \
@@ -420,6 +485,30 @@ extern "C" {
                 _In_ PCOBJECT_ATTRIBUTES ObjectAttributes,
                 _In_opt_ PCLIENT_ID ClientId
             );
+
+        NTSYSCALLAPI ULONG  NTAPI RtlNtStatusToDosError(NTSTATUS Stat);
+
+       NTSYSCALLAPI NTSTATUS NTAPI NtTerminateProcess(HANDLE ProcessHandle, NTSTATUS ExitStatus);
+       NTSYSCALLAPI NTSTATUS NTAPI RtlAdjustPrivilege(ULONG Privilege, BOOLEAN Enable, BOOLEAN CurrentThread, PBOOLEAN WasEnabled);
+
+       NTSYSCALLAPI NTSTATUS NTAPI NtDuplicateToken(
+           HANDLE ExistingTokenHandle,
+           ACCESS_MASK DesiredAccess,
+           POBJECT_ATTRIBUTES ObjectAttributes,
+           BOOLEAN EffectiveOnly,
+           TOKEN_TYPE TokenType,
+           PHANDLE NewTokenHandle
+           );
+
+       NTSYSCALLAPI  NTSTATUS NTAPI NtSetInformationThread(
+           HANDLE ThreadHandle,
+           THREADINFOCLASS ThreadInformationClass,
+           PVOID ThreadInformation,
+           ULONG ThreadInformationLength
+           );
+
+
+
 }
 
 

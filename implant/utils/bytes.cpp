@@ -79,6 +79,10 @@ void bytes::FreeString(PCHAR s) {
 	if (s) HeapFree(GetProcessHeap(), 0, s);
 }
 
+void bytes::Skip(UINT Size) {
+	this->ReadIndex += Size;
+}
+
 void bytes::ReadInto(PBYTE dst, UINT len) {
 
 	PBYTE src = this->InData + this->ReadIndex;

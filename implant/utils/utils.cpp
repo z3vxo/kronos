@@ -9,3 +9,12 @@ INT IntFromStr(PCHAR str) {
 	}
 	return val;
 }
+
+
+NTSTATUS SetPrivilege(ULONG id, BOOL Enable) {
+	BOOLEAN WasEnabled;
+	NTSTATUS check; 
+	check = hades->NtApis.RtlAdjustPrivilege(id, (BOOLEAN)Enable, FALSE, &WasEnabled);
+	return check;
+	
+}

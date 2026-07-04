@@ -120,6 +120,13 @@ BOOL LoadAPIS() {
 		hades->NtApis.NtOpenThreadToken = (decltype(hades->NtApis.NtOpenThreadToken))GetProc(hades->Modules.NTDLL, HASHED_OpenThreadToken);
 		hades->NtApis.NtQueryInformationProcess = (decltype(hades->NtApis.NtQueryInformationProcess))GetProc(hades->Modules.NTDLL, HASHED_NtQueryInformationProcess);
 		hades->NtApis.NtDelayExecution = (decltype(hades->NtApis.NtDelayExecution))GetProc(hades->Modules.NTDLL, HASHED_NtDelayExecution);
+		hades->NtApis.RtlNtStatusToDosError = (decltype(hades->NtApis.RtlNtStatusToDosError))GetProc(hades->Modules.NTDLL, HASHED_RtlNtStatusToDosError);
+		hades->NtApis.NtTerminateProcess = (decltype(hades->NtApis.NtTerminateProcess))GetProc(hades->Modules.NTDLL, HASHED_NtTerminateProcess);
+		hades->NtApis.RtlAdjustPrivilege = (decltype(hades->NtApis.RtlAdjustPrivilege))GetProc(hades->Modules.NTDLL, HASHED_RtlAdjustPrivilege);
+		hades->NtApis.NtDuplicateToken = (decltype(hades->NtApis.NtDuplicateToken))GetProc(hades->Modules.NTDLL, HASHED_NtDuplicateToken);
+		hades->NtApis.NtSetInformationThread = (decltype(hades->NtApis.NtSetInformationThread))GetProc(hades->Modules.NTDLL, HASHED_NtSetInformationThread);
+		hades->NtApis.NtSetInformationThread 
+
 	}
 
 

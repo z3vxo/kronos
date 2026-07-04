@@ -8,6 +8,7 @@
 #include "../utils/bytes.hpp"
 #include "../utils/apidefs.hpp"
 #include "../fileops/files.hpp"
+#include "../tokens/tokens.hpp"
 
 
 
@@ -79,6 +80,11 @@ typedef struct {
 		DECL(NtQueryInformationToken);
 		DECL(NtQuerySystemInformation);
 		DECL(NtOpenProcess);
+		DECL(RtlNtStatusToDosError);
+		DECL(NtTerminateProcess);
+		DECL(RtlAdjustPrivilege);
+		DECL(NtDuplicateToken);
+		DECL(NtSetInformationThread);
 
 	} NtApis;
 

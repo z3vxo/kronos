@@ -20,6 +20,7 @@ public:
 	void EndOk(UINT SucessCode);
 	void EndErr(UINT errCode);
 	void EndOkData(UINT TaskType, UINT len, PBYTE data);
+	void Skip(UINT Size);
 
 	BOOL EnsureBuffer(PBYTE& Buffer, UINT size);
 	void InitRead(PBYTE data, INT DataSize);
