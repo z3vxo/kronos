@@ -168,7 +168,7 @@ func (c *CLI) UploadFileHandler(args []string) {
 	var remotePath string
 	if len(args) < 2 {
 		remotePath = `.\` + localBase
-	} else if strings.HasSuffix(args[1], `\`) {
+	} else if strings.HasSuffix(args[1], `\`) || strings.HasSuffix(args[1], "/") {
 		remotePath = args[1] + localBase
 	} else {
 		remotePath = args[1]

@@ -281,6 +281,8 @@ var SuccessMap = map[uint32]string{
 	493: "MKDIR_SUCCESS: Succesfully Created Directory",
 	494: "DOWNLOAD_SUCCESS: Succesfully wrote file to disk",
 	495: "RECONFIG_DONE: Succesfully updated agent config",
+	496: "KILL_SUCCESS: Succesfully terminated process",
+	497: "STEAL_SUCCESS: Succesfully Stole token",
 }
 
 type ClientRegister struct {

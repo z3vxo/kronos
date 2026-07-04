@@ -178,7 +178,7 @@ func CraftCmdFormat(code, TaskID uint32, param1, param2, DataType string) ([]byt
 		if err != nil {
 			return nil, err
 		}
-		if err := Write4(&buffer, val); err != nil {
+		if err := Write4(&buffer, uint32(val)); err != nil {
 			return nil, err
 		}
 
@@ -187,7 +187,7 @@ func CraftCmdFormat(code, TaskID uint32, param1, param2, DataType string) ([]byt
 			if err != nil {
 				return nil, err
 			}
-			if err := Write4(&buffer, val2); err != nil {
+			if err := Write4(&buffer, uint32(val2)); err != nil {
 				return nil, err
 			}
 		}

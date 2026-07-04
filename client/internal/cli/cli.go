@@ -75,6 +75,7 @@ func (c *CLI) SetupDispatchTable() {
 		"upload":       c.UploadFileHandler,
 		"profiles":     c.HandleProfiles,
 		"reconfig":     c.HandleReconfig,
+		"token":        c.HandleToken,
 	}
 }
 

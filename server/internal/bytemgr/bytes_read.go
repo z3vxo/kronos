@@ -191,22 +191,58 @@ func ParseFileOutput(r *Reader) *FileOutput {
 
 func ParsePSOutput(r *Reader) string {
 	var b strings.Builder
+	fmt.Fprintf(&b, "%-40s %-25s %-8s %-6s %s\n", "PROCESS", "OWNER", "PID", "SID", "ARCH")
+	fmt.Fprintf(&b, "%-40s %-25s %-8s %-6s %s\n",
+		strings.Repeat("-", 40), strings.Repeat("-", 25),
+		strings.Repeat("-", 8), strings.Repeat("-", 6), strings.Repeat("-", 4))
 
 	for {
-		val := r.Read4()
-		if val == LS_END {
+		nameLen := r.Read4()
+		if r.err != nil || nameLen == LS_END {
 			return b.String()
 		}
 
-		ProcessName := r.ReadString(val)
-		UserLen := r.Read4()
-		UserStr := r.ReadString(UserLen)
-		PID := r.Read4()
-		fmt.Fprintf(&b, "%-40s %-25s %d\n", ProcessName, UserStr, PID)
-	}
-	fmt.Println(b.String())
-	return b.String()
+		processName := r.ReadString(nameLen)
+		ownerLen := r.Read4()
 
+		var owner string
+		if ownerLen > 0 {
+			owner = r.ReadString(ownerLen)
+		}
+
+		domainLen := r.Read4()
+		var domain string
+		if domainLen > 0 {
+			domain = r.ReadString(domainLen)
+		}
+
+		pid := r.Read4()
+		sessionID := r.Read4()
+		arch := r.Read4()
+
+		if r.err != nil {
+			return b.String()
+		}
+
+		if ownerLen == 0 {
+			if sessionID == 0 {
+				owner = "SYSTEM"
+			} else {
+				owner = "N/A"
+			}
+		} else if domain != "" {
+			owner = domain + "\\" + owner
+		}
+
+		archStr := "?"
+		if arch == 1 {
+			archStr = "x64"
+		} else if arch == 0 {
+			archStr = "x86"
+		}
+
+		fmt.Fprintf(&b, "%-40s %-25s %-8d %-6d %s\n", processName, owner, pid, sessionID, archStr)
+	}
 }
 
 func ParseLSOutput(r *Reader) string {
@@ -214,17 +250,18 @@ func ParseLSOutput(r *Reader) string {
 
 	for {
 		val := r.Read4()
-		if val == LS_END {
+		if r.err != nil || val == LS_END {
 			return b.String()
 		}
 		EntryStr := r.ReadString(val)
 		TypeLen := r.Read4()
 		TypeStr := r.ReadString(TypeLen)
 		FileSize := r.Read8()
+		if r.err != nil {
+			return b.String()
+		}
 		fmt.Fprintf(&b, "%-40s %-15s %d\n", EntryStr, TypeStr, FileSize)
 	}
-	fmt.Println(b.String())
-	return b.String()
 }
 
 func ParsePRIVOutput(r *Reader) string {

