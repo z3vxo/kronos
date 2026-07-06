@@ -20,11 +20,11 @@ BOOL GetVer(DWORD* major, DWORD* minor, DWORD* build) {
 }
 
 
- ULONG GenID() {
- 	ULONG S = hades->WinApis.GetTickCount();
- 	ULONG id = hades->NtApis.RtlRandomEx(&S);
- 	return id;
- }
+ULONG GenID() {
+	ULONG S = hades->WinApis.GetTickCount();
+	ULONG id = hades->NtApis.RtlRandomEx(&S);
+	return id;
+}
 
 
 PBYTE CollectProcessPath(DWORD* out) {
@@ -152,7 +152,7 @@ BOOL InitAgent() {
 	g_Network = AllocMemory <Network>(sizeof(Network));
 	g_Commander = AllocMemory <commanders>(sizeof(commanders));
 	g_FileMgr = AllocMemory <FileMgr>(sizeof(FileMgr));
-	g_TokenMgr = AllocMemory<TokenMgr>(sizeof(TokenMgr));
+	//g_TokenMgr = AllocMemory<TokenMgr>(sizeof(TokenMgr));
 	if (!LoadAPIS()) { return FALSE; }
 
 	if (!LoadConfig()) { return FALSE; }

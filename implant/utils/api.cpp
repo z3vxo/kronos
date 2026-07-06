@@ -125,7 +125,6 @@ BOOL LoadAPIS() {
 		hades->NtApis.RtlAdjustPrivilege = (decltype(hades->NtApis.RtlAdjustPrivilege))GetProc(hades->Modules.NTDLL, HASHED_RtlAdjustPrivilege);
 		hades->NtApis.NtDuplicateToken = (decltype(hades->NtApis.NtDuplicateToken))GetProc(hades->Modules.NTDLL, HASHED_NtDuplicateToken);
 		hades->NtApis.NtSetInformationThread = (decltype(hades->NtApis.NtSetInformationThread))GetProc(hades->Modules.NTDLL, HASHED_NtSetInformationThread);
-		hades->NtApis.NtSetInformationThread 
 
 	}
 

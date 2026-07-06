@@ -48,6 +48,9 @@
     <ClCompile Include="fileops\files.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tokens\tokens.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="utils\apidefs.hpp">
@@ -75,6 +78,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="shared\list.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tokens\tokens.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
