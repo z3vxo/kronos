@@ -52,9 +52,10 @@ type TaskEntry struct {
 }
 
 type Task struct {
-	ID       uint32    `json:"id"`
+	ID       uint32 `json:"id"`
 	Guid     string `json:"guid"`
 	CmdCode  int    `json:"cmd_code"`
+	CmdName  string `json:"cmd_name"`
 	Param1   string `json:"param_1"`
 	Param2   string `json:"param_2"`
 	TaskID   uint32 `json:"task_id"`
@@ -154,4 +155,20 @@ type GeneratePayloadReq struct {
 	Name string `json:"name"`
 	Debug bool `json:"debug"`
 	Format string `json:"format"`
+}
+
+
+type HistoryEntry struct {
+	CmdCode    int    `json:"cmd_code"`
+	CmdName    string `json:"cmd_name"`
+	TaskID     uint32 `json:"task_id"`
+	Param1     string `json:"param_1"`
+	Param2     string `json:"param_2"`
+	TaskedAt   int64  `json:"tasked_at"`
+	FinishedAt int64  `json:"finished_at"`
+}
+
+type History struct {
+	Total int            `json:"total"`
+	Entry []HistoryEntry `json:"history"`
 }

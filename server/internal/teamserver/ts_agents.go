@@ -100,4 +100,18 @@ func (ts *TeamServer) AgentDeleteHandler(w http.ResponseWriter, r *http.Request)
 		httputil.SendJSONError(w, "failed deleting agent", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+func (ts *TeamServer) AgentDeleteAllHandler(w http.ResponseWriter, r *http.Request) {
+	if err := ts.db.PurgeAgents(); err != nil {
+		httputil.SendJSONError(w, "failed purging agents", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }

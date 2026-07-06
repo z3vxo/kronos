@@ -2,20 +2,14 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/z3vxo/kronos/internal/ui"
 )
 
-var IdToCmdMap = map[int]string{
-	0: "ps",
-	1: "cmd",
-	2: "cat",
-	3: "ls",
-	4: "rm",
-	5: "mv",
-}
+
 
 func (c *CLI) ParseTasks(args []string) {
 	if len(args) == 0 {
@@ -64,16 +58,9 @@ func (c *CLI) ListTasks() {
 	t.AppendSeparator()
 	for _, i := range Task.Tasks {
 		c.CacheMgr.TaskIdMap[i.ID] = i.TaskID
-		if i.Param1 == "" {
-			i.Param1 = "NULL"
-		}
-		if i.Param2 == "" {
-			i.Param2 = "NULL"
-		}
-		name := IdToCmdMap[i.CmdCode]
 		t.AppendRow(table.Row{
 			i.ID,
-			name,
+			i.CmdName,
 			i.Param1,
 			i.Param2,
 			i.TaskID,
@@ -107,4 +94,80 @@ func (c *CLI) DeleteTask(id string) {
 
 	c.ui.PrintTitle("Deleted Task!")
 
+}
+
+func (c *CLI) HandleHistory(args []string) {
+	if len(args) == 0 {
+		c.GetHistory()
+		return
+	}
+
+	if args[0] == "output" {
+		if len(args) < 2 || args[1] == "" {
+			c.ui.Send(ui.WARN.Sprint("Must Provide TaskID"))
+			return
+		}
+		c.GetHistoryOutput(args[1])
+		return
+	}
+
+	c.ui.Send(ui.BAD.Sprint("Unknown sub command"))
+}
+
+func (c *CLI) GetHistoryOutput(id string) {
+	if !c.requireAgent() {
+		return
+	}
+
+	resp, err := c.http.DoGetRaw(fmt.Sprintf("ts/rest/tasks/history/%s/%s", c.ClientInUse, id))
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Error getting output: %s", err))
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Error reading output: %s", err))
+		return
+	}
+
+	c.ui.PrintTitle(fmt.Sprintf("Output for TaskID: %s\n", id))
+	c.ui.Send(string(body))
+}
+
+
+func (c *CLI) GetHistory() {
+	if !c.requireAgent() {
+		return
+	}
+	var h History
+
+	if err := c.http.DoGet(fmt.Sprintf("ts/rest/tasks/history/%s", c.ClientInUse), &h); err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Error listing history: %s", err))
+		return
+	}
+
+	if h.Total == 0 {
+		c.ui.Send(ui.INFO.Sprint("No history for agent"))
+		return
+	}
+
+	c.ui.PrintTitle(fmt.Sprintf("Task History (%d)", h.Total))
+	t := table.NewWriter()
+	t.SetStyle(table.StyleLight)
+	t.AppendHeader(table.Row{"#", "TASK-ID", "CMD", "PARAM1", "PARAM2", "TASKED", "FINISHED"})
+	t.AppendSeparator()
+	for i, e := range h.Entry {
+		t.AppendRow(table.Row{
+			i + 1,
+			e.TaskID,
+			e.CmdName,
+			e.Param1,
+			e.Param2,
+			relativeTime(e.TaskedAt),
+			relativeTime(e.FinishedAt),
+		})
+	}
+	c.ui.Send(t.Render())
 }

@@ -3,10 +3,7 @@ package teamserver
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -15,12 +12,8 @@ import (
 	"github.com/z3vxo/kronos/internal/config"
 	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/files"
+	"github.com/z3vxo/kronos/internal/logger"
 )
-
-func GetLogFile() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".kronos", "logs", "kronos.log")
-}
 
 func NewTeamServer() (*TeamServer, error) {
 	a := auth.NewAuth(config.Cfg.TS.Auth.Username, config.Cfg.TS.Auth.Password,
@@ -30,7 +23,7 @@ func NewTeamServer() (*TeamServer, error) {
 		return nil, err
 	}
 
-	file, err := os.OpenFile(GetLogFile(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	l, err := logger.New()
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +39,7 @@ func NewTeamServer() (*TeamServer, error) {
 		Auth:      a,
 		db:        d,
 		Listeners: &Listeners{ListenerMap: make(map[string]Listener), GetEndpoint: config.Cfg.Server.GetEndpoint, PostEndpoint: config.Cfg.Server.PostEndpoint},
-		Logger:    slog.New(slog.NewJSONHandler(file, nil)),
+		Logger:    l,
 		FileMgr:   files.NewFileManager(d),
 	}, nil
 }
@@ -71,15 +64,18 @@ func (ts *TeamServer) Start() error {
 			r.Get("/rest/agents/list", ts.AgentListHandler)
 			r.Get("/rest/agents/resolve/{codename}", ts.AgentResolveHandler)
 			r.Get("/rest/agents/info/{codename}", ts.AgentInfoHandler)
+			r.Delete("/rest/agents/delete/all", ts.AgentDeleteAllHandler)
 			r.Delete("/rest/agents/delete/{codename}", ts.AgentDeleteHandler)
 
 			r.Post("/rest/tasks/new", ts.CommandNewHandler)
 			r.Delete("/rest/tasks/delete/{guid}/{taskID}", ts.CommandDeleteHandler)
 			r.Get("/rest/tasks/list/{guid}", ts.ListTasksHandler)
+			r.Get("/rest/tasks/history/{guid}", ts.ListHistoryHandler)
+			r.Get("/rest/tasks/history/{guid}/{taskID}", ts.GetHistoryOutputHandler)
 
 			r.Get("/rest/files/list", ts.FilesListHandler)
 			r.Get("/rest/files/sync/{code}", ts.FilesSyncHandler)
-			r.Post("/rest/file/download/task", ts.DownloadTaskHandler)
+			r.Post("/rest/file/download/task", ts.DownloadTaskHandler) 
 			r.Post("/rest/file/upload/start", ts.UploadStartHandler)
 			r.Put("/rest/file/upload/{id}", ts.HandleUpload)
 

@@ -30,14 +30,24 @@ func (c *CLI) ParseAgentsCmd(args []string) {
 		return
 	}
 
-	if args[0] == "delete" {
+	action := args[0]
+	switch action {
+	case "delete":
 		if len(args) < 2 || args[1] == "" {
 			c.ui.Send(ui.WARN.Sprint("Must provide agent ID or name"))
 			return
 		}
 		c.DeleteAgent(args[1])
 		return
+	case "purge":
+		c.PurgeAgents()
+		return
+	default:
+		c.ui.Send(ui.BAD.Sprint("Unknown sub command"))
+
+
 	}
+
 }
 
 func (c *CLI) ListAgents() {
@@ -234,3 +244,17 @@ func (c *CLI) DeleteAgent(id string) {
 	c.CacheMgr.InvalidateOneAgent(name)
 	c.ui.PrintTitle(fmt.Sprintf("Deleted agent %s", name))
 }
+
+func (c *CLI) PurgeAgents() {
+	if err := c.http.DoDelete("ts/rest/agents/delete/all", nil); err != nil {
+		c.ui.Send(ui.WARN.Sprintf("Failed purging agents: %v", err))
+		return
+	}
+	c.CacheMgr.InvalidateAgents()
+	c.CacheMgr.InvalidateInfo()
+	c.ClientInUse = ""
+	c.ui.InUse = ""
+	c.ui.SetPrompt("")
+	c.ui.PrintTitle("Purged agents")
+}
+

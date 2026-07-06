@@ -34,7 +34,7 @@ func (ts *TeamServer) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ts.Logger.Debug("Operator logged in", "user", log.Username)
+	ts.Logger.LogOperatorOp("Operator logged in", "login", "user", log.Username)
 
 	json.NewEncoder(w).Encode(map[string]string{"token": token, "refresh": refresh})
 }

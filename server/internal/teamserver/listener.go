@@ -17,6 +17,7 @@ import (
 	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/server"
 	"github.com/z3vxo/kronos/internal/files"
+	"github.com/z3vxo/kronos/internal/logger"
 )
 
 var listenerAdjectives = []string{"golden", "cursed", "sacred", "eternal", "fallen", "divine", "forsaken", "ancient", "wrathful", "fated", "hollow", "sunken", "boundless", "immortal", "exiled"}
@@ -53,8 +54,8 @@ func (ts *TeamServer) UpdateListenerMapStatus(id string, status bool) {
 	ts.Listeners.Mu.Unlock()
 }
 
-func BuildListenerHttp(port int, protocol string, db *database.DB, sse *broker.Broker, host string, letsEncrypt bool, mgr *files.Manager) (*http.Server, error) {
-	h := &server.AgentHandler{DB: db, Broker: sse, Host: host, FileMgr: mgr}
+func BuildListenerHttp(port int, protocol string, db *database.DB, sse *broker.Broker, host string, letsEncrypt bool, mgr *files.Manager, l *logger.Logger) (*http.Server, error) {
+	h := &server.AgentHandler{DB: db, Broker: sse, Host: host, FileMgr: mgr, Logger: l}
 	r := chi.NewRouter()
 	r.Get(config.Cfg.Server.GetEndpoint, h.AgentCheckInHandler)
 	r.Post(config.Cfg.Server.PostEndpoint, h.AgentUploadHandler)
@@ -95,7 +96,7 @@ func (ts *TeamServer) StartListenersFromDB() error {
 	}
 	for _, l := range ToStart {
 
-		srv, err := BuildListenerHttp(l.Port, l.Protocol, ts.db, ts.SSE, l.Host, l.CertType, ts.FileMgr)
+		srv, err := BuildListenerHttp(l.Port, l.Protocol, ts.db, ts.SSE, l.Host, l.CertType, ts.FileMgr, ts.Logger)
 		if err != nil {
 			return err
 		}
@@ -121,7 +122,7 @@ func (ts *TeamServer) StartListenersFromDB() error {
 			}
 		}
 
-		ts.Logger.Info("listener started from db", "event", "listener-restore", "id", l.Guid, "protocol", l.Protocol, "port", l.Port)
+		ts.Logger.LogOperatorOp("listener started from db", "listener-restore", "id", l.Guid, "protocol", l.Protocol, "port", l.Port)
 	}
 	return nil
 }
@@ -152,7 +153,7 @@ func (ts *TeamServer) NewListener(port int, Protocol string, user, host string, 
 		ts.Listeners.Mu.Unlock()
 		return "", "", err
 	}
-	ts.Logger.Info("New Listener Created", "event", "listener-create", "id", id, "operator", user, "proto", Protocol, "port", port)
+	ts.Logger.LogOperatorOp("New Listener Created", "listener-create", "id", id, "operator", user, "proto", Protocol, "port", port)
 
 	return id, name, nil
 }
@@ -169,7 +170,7 @@ func (ts *TeamServer) StartListener(id string) error {
 		return errors.New("listener already running!")
 	}
 
-	srv, err := BuildListenerHttp(l.Port, l.Protocol, ts.db, ts.SSE, l.Host, l.certType, ts.FileMgr)
+	srv, err := BuildListenerHttp(l.Port, l.Protocol, ts.db, ts.SSE, l.Host, l.certType, ts.FileMgr, ts.Logger)
 	if err != nil {
 		return errors.New("Failed Creating server object")
 	}
@@ -248,7 +249,7 @@ func (ts *TeamServer) StopListener(id string, user string) error {
 
 	ts.UpdateListenerMapStatus(id, false)
 
-	ts.Logger.Info("listener stopped", "event", "listener-stop", "id", id, "operator", user)
+	ts.Logger.LogOperatorOp("listener stopped", "listener-stop", "id", id, "operator", user)
 
 	return nil
 

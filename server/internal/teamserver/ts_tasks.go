@@ -2,9 +2,10 @@ package teamserver
 
 import (
 	"crypto/rand"
-    "encoding/binary"	
-    "encoding/json"
+	"encoding/binary"
+	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/z3vxo/kronos/internal/database"
@@ -78,10 +79,57 @@ func (ts *TeamServer) ListTasksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for i := range tasks {
+		tasks[i].CmdName = bytemgr.CmdNames[tasks[i].CmdCode]
+	}
+
 	payload := database.TaskEntrys{Total: len(tasks), Tasks: tasks}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(&payload)
+
+}
+
+
+func (ts *TeamServer) GetHistoryOutputHandler(w http.ResponseWriter, r *http.Request) {
+	guid := chi.URLParam(r, "guid")
+	taskID := chi.URLParam(r, "taskID")
+	if guid == "" || taskID == "" {
+		httputil.SendJSONError(w, "missing guid or taskID", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.ParseUint(taskID, 10, 32)
+	if err != nil {
+		httputil.SendJSONError(w, "invalid taskID", http.StatusBadRequest)
+		return
+	}
+
+	output, err := ts.Logger.GetOutput(guid, uint32(id))
+	if err != nil {
+		httputil.SendJSONError(w, "output not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	w.Write(output)
+}
+
+func (ts *TeamServer) ListHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	guid := chi.URLParam(r, "guid")
+
+	data, err := ts.Logger.GetHistory(guid)
+	if err != nil {
+		httputil.SendJSONError(w, "Failed getting history", http.StatusInternalServerError)
+		return
+	}
+
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(&data)
+
 
 }

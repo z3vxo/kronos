@@ -1,13 +1,13 @@
 package teamserver
 
 import (
-	"log/slog"
 	"net/http"
 
 	"github.com/z3vxo/kronos/internal/auth"
 	"github.com/z3vxo/kronos/internal/broker"
 	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/files"
+	"github.com/z3vxo/kronos/internal/logger"
 )
 
 type TaskDelete struct {
@@ -40,8 +40,9 @@ type TeamServer struct {
 	Auth       *auth.Auth
 	db         *database.DB
 	Listeners  *Listeners
-	Logger     *slog.Logger
+	Logger     *logger.Logger
 	FileMgr    *files.Manager
+
 }
 
 type ListenerEntry struct {

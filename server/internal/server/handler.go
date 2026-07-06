@@ -10,12 +10,14 @@ import (
 	"github.com/z3vxo/kronos/internal/bytemgr"
 	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/files"
+	"github.com/z3vxo/kronos/internal/logger"
 )
 
 type AgentHandler struct {
 	DB      *database.DB
 	Broker  *broker.Broker
 	FileMgr *files.Manager
+	Logger  *logger.Logger
 	Host    string
 }
 
@@ -81,6 +83,8 @@ func (h *AgentHandler) HandleClientRegister(ip string, r *bytes.Reader) error {
 		return err
 	}
 
+	h.Logger.LogOperatorOp("New agent registered", "agent-register", "guid", Client.AgentID, "codename", CodeName, "hostname", Client.Host, "user", Client.User, "ip", Client.ExternalIP)
+
 	data, err := json.Marshal(Event{
 		CmdType: 1,
 		User: UserDetails{
@@ -135,6 +139,16 @@ func (h *AgentHandler) HandleAgentOutput(r *bytes.Reader, id string) {
 					fmt.Println(err)
 					return
 				}
+				taskIDStr := strconv.FormatUint(uint64(o.TaskID), 10)
+				task, err := h.DB.GetSingleTask(id, taskIDStr)
+				if err == nil {
+					h.Logger.LogMetaAndOutput(id, o.TaskID, o.Output,
+						"cmd_name", bytemgr.CmdNames[task.CmdCode],
+						"param_1", task.Param1,
+						"param_2", task.Param2,
+						"tasked_at", task.TaskedAt,
+					)
+				}
 				h.Broker.Broadcast(string(data))
 			}
 			continue
@@ -152,8 +166,18 @@ func (h *AgentHandler) HandleAgentOutput(r *bytes.Reader, id string) {
 			fmt.Println(err)
 			return
 		}
+		taskIDStr := strconv.FormatUint(uint64(o.TaskID), 10)
+		task, err := h.DB.GetSingleTask(id, taskIDStr)
+		if err == nil {
+			h.Logger.LogMetaAndOutput(id, o.TaskID, o.Output,
+				"cmd_name", bytemgr.CmdNames[task.CmdCode],
+				"param_1", task.Param1,
+				"param_2", task.Param2,
+				"tasked_at", task.TaskedAt,
+			)
+		}
 		h.Broker.Broadcast(string(data))
-		err = h.DB.DeleteTask(id, strconv.FormatUint(uint64(o.TaskID), 10))
+		err = h.DB.DeleteTask(id, taskIDStr)
 		if err != nil {
 			fmt.Println(err)
 		}

@@ -109,10 +109,11 @@ func (db *DB) DeleteAgent(name string) error {
 	q := `DELETE FROM agents WHERE code_name = ?`
 
 	_, err := db.conn.Exec(q, name)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 
+func (db *DB) PurgeAgents() error {
+	_, err := db.conn.Exec("DELETE FROM agents")
+	return err
+}

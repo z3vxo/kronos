@@ -76,6 +76,7 @@ func (c *CLI) SetupDispatchTable() {
 		"profiles":     c.HandleProfiles,
 		"reconfig":     c.HandleReconfig,
 		"token":        c.HandleToken,
+		"history":      c.HandleHistory,
 	}
 }
 

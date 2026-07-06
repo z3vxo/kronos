@@ -195,6 +195,26 @@ func (c *Client) DoPostRaw(endpoint string, data []byte) (*http.Response, error)
 	return resp, nil
 }
 
+func (c *Client) DoGetRaw(endpoint string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", c.Hostname, endpoint), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.Auth.Apply(req)
+
+	resp, err := c.HttpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		var e ErrorRes
+		_ = json.NewDecoder(resp.Body).Decode(&e)
+		resp.Body.Close()
+		return nil, fmt.Errorf("%s | %d", e.ErrorStr, resp.StatusCode)
+	}
+	return resp, nil
+}
+
 func (c *Client) Do(req *http.Request, out any) error {
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {

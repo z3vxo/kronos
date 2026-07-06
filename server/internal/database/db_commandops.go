@@ -78,3 +78,14 @@ func (db *DB) ListTasks(guid string) ([]Task, error) {
 	return tasks, nil
 
 }
+
+
+func (db *DB) GetSingleTask(guid, taskID string) (Task, error) {
+	var t Task
+	query := `SELECT task_id, command_type, param_1, param_2, tasked_at FROM commands WHERE guid = ? AND task_id = ?`
+	err := db.conn.QueryRow(query, guid, taskID).Scan(&t.TaskID, &t.CmdCode, &t.Param1, &t.Param2, &t.TaskedAt)
+	if err != nil {
+		return Task{}, err
+	}
+	return t, nil
+}

