@@ -5,6 +5,7 @@ import (
 
 	"github.com/z3vxo/kronos/internal/auth"
 	"github.com/z3vxo/kronos/internal/broker"
+	"github.com/z3vxo/kronos/internal/bytemgr"
 	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/files"
 	"github.com/z3vxo/kronos/internal/logger"
@@ -15,13 +16,10 @@ type TaskDelete struct {
 }
 
 type TaskEntry struct {
-	Cmd_type int    `json:"type"`
-	Guid     string `json:"guid"`
-	Param1   string `json:"param_1"`
-	Param2   string `json:"param_2"`
-	DataType string `json:"data_type"`
+	Cmd_type int              `json:"type"`
+	Guid     string           `json:"guid"`
+	Params   []bytemgr.Param  `json:"params"`
 }
-
 type UserLogin struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -91,6 +89,9 @@ type GeneratePayloadReq struct {
 	Debug bool `json:"debug"`
 	Format string `json:"format"`
 }
+
+
+
 
 
 const notFound = `<!DOCTYPE html>

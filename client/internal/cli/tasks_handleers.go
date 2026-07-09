@@ -54,15 +54,15 @@ func (c *CLI) ListTasks() {
 		{Number: 5, WidthMin: 12},
 		{Number: 6, WidthMin: 14},
 	})
-	t.AppendHeader(table.Row{"ID", "CMD", "PARAM1", "PARAM2", "TASK-ID", "TASKED-AT"})
+	t.AppendHeader(table.Row{"ID", "CMD", "ARGS", "TASK-ID", "TASKED-AT"})
 	t.AppendSeparator()
 	for _, i := range Task.Tasks {
 		c.CacheMgr.TaskIdMap[i.ID] = i.TaskID
+		args := i.Param1 + " " + i.Param2
 		t.AppendRow(table.Row{
 			i.ID,
 			i.CmdName,
-			i.Param1,
-			i.Param2,
+			args,
 			i.TaskID,
 			relativeTime(int64(i.TaskedAt)),
 		})
@@ -156,15 +156,15 @@ func (c *CLI) GetHistory() {
 	c.ui.PrintTitle(fmt.Sprintf("Task History (%d)", h.Total))
 	t := table.NewWriter()
 	t.SetStyle(table.StyleLight)
-	t.AppendHeader(table.Row{"#", "TASK-ID", "CMD", "PARAM1", "PARAM2", "TASKED", "FINISHED"})
+	t.AppendHeader(table.Row{"#", "TASK-ID", "CMD", "ARGS", "TASKED", "FINISHED"})
 	t.AppendSeparator()
 	for i, e := range h.Entry {
+		args := e.Param1 + " " + e.Param2
 		t.AppendRow(table.Row{
 			i + 1,
 			e.TaskID,
 			e.CmdName,
-			e.Param1,
-			e.Param2,
+			args,
 			relativeTime(e.TaskedAt),
 			relativeTime(e.FinishedAt),
 		})

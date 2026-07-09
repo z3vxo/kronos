@@ -3,30 +3,32 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/z3vxo/kronos/internal/ui"
-	//"github.com/z3vxo/kronos/internal/payloadgen"
+	"github.com/spf13/pflag"
 )
 
 var CmdCodeMap = map[string]int{
-	"proc-list":      0,
-	"cmd":       1,
-	"cat":       2,
-	"ls":        3,
-	"rm":        4,
-	"mv":        5,
-	"pwd":       6,
-	"cd":        7,
-	"cp":        8,
-	"rmdir":     9,
-	"get-privs": 10,
-	"mkdir":     11,
-	"download":  12,
-	"upload":    13,
-	"reconfig":  14,
-	"proc-kill": 15,
-	"token-steal": 16,
+	"proc-list":    0,
+	"cmd":          1,
+	"cat":          2,
+	"ls":           3,
+	"rm":           4,
+	"mv":           5,
+	"pwd":          6,
+	"cd":           7,
+	"cp":           8,
+	"rmdir":        9,
+	"get-privs":    10,
+	"mkdir":        11,
+	"download":     12,
+	"upload":       13,
+	"reconfig":     14,
+	"proc-kill":    15,
+	"token-steal":  16,
+	"exec":         17,
 }
 
 func (c *CLI) requireAgent() bool {
@@ -37,13 +39,11 @@ func (c *CLI) requireAgent() bool {
 	return true
 }
 
-func (c *CLI) sendTask(cmd string, param1 string, param2, DataType string) bool {
+func (c *CLI) sendTask(cmd string, params []Param) bool {
 	payload := TaskEntry{
 		Guid:     c.ClientInUse,
 		Cmd_type: CmdCodeMap[cmd],
-		Param1:   param1,
-		Param2:   param2,
-		DataType: DataType,
+		Params:   params,
 	}
 
 	data, err := json.Marshal(&payload)
@@ -69,7 +69,7 @@ func (c *CLI) HandleRMDIR(args []string) {
 		c.ui.Send(ui.BAD.Sprint("Usage: rmdir <dir>"))
 		return
 	}
-	c.sendTask("rmdir", strings.Join(args, " "), "", "string")
+	c.sendTask("rmdir", []Param{{strings.Join(args, " "), "string"}})
 }
 
 func (c *CLI) HandleLS(args []string) {
@@ -82,8 +82,7 @@ func (c *CLI) HandleLS(args []string) {
 	} else {
 		dir = strings.Join(args, " ")
 	}
-
-	c.sendTask("ls", dir, "", "string")
+	c.sendTask("ls", []Param{{dir, "string"}})
 }
 
 func (c *CLI) HandleMKDIR(args []string) {
@@ -94,15 +93,14 @@ func (c *CLI) HandleMKDIR(args []string) {
 		c.ui.Send(ui.BAD.Sprint("Usage: mkdir <dir>"))
 		return
 	}
-	c.sendTask("mkdir", strings.Join(args, " "), "", "string")
+	c.sendTask("mkdir", []Param{{strings.Join(args, " "), "string"}})
 }
 
 func (c *CLI) HandleGETPRIVS(args []string) {
 	if !c.requireAgent() {
 		return
 	}
-
-	c.sendTask("get-privs", "", "", "")
+	c.sendTask("get-privs", nil)
 }
 
 func (c *CLI) HandleRM(args []string) {
@@ -113,7 +111,7 @@ func (c *CLI) HandleRM(args []string) {
 		c.ui.Send(ui.BAD.Sprint("Usage: rm <file>"))
 		return
 	}
-	c.sendTask("rm", strings.Join(args, " "), "", "string")
+	c.sendTask("rm", []Param{{strings.Join(args, " "), "string"}})
 }
 
 func (c *CLI) HandleCAT(args []string) {
@@ -124,7 +122,7 @@ func (c *CLI) HandleCAT(args []string) {
 		c.ui.Send(ui.BAD.Sprint("Usage: cat <file>"))
 		return
 	}
-	c.sendTask("cat", strings.Join(args, " "), "", "string")
+	c.sendTask("cat", []Param{{strings.Join(args, " "), "string"}})
 }
 
 func (c *CLI) HandlePROC(args []string) {
@@ -135,11 +133,14 @@ func (c *CLI) HandlePROC(args []string) {
 	sub := args[0]
 	switch sub {
 	case "list":
-		c.sendTask("proc-list", "", "", "")
-		break
+		c.sendTask("proc-list", nil)
 	case "kill":
-		c.sendTask("proc-kill", args[1], "", "int")
-		break
+		pid, err := strconv.Atoi(args[1])
+		if err != nil {
+			c.ui.Send(ui.BAD.Sprint("Invalid PID"))
+			return
+		}
+		c.sendTask("proc-kill", []Param{{pid, "int"}})
 	default:
 		c.ui.Send(ui.WARN.Sprint("Unknown subcommand"))
 	}
@@ -149,8 +150,7 @@ func (c *CLI) HandlePWD(args []string) {
 	if !c.requireAgent() {
 		return
 	}
-
-	c.sendTask("pwd", "", "", "")
+	c.sendTask("pwd", nil)
 }
 
 func (c *CLI) HandleCD(args []string) {
@@ -161,8 +161,7 @@ func (c *CLI) HandleCD(args []string) {
 		c.ui.Send(ui.BAD.Sprint("Usage: cd <dir>"))
 		return
 	}
-
-	c.sendTask("cd", args[0], "", "string")
+	c.sendTask("cd", []Param{{args[0], "string"}})
 }
 
 func (c *CLI) HandleCP(args []string) {
@@ -173,8 +172,7 @@ func (c *CLI) HandleCP(args []string) {
 		c.ui.Send(ui.BAD.Sprint("Usage: cp <old> <new>"))
 		return
 	}
-
-	c.sendTask("cp", args[0], args[1], "string")
+	c.sendTask("cp", []Param{{args[0], "string"}, {args[1], "string"}})
 }
 
 func (c *CLI) HandleMV(args []string) {
@@ -185,10 +183,8 @@ func (c *CLI) HandleMV(args []string) {
 		c.ui.Send(ui.BAD.Sprint("Usage: mv <src> <dst>"))
 		return
 	}
-
-	c.sendTask("mv", args[0], args[1], "string")
+	c.sendTask("mv", []Param{{args[0], "string"}, {args[1], "string"}})
 }
-
 
 func (c *CLI) HandleReconfig(args []string) {
 	if !c.requireAgent() {
@@ -200,9 +196,19 @@ func (c *CLI) HandleReconfig(args []string) {
 		return
 	}
 
-	c.sendTask("reconfig", args[0], args[1], "int")
-}
+	sleep, err := strconv.Atoi(args[0])
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprint("Invalid sleep value"))
+		return
+	}
+	jitter, err := strconv.Atoi(args[1])
+	if err != nil {
+		c.ui.Send(ui.BAD.Sprint("Invalid jitter value"))
+		return
+	}
 
+	c.sendTask("reconfig", []Param{{sleep, "int"}, {jitter, "int"}})
+}
 
 func (c *CLI) HandleToken(args []string) {
 	if !c.requireAgent() {
@@ -216,11 +222,47 @@ func (c *CLI) HandleToken(args []string) {
 	action := args[0]
 	switch action {
 	case "steal":
-		c.sendTask("token-steal", args[1], "", "int")
+		pid, err := strconv.Atoi(args[1])
+		if err != nil {
+			c.ui.Send(ui.BAD.Sprint("Invalid PID"))
+			return
+		}
+		c.sendTask("token-steal", []Param{{pid, "int"}})
 	default:
 		c.ui.Send(ui.WARN.Sprint("Unknown subcommand"))
 	}
 }
 
 
+func (c *CLI) HandleExec(args []string) {
+	if !c.requireAgent() {
+		return
+	}
 
+	fs := pflag.NewFlagSet("exec", pflag.ContinueOnError)
+	output := fs.BoolP("output", "o", false, "")
+	process := fs.StringP("process", "p", "", "")
+	execArgs := fs.StringP("args", "a", "", "")
+
+	if err := fs.Parse(args); err != nil {
+		c.ui.Send(ui.BAD.Sprintf("Error parsing flags: %v", err))
+		return
+	}
+
+	if *process == "" {
+		c.ui.Send(ui.BAD.Sprint("Missing process argument"))
+		return
+	}
+
+	final := *process
+	if *execArgs != "" {
+		final += " " + *execArgs
+	}
+
+	capture := 0
+	if *output {
+		capture = 1
+	}
+
+	c.sendTask("exec", []Param{{final, "string"}, {capture, "int"}})
+}

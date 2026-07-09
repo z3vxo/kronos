@@ -4,14 +4,26 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/z3vxo/kronos/internal/bytemgr"
 	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/httputil"
-	"github.com/z3vxo/kronos/internal/bytemgr"
 )
+
+func extractDisplayParams(params []bytemgr.Param) (string, string) {
+	var p1, p2 string
+	if len(params) > 0 {
+		p1 = fmt.Sprintf("%v", params[0].Value)
+	}
+	if len(params) > 1 {
+		p2 = fmt.Sprintf("%v", params[1].Value)
+	}
+	return p1, p2
+}
 
 const TASK_DOWNLOAD = 12
 
@@ -30,14 +42,15 @@ func (ts *TeamServer) CommandNewHandler(w http.ResponseWriter, r *http.Request) 
 
 	taskID := GenTaskID()
 
-	Buf, err := bytemgr.CraftCmdFormat(uint32(cmd.Cmd_type), taskID, cmd.Param1, cmd.Param2, cmd.DataType)
+	Buf, err := bytemgr.CraftCmdFormat(uint32(cmd.Cmd_type), taskID, cmd.Params)
 	if err != nil {
 		httputil.SendJSONError(w, "failed crafting format", http.StatusInternalServerError)
 		return
 	}
 
 
-	err = ts.db.InsertCommand(cmd.Cmd_type, taskID, cmd.Guid, cmd.Param1, cmd.Param2, Buf)
+	p1, p2 := extractDisplayParams(cmd.Params)
+	err = ts.db.InsertCommand(cmd.Cmd_type, taskID, cmd.Guid, p1, p2, "", Buf)
 	if err != nil {
 		httputil.SendJSONError(w, "failed inserting command", http.StatusInternalServerError)
 		return

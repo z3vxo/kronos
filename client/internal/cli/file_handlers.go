@@ -25,7 +25,7 @@ func (c *CLI) HandleDOWNLOAD(args []string) {
 	payload := TaskEntry{
 		Guid:     c.ClientInUse,
 		Cmd_type: CmdCodeMap["download"],
-		Param1:   strings.Join(args, " "),
+		Params:   []Param{{strings.Join(args, " "), "string"}},
 	}
 
 	data, err := json.Marshal(&payload)

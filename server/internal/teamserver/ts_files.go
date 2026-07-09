@@ -65,17 +65,19 @@ func (ts *TeamServer) DownloadTaskHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := ts.FileMgr.InsertNewDownloadFileTask(cmd.Guid, taskID, cmd.Param1, fileID); err != nil {
+	p1, _ := extractDisplayParams(cmd.Params)
+
+	if err := ts.FileMgr.InsertNewDownloadFileTask(cmd.Guid, taskID, p1, fileID); err != nil {
 		httputil.SendJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	blob, err := bytemgr.CraftCmdFormat(uint32(cmd.Cmd_type), taskID, cmd.Param1, "", "string")
+	blob, err := bytemgr.CraftCmdFormat(uint32(cmd.Cmd_type), taskID, cmd.Params)
 	if err != nil {
 		httputil.SendJSONError(w, "failed Crafting command", http.StatusInternalServerError)
 		return
 	}
-	if err := ts.db.InsertCommand(cmd.Cmd_type, taskID, cmd.Guid, cmd.Param1, "", blob); err != nil {
+	if err := ts.db.InsertCommand(cmd.Cmd_type, taskID, cmd.Guid, p1, "", "", blob); err != nil {
 		httputil.SendJSONError(w, "failed inserting command", http.StatusInternalServerError)
 		return
 	}
@@ -154,7 +156,7 @@ func (ts *TeamServer) HandleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := ts.db.InsertCommand(13, entry.TaskID, entry.AgentID, entry.RemotePath, id, []byte{}); err != nil {
+	if err := ts.db.InsertCommand(13, entry.TaskID, entry.AgentID, entry.RemotePath, "", id, []byte{}); err != nil {
 		fmt.Println(err)
 		os.Remove(entry.OnDiskFile.Name())
 		delete(ts.FileMgr.Uploads, id)

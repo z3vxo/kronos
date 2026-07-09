@@ -41,14 +41,16 @@ type ResolveResp struct {
 	Guid string `json:"guid"`
 }
 
+type Param struct {
+	Value    any    `json:"param"`
+	DataType string `json:"type"`
+}
+
 // ---- TASK STRUCTS ----
 type TaskEntry struct {
-	Cmd_type int    `json:"type"`
-	Guid     string `json:"guid"`
-	TaskID   uint32    `json:"task_id"`
-	Param1   string `json:"param_1"`
-	Param2   string `json:"param_2"`
-	DataType string `json:"data_type"`
+	Cmd_type int     `json:"type"`
+	Guid     string  `json:"guid"`
+	Params   []Param `json:"params"`
 }
 
 type Task struct {

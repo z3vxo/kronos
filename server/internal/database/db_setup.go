@@ -94,6 +94,7 @@ func SetupDB(db *DB) error {
 		params       BLOB NOT NULL DEFAULT '',
 		param_1      TEXT NOT NULL DEFAULT '',
 		param_2      TEXT NOT NULL DEFAULT '',
+		metadata     TEXT NOT NULL DEFAULT '',
 		executed     BOOLEAN NOT NULL,
 		tasked_at    INTEGER NOT NULL);`
 
