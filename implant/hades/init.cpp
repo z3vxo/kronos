@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 
+#include "../utils/api.hpp"
 #include "../utils/apidefs.hpp"
 #include "../utils/bytes.hpp"
 #include "../shared/nt.hpp"

@@ -139,5 +139,3 @@ T* AllocMemory(size_t size) {
 
 BOOL RunHades();
 BOOL InitAgent();
-DWORD Hasher(PCHAR str);
-INT IntFromStr(PCHAR str);

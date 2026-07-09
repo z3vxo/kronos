@@ -1,4 +1,5 @@
 #include "network.hpp"
+#include "../utils/api.hpp"
 #include "../hades/hades.h"
 #include <stdio.h>
 

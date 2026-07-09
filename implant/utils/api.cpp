@@ -1,4 +1,6 @@
 
+#include "api.hpp"
+#include "apidefs.hpp"
 #include "../hades/hades.h"
 #include <stdio.h>
 
